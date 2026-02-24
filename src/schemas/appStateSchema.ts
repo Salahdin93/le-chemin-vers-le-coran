@@ -20,7 +20,7 @@ const progressSchema = z.object({
   currentReadingDay: z.number().int().positive(),
   consecutiveDays: z.number().int().nonnegative(),
   totalPagesRead: z.number().int().nonnegative(),
-  readingHistory: z.record(readingHistoryEntrySchema),
+  readingHistory: z.record(z.string(), readingHistoryEntrySchema),
   currentRevisionIndex: z.number().int().nonnegative(),
   history: z.object({
     reading: z.array(z.any()), // Simplifié pour la validation

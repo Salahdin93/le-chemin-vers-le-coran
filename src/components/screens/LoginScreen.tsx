@@ -5,12 +5,12 @@ import Button from '@/components/ui/Button';
 import { useStore } from '@/context/AppContext';
 
 const LoginScreen: React.FC = () => {
-    const { state, dispatch, t } = useStore();
+    const { dispatch, t, activeProfile } = useStore();
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleLogin = () => {
-        if (state.profile?.password === password) {
+        if (activeProfile?.password === password) {
             setError('');
             dispatch({ type: 'SET_APP_SCREEN', payload: 'main' });
         } else {
@@ -18,9 +18,9 @@ const LoginScreen: React.FC = () => {
             setPassword('');
         }
     };
-    
+
     const handleForgotPassword = () => {
-        if(window.confirm(t('confirmReset'))) {
+        if (window.confirm(t('confirmReset'))) {
             dispatch({ type: 'RESET_APP' });
         }
     }
@@ -29,7 +29,7 @@ const LoginScreen: React.FC = () => {
         <Modal isOpen={true} className="text-center">
             <h2 className="font-amiri text-4xl text-primary mb-4">{t('welcome')}</h2>
             <h3 className="text-xl mb-6">{t('enterPassword')}</h3>
-            
+
             <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
                 <Input
                     type="password"
@@ -45,8 +45,8 @@ const LoginScreen: React.FC = () => {
                     <button type="button" onClick={handleForgotPassword} className="text-sm text-primary/80 hover:text-primary mt-2">
                         {t('forgotPassword')}
                     </button>
-                    <Button variant='ghost' size='sm' className='mt-4' onClick={() => dispatch({type: 'SET_APP_SCREEN', payload: 'welcome'})}>
-                       ⬅️ Retour
+                    <Button variant='ghost' size='sm' className='mt-4' onClick={() => dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' })}>
+                        ⬅️ Retour
                     </Button>
                 </div>
             </form>

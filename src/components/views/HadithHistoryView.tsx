@@ -3,7 +3,7 @@ import { useStore, useActiveProfileSelector } from '../../context/AppContext';
 import Card, { CardHeader, CardTitle, CardContent } from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import { HADITH_COLLECTION } from '../../constants/hadithData';
-import { Hadith, HadithMemorizationStatus } from '../../types';
+import { Hadith } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 
@@ -35,8 +35,8 @@ const HadithHistoryView: React.FC = () => {
                                 if (!hadith) return null;
 
                                 return (
-                                    <li 
-                                        key={index} 
+                                    <li
+                                        key={index}
                                         className="p-3 bg-bg-main rounded-lg border-l-4 border-primary cursor-pointer hover:bg-border-main/20 transition-colors"
                                         onClick={() => setSelectedHadith(hadith)}
                                     >
@@ -61,7 +61,7 @@ const HadithHistoryView: React.FC = () => {
                     <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
                         <p className="font-amiri text-2xl leading-loose rtl text-right">{selectedHadith.arabic}</p>
                         {lang !== 'ar' && (
-                             <div className="p-4 bg-bg-main rounded-lg border border-border-main text-base italic">
+                            <div className="p-4 bg-bg-main rounded-lg border border-border-main text-base italic">
                                 <p>"{selectedHadith.translations[lang] || selectedHadith.translations.en}"</p>
                             </div>
                         )}

@@ -4,29 +4,28 @@ import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
-import { EvaluationPlan, RevisionFrequency, EvaluationContentType } from '@/types';
+import { EvaluationPlan, EvaluationContentType } from '@/types';
 import { MultiSelectGrid } from '@/components/ui/MultiSelectGrid';
-import { ToggleSwitch } from '@/components/ui/Checkbox';
-import { clsx } from 'clsx';
 import { FULL_SURAH_LIST, HIZB_DATA, JUZ_DATA } from '@/constants/quranData';
-import { HADITH_COLLECTION } from '@/constants/hadithdata';
+import { HADITH_COLLECTION } from '@/constants/hadithData';
 
 type PlanFormData = Partial<EvaluationPlan> & { id?: string | null };
 
 const EvaluationPlanFormView: React.FC = () => {
     const { state, dispatch, t } = useStore();
-    const { activeProfile, editingEvaluationPlanId } = state;
-    
+    const { editingEvaluationPlanId } = state;
+    const activeProfile = state.profiles.find(p => p.id === state.activeProfileId);
+
     const [formData, setFormData] = useState<PlanFormData>({});
     const [openBoosters, setOpenBoosters] = useState<Partial<Record<EvaluationContentType, boolean>>>({});
 
     useEffect(() => {
-        const planToEdit = activeProfile?.evaluationPlans.find(p => p.id === editingEvaluationPlanId);
+        const planToEdit = activeProfile?.evaluationPlans?.find((p: EvaluationPlan) => p.id === editingEvaluationPlanId);
         if (planToEdit) {
-            setFormData({ 
-                ...planToEdit, 
+            setFormData({
+                ...planToEdit,
                 boosterPools: planToEdit.boosterPools || {},
-                itemsPerSession: planToEdit.itemsPerSession || { main: 5, boosters: {} } 
+                itemsPerSession: planToEdit.itemsPerSession || { main: 5, boosters: {} }
             });
             const activeBoosters = Object.keys(planToEdit.boosterPools || {}).reduce((acc, key) => {
                 acc[key as EvaluationContentType] = true;
@@ -34,16 +33,16 @@ const EvaluationPlanFormView: React.FC = () => {
             }, {} as Record<EvaluationContentType, boolean>);
             setOpenBoosters(activeBoosters);
         } else {
-            setFormData({ 
-                name: '', 
-                mainContentType: 'surahPart', 
-                order: 'random', 
+            setFormData({
+                name: '',
+                mainContentType: 'surahPart',
+                order: 'random',
                 itemsPerSession: { main: 5, boosters: {} },
-                isScheduled: false, 
-                frequency: { type: 'daily', value: 1 }, 
-                duration: 30, 
-                pool: [], 
-                boosterPools: {} 
+                isScheduled: false,
+                frequency: { type: 'daily', value: 1 },
+                duration: 30,
+                pool: [],
+                boosterPools: {}
             });
             setOpenBoosters({});
         }
@@ -62,7 +61,7 @@ const EvaluationPlanFormView: React.FC = () => {
         { value: 'juzz', label: t('revModeJuzz') },
         { value: 'hadith', label: t('hadith') },
     ];
-    
+
     const handleSave = () => {
         if (!formData || !formData.name) {
             dispatch({ type: 'SET_TOAST', payload: t('errorPlanNameRequired') });
@@ -75,11 +74,11 @@ const EvaluationPlanFormView: React.FC = () => {
             dispatch({ type: 'ADD_EVALUATION_PLAN', payload: newPlan });
         }
         dispatch({ type: 'SET_TOAST', payload: t('evaluationPlanSaved') });
-        dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-plans-view'});
+        dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-plans-view' });
     };
-    
+
     const handleCancel = () => {
-        dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-plans-view'});
+        dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-plans-view' });
     }
 
     if (!formData.mainContentType) return <div>{t('loading')}</div>;
@@ -89,7 +88,7 @@ const EvaluationPlanFormView: React.FC = () => {
         if (field === 'mainContentType') newState.pool = [];
         setFormData(newState);
     };
-    
+
     const updateItemsPerSession = (type: 'main' | EvaluationContentType, value: number) => {
         setFormData(prev => ({
             ...prev!,
@@ -106,14 +105,12 @@ const EvaluationPlanFormView: React.FC = () => {
     const updateBoosterPool = (type: EvaluationContentType, ids: (string | number)[]) => {
         setFormData(prev => ({ ...prev!, boosterPools: { ...prev!.boosterPools, [type]: ids } }));
     };
-    
+
     const toggleBooster = (boosterType: EvaluationContentType) => {
         setOpenBoosters(prev => ({ ...prev, [boosterType]: !prev[boosterType] }));
     };
-    
-    const updateFreq = (freq: Partial<RevisionFrequency>) => {
-        updateField('frequency', { ...formData.frequency!, ...freq });
-    };
+
+
 
     const boosterTypes = contentTypeOptions.filter(opt => opt.value !== formData.mainContentType);
 
@@ -123,7 +120,7 @@ const EvaluationPlanFormView: React.FC = () => {
                 <CardTitle>{editingEvaluationPlanId ? `${t('editPlan')}` : t('createNewPlan')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
-                 <section>
+                <section>
                     <h3 className="text-lg font-semibold border-b border-border-main pb-2 mb-4">{t('generalInfo')}</h3>
                     <div className="space-y-4">
                         <Input label={t('planName')} value={formData.name} onChange={e => updateField('name', e.target.value)} placeholder={t('planNamePlaceholder')} />
@@ -142,7 +139,7 @@ const EvaluationPlanFormView: React.FC = () => {
                         </div>
                         <div>
                             <h4 className="font-semibold mb-2">{t('addBoosterItems')}</h4>
-                             <p className="text-sm text-text-main/70 mb-3">{t('boosterDescription')}</p>
+                            <p className="text-sm text-text-main/70 mb-3">{t('boosterDescription')}</p>
                             <div className="flex flex-wrap gap-2">
                                 {boosterTypes.map(booster => (
                                     <Button key={booster.value} variant={openBoosters[booster.value] ? 'primary' : 'secondary'} onClick={() => toggleBooster(booster.value)}>

@@ -19,9 +19,9 @@ const StepRevisionSelection: React.FC<StepProps> = ({ formData, updateData, togg
             return HIZB_DATA.map((h, i) => ({ id: i.toString(), name: `${t('hizb')} ${h.name}`, details: h.details }));
         }
         if (mode === 'juzz') {
-            return JUZ_DATA.map(j => ({ id: j.id.toString(), name: `${t('juzz')} ${j.id}` }));
+            return JUZ_DATA.map(j => ({ id: j.id.toString(), name: `${t('juzz')} ${j.id}`, details: undefined as string | undefined }));
         }
-        return FULL_SURAH_LIST.map(s => ({ id: s.id.toString(), name: `${s.id}. ${s.name}` }));
+        return FULL_SURAH_LIST.map(s => ({ id: s.id.toString(), name: `${s.id}. ${s.name}`, details: undefined as string | undefined }));
     };
 
     const handleSelectAll = (listName: 'revisionSelection' | 'boosterSurahs') => {
@@ -64,10 +64,10 @@ const StepRevisionSelection: React.FC<StepProps> = ({ formData, updateData, togg
             </div>
 
             <div className="flex justify-end gap-2 mt-2">
-                <Button size="xs" variant="ghost" onClick={() => handleSelectAll('revisionSelection')}>
+                <Button size="sm" variant="ghost" onClick={() => handleSelectAll('revisionSelection')}>
                     Tout Sélectionner
                 </Button>
-                <Button size="xs" variant="ghost" onClick={() => handleDeselectAll('revisionSelection')}>
+                <Button size="sm" variant="ghost" onClick={() => handleDeselectAll('revisionSelection')}>
                     Tout Désélectionner
                 </Button>
             </div>
@@ -77,16 +77,16 @@ const StepRevisionSelection: React.FC<StepProps> = ({ formData, updateData, togg
             <div>
                 <label className="font-semibold block mt-3">{t('boosterSurah')}</label>
                 <div className="flex justify-end gap-2 mt-2">
-                    <Button size="xs" variant="ghost" onClick={() => handleSelectAll('boosterSurahs')}>
+                    <Button size="sm" variant="ghost" onClick={() => handleSelectAll('boosterSurahs')}>
                         Tout Sélectionner
                     </Button>
-                    <Button size="xs" variant="ghost" onClick={() => handleDeselectAll('boosterSurahs')}>
+                    <Button size="sm" variant="ghost" onClick={() => handleDeselectAll('boosterSurahs')}>
                         Tout Désélectionner
                     </Button>
                 </div>
                 {renderGridSelection('sourate', 'boosterSurahs')}
             </div>
-            
+
             {formData.boosterSurahs && formData.boosterSurahs.length > 0 && (
                 <Input
                     label={t('boosterSurahFreq')}

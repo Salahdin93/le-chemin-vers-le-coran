@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import Button from './ui/Button';
 import Card, { CardContent, CardHeader, CardTitle } from './ui/Card';
 

@@ -33,7 +33,7 @@ const StepAppearance: React.FC<StepProps> = ({ formData, updateData, t }) => {
                             key={color}
                             style={{ backgroundColor: color }}
                             className={`w-8 h-8 rounded-full border-2 ${formData.accentColor === color ? 'border-text-main' : 'border-transparent'}`}
-                            onClick={() => updateData({ accentColor: color })}
+                            onClick={() => updateData({ accentColor: color as any })}
                         />
                     ))}
                 </div>

@@ -6,7 +6,7 @@ type NotificationData = Omit<NotificationProps, 'id' | 'onDismiss'>;
 let notificationId = 0;
 
 export const notificationService = {
-  show: (data: NotificationData) => {},
+  show: (_data: NotificationData) => { },
 };
 
 const NotificationContainer: React.FC = () => {
@@ -15,17 +15,18 @@ const NotificationContainer: React.FC = () => {
 
   const show = useCallback((data: NotificationData) => {
     const id = `notif-${notificationId++}`;
-    const newNotification: NotificationProps = { 
-      ...data, 
-      id, 
+    const newNotification: NotificationProps = {
+      ...data,
+      id,
       onDismiss: (idToRemove: string) => {
         setNotifications(current => current.filter(n => n.id !== idToRemove));
-    }};
+      }
+    };
 
     setNotifications(current => [newNotification, ...current]);
     dispatch({ type: 'ADD_NOTIFICATION_TO_HISTORY', payload: newNotification });
   }, [dispatch]);
-  
+
   notificationService.show = show;
 
   return (

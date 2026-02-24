@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
-import { EvaluationPlan, EvaluationStatus, EvaluationContentType } from '@/types';
+import { EvaluationPlan, EvaluationStatus, EvaluationContentType, EvaluationItem } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const EvaluationPlansView: React.FC = () => {
     const { state, dispatch, t } = useStore();
-    const { activeProfile } = state;
+    const activeProfile = state.profiles.find(p => p.id === state.activeProfileId);
     const [activeTab, setActiveTab] = useState<'plans' | 'history'>('plans');
 
     const contentTypeToTranslationKey: Record<EvaluationContentType, string> = {
@@ -22,17 +22,17 @@ const EvaluationPlansView: React.FC = () => {
         dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-plan-form-view' });
     };
 
-    const handleEdit = (plan: EvaluationPlan) => { 
+    const handleEdit = (plan: EvaluationPlan) => {
         dispatch({ type: 'SET_EDITING_EVALUATION_PLAN_ID', payload: plan.id });
         dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-plan-form-view' });
     };
 
-    const handleDelete = (planId: string) => { 
+    const handleDelete = (planId: string) => {
         if (window.confirm(t('confirmDeletePlan'))) {
             dispatch({ type: 'REMOVE_EVALUATION_PLAN', payload: { id: planId } });
         }
     };
-    
+
     const handleLaunch = (plan: EvaluationPlan) => {
         dispatch({ type: 'SET_ACTIVE_EVALUATION_PLAN', payload: plan });
         dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-view' });
@@ -45,7 +45,7 @@ const EvaluationPlansView: React.FC = () => {
                 <Button onClick={handleCreateNew}>{t('createNewPlan')}</Button>
             </div>
             {activeProfile?.evaluationPlans && activeProfile.evaluationPlans.length > 0 ? (
-                activeProfile.evaluationPlans.map(plan => (
+                activeProfile.evaluationPlans.map((plan: EvaluationPlan) => (
                     <Card key={plan.id}>
                         <CardHeader>
                             <CardTitle>{plan.name}</CardTitle>
@@ -72,13 +72,20 @@ const EvaluationPlansView: React.FC = () => {
         const history = activeProfile?.evaluationHistory || [];
         return (
             <div className="space-y-4">
-                 <h2 className="text-xl font-bold mb-4">{t('evaluationHistory', 'Historique des Évaluations')}</h2>
+                <h2 className="text-xl font-bold mb-4">{t('evaluationHistory')}</h2>
                 {history.length > 0 ? (
-                    history.map(record => (
+                    history.map((record: any) => (
                         <div key={record.id} className="p-4 bg-bg-secondary rounded-lg border-l-4 border-primary">
                             <p className="font-bold text-lg">{new Date(record.date).toLocaleString(state.settings.lang)}</p>
                             <div className="mt-2 space-y-1">
-                                {record.items.map(item => (<div key={item.itemId + item.type} className="flex justify-between items-center text-sm"><span>{item.itemName}</span><span className={`px-2 py-0.5 text-xs font-bold rounded-full ${statusClasses[item.result]}`}>{t(item.result)}</span></div>))}
+                                {record.items.map((item: EvaluationItem & { result: EvaluationStatus }) => (
+                                    <div key={item.itemId + item.type} className="flex justify-between items-center text-sm">
+                                        <span>{item.itemName}</span>
+                                        <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${statusClasses[item.result]}`}>
+                                            {t(item.result)}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     ))
@@ -89,7 +96,7 @@ const EvaluationPlansView: React.FC = () => {
 
     return (
         <div className="p-4">
-             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'plans' | 'history')} className="w-full">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'plans' | 'history')} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="plans">{t('myEvaluationPlans')}</TabsTrigger>
                     <TabsTrigger value="history">{t('history')}</TabsTrigger>

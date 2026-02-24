@@ -10,7 +10,7 @@ interface StepProps {
 }
 
 const StepResumeRevision: React.FC<StepProps> = ({ formData, updateData, t }) => {
-    
+
     const tempPlan = useMemo(() => {
         if (!formData.revisionSelection || formData.revisionSelection.length === 0) return [];
         return generateRevisionPlan({
@@ -27,24 +27,16 @@ const StepResumeRevision: React.FC<StepProps> = ({ formData, updateData, t }) =>
     if ((formData.revisionSelection || []).length === 0) {
         return <p className="text-sm text-yellow-600">Veuillez d'abord sélectionner les unités à réviser à l'étape précédente.</p>
     }
-    
-    const unitsInPlan = tempPlan.flatMap((day, dayIndex) => 
-        day.units.map((unit, unitIndex) => ({
-            value: dayIndex.toString(), // We resume by day index
-            label: `${t('day')} ${day.day}: ${unit.text} (${unit.surahs})`
-        }))
-    );
-
     return (
-        <Select 
-            label="Point de départ de la révision" 
-            value={formData.resumeRevisionIndex} 
+        <Select
+            label="Point de départ de la révision"
+            value={formData.resumeRevisionIndex}
             onChange={e => updateData({ resumeRevisionIndex: parseInt(e.target.value) })}
         >
-             <option value={0}>Commencer au début</option>
-            {tempPlan.map((day, index) => 
+            <option value={0}>Commencer au début</option>
+            {tempPlan.map((day, index) =>
                 <option key={index} value={index}>
-                    {t('day')} {day.day}: {day.units.map(u=>u.text).join(' + ')}
+                    {t('day')} {day.day}: {day.units.map(u => u.text).join(' + ')}
                 </option>
             )}
         </Select>

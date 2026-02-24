@@ -6,7 +6,7 @@ export interface NotificationProps {
     title?: string;
     message?: string;
     content?: React.ReactNode;
-    type: 'info' | 'warning' | 'success' | 'danger';
+    type: 'info' | 'warning' | 'success' | 'error' | 'danger';
     duration?: number;
     onDismiss: (id: string) => void;
 }
@@ -29,10 +29,11 @@ const Notification: React.FC<NotificationProps> = ({ id, title, message, content
         warning: 'border-yellow-500',
         success: 'border-green-500',
         danger: 'border-red-500',
+        error: 'border-red-500',
     };
 
     return (
-        <div 
+        <div
             role="button"
             tabIndex={0}
             onClick={handleDismiss}

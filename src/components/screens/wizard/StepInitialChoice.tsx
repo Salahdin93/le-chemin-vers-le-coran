@@ -1,83 +1,50 @@
-import React from 'react'; 
+import React from 'react';
 import { WizardData } from '@/types';
-import Button from '@/components/ui/Button';
+import Card, { CardContent } from '@/components/ui/Card';
+import { BookOpen, RefreshCw } from 'lucide-react';
+import { clsx } from 'clsx';
 
 interface StepProps {
-    formData: Partial<WizardData>;
     updateData: (data: Partial<WizardData>) => void;
-    t: (key: string) => string;
-    wantsReading: boolean;
     setWantsReading: (val: boolean) => void;
-    wantsRevision: boolean;
     setWantsRevision: (val: boolean) => void;
 }
 
-const StepInitialChoice: React.FC<StepProps> = ({
-    formData,
-    updateData,
-    t,
-    wantsReading,
-    setWantsReading,
-    wantsRevision,
-    setWantsRevision,
-}) => {
+const StepInitialChoice: React.FC<StepProps> = ({ updateData, setWantsReading, setWantsRevision }) => {
     return (
-        <div className="space-y-6">
-            <div>
-                <p className="mb-2 text-left">Souhaites-tu planifier ta lecture dès maintenant ?</p>
-                <div className="flex gap-4">
-                    <Button
-                        className="flex-1"
-                        variant={wantsReading ? 'success' : 'ghost'}
-                        onClick={() => {
-                            setWantsReading(true);
-                            updateData({ wantsReading: true }); // facultatif : pour garder trace dans formData
-                        }}
-                    >
-                        Oui
-                    </Button>
-                    <Button
-                        className="flex-1"
-                        variant={!wantsReading ? 'danger' : 'ghost'}
-                        onClick={() => {
-                            setWantsReading(false);
-                            updateData({ wantsReading: false });
-                        }}
-                    >
-                        Non
-                    </Button>
-                </div>
-            </div>
-            <div>
-                <p className="mb-2 text-left">Souhaites-tu planifier ta révision dès maintenant ?</p>
-                <div className="flex gap-4">
-                    <Button
-                        className="flex-1"
-                        variant={wantsRevision ? 'success' : 'ghost'}
-                        onClick={() => {
-                            setWantsRevision(true);
-                            updateData({ wantsRevision: true });
-                        }}
-                    >
-                        Oui
-                    </Button>
-                    <Button
-                        className="flex-1"
-                        variant={!wantsRevision ? 'danger' : 'ghost'}
-                        onClick={() => {
-                            setWantsRevision(false);
-                            updateData({ wantsRevision: false });
-                        }}
-                    >
-                        Non
-                    </Button>
-                </div>
-                {wantsRevision && (
-                    <p className="text-xs text-left opacity-70 mt-2">
-                        Tu pourras modifier ce paramètre plus tard.
-                    </p>
-                )}
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card
+                className={clsx("cursor-pointer border-2 transition-all hover:border-primary")}
+                onClick={() => {
+                    setWantsReading(true);
+                    setWantsRevision(false);
+                    updateData({ wantsReading: true, wantsRevision: false });
+                }}
+            >
+                <CardContent className="flex flex-col items-center py-6">
+                    <BookOpen size={48} className="text-primary mb-4" />
+                    <h3 className="text-xl font-bold">Lire seulement</h3>
+                    <p className="text-sm text-text-secondary text-center mt-2">Mise en place d'un plan de lecture (Khatma)</p>
+                </CardContent>
+            </Card>
+
+            <Card
+                className={clsx("cursor-pointer border-2 transition-all hover:border-primary")}
+                onClick={() => {
+                    setWantsReading(true);
+                    setWantsRevision(true);
+                    updateData({ wantsReading: true, wantsRevision: true });
+                }}
+            >
+                <CardContent className="flex flex-col items-center py-6">
+                    <div className="flex gap-2 mb-4">
+                        <BookOpen size={48} className="text-primary" />
+                        <RefreshCw size={48} className="text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold">Lecture & Révision</h3>
+                    <p className="text-sm text-text-secondary text-center mt-2">Combiner lecture et révision de votre mémorisation</p>
+                </CardContent>
+            </Card>
         </div>
     );
 };

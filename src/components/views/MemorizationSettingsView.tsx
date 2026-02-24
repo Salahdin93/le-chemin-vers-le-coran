@@ -1,91 +1,134 @@
 import React, { useState } from 'react';
-import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import Card, { CardHeader } from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
-import { JUZ_DATA, HIZB_DATA, FULL_SURAH_LIST } from '@/constants/quranData';
-import MultiSelect from '@/components/ui/MultiSelect';
 import Button from '@/components/ui/Button';
-import { MemorizationStatus } from '@/types';
+import Select from '@/components/ui/Select';
+import { JUZ_DATA, HIZB_DATA, MEMORIZATION_SURAH_OPTIONS } from '@/constants/quranData';
+import { MemorizationLevel, MemorizationStatus, MemorizedHizb, MemorizedJuzz, MemorizedSurahPart } from '@/types';
+import { motion } from 'framer-motion';
 
-type SelectionMode = 'juzz' | 'hizb' | 'surah';
+type SelectionMode = 'juzz' | 'hizb' | 'surahPart';
 
 const MemorizationSettingsView: React.FC = () => {
-    const { state, dispatch, t } = useStore();
-    const [selectionMode, setSelectionMode] = useState<SelectionMode>('surah');
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    
-    const options = {
-        juzz: JUZ_DATA.map(j => ({ id: j.id, label: `${j.name} (${j.surah})`})),
-        hizb: HIZB_DATA.map((h, i) => ({ id: i + 1, label: `Hizb ${i + 1} (${h.details})`})),
-        surah: FULL_SURAH_LIST.map(s => ({ id: s.id, label: `${s.id}. ${s.name}`})),
+    const { dispatch, t } = useStore();
+    const [mode, setMode] = useState<SelectionMode>('juzz');
+    const [selectedLevel, setSelectedLevel] = useState<MemorizationLevel>('bon');
+
+    const handleToggleAll = (isSelected: boolean) => {
+        if (!window.confirm(isSelected ? t('confirmAllMemorized') : t('confirmAllNotMemorized'))) return;
+
+        if (mode === 'surahPart') {
+            MEMORIZATION_SURAH_OPTIONS.forEach(s => {
+                const item: MemorizedSurahPart = { ...s, level: selectedLevel, status: selectedLevel === 'moyen' ? 'moyen' : selectedLevel };
+                dispatch({ type: isSelected ? 'ADD_MEMORIZATION' : 'REMOVE_MEMORIZATION', payload: { type: 'surahPart', item } });
+            });
+        } else if (mode === 'hizb') {
+            HIZB_DATA.forEach(h => {
+                const hizbNum = Number(h.name);
+                const surahPartsInHizb = MEMORIZATION_SURAH_OPTIONS.filter(opt => opt.hizbs.includes(hizbNum));
+                const componentSurahParts: MemorizedSurahPart[] = surahPartsInHizb.map(p => ({ id: p.id, name: p.name, level: selectedLevel, status: selectedLevel === 'moyen' ? 'moyen' : selectedLevel, originalSurahId: p.originalSurahId }));
+                const item: MemorizedHizb = { number: h.name, details: h.details, level: selectedLevel, status: selectedLevel === 'moyen' ? 'moyen' : selectedLevel, componentSurahParts };
+                dispatch({ type: isSelected ? 'ADD_MEMORIZATION' : 'REMOVE_MEMORIZATION', payload: { type: 'hizb', item } });
+            });
+        } else if (mode === 'juzz') {
+            JUZ_DATA.forEach(j => {
+                const hizb1Num = ((j.id - 1) * 2 + 1).toString();
+                const hizb2Num = ((j.id - 1) * 2 + 2).toString();
+                const hizb1Details = HIZB_DATA.find(h => h.name === hizb1Num)?.details || '';
+                const hizb2Details = HIZB_DATA.find(h => h.name === hizb2Num)?.details || '';
+                const item: MemorizedJuzz = { number: j.id, level: selectedLevel, status: selectedLevel === 'moyen' ? 'moyen' : selectedLevel, componentHizbs: [{ number: hizb1Num, details: hizb1Details, level: selectedLevel, status: selectedLevel === 'moyen' ? 'moyen' : selectedLevel }, { number: hizb2Num, details: hizb2Details, level: selectedLevel, status: selectedLevel === 'moyen' ? 'moyen' : selectedLevel }] };
+                dispatch({ type: isSelected ? 'ADD_MEMORIZATION' : 'REMOVE_MEMORIZATION', payload: { type: 'juzz', item } });
+            });
+        }
     };
 
-    const handleToggleSelection = (id: number) => {
-        setSelectedIds(prev => 
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    const renderSelectionList = () => {
+        let items: any[] = [];
+        if (mode === 'surahPart') items = MEMORIZATION_SURAH_OPTIONS;
+        else if (mode === 'hizb') items = HIZB_DATA;
+        else if (mode === 'juzz') items = JUZ_DATA;
+
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {items.map((item, index) => {
+                    const label = mode === 'surahPart' ? item.name : (mode === 'hizb' ? `${t('hizb')} ${item.name}` : `${t('juzz')} ${item.id}`);
+                    const subLabel = mode === 'hizb' ? item.details : '';
+
+                    return (
+                        <div key={index} className="flex items-center justify-between p-3 bg-bg-secondary border border-border-main rounded-xl hover:border-primary/50 transition-colors">
+                            <div className="flex flex-col">
+                                <span className="font-semibold text-sm">{label}</span>
+                                {subLabel && <span className="text-xs opacity-60">{subLabel}</span>}
+                            </div>
+                            <div className="flex gap-1">
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => {
+                                    let payload: any;
+                                    const status: MemorizationStatus = selectedLevel === 'moyen' ? 'moyen' : selectedLevel;
+                                    if (mode === 'surahPart') payload = { type: 'surahPart', item: { ...item, level: selectedLevel, status } };
+                                    else if (mode === 'hizb') {
+                                        const hizbNum = Number(item.name);
+                                        const surahPartsInHizb = MEMORIZATION_SURAH_OPTIONS.filter(opt => opt.hizbs.includes(hizbNum));
+                                        const componentSurahParts: MemorizedSurahPart[] = surahPartsInHizb.map(p => ({ id: p.id, name: p.name, level: selectedLevel, status, originalSurahId: p.originalSurahId }));
+                                        payload = { type: 'hizb', item: { number: item.name, details: item.details, level: selectedLevel, status, componentSurahParts } };
+                                    }
+                                    else if (mode === 'juzz') {
+                                        const hizb1Num = ((item.id - 1) * 2 + 1).toString();
+                                        const hizb2Num = ((item.id - 1) * 2 + 2).toString();
+                                        const hizb1Details = HIZB_DATA.find(h => h.name === hizb1Num)?.details || '';
+                                        const hizb2Details = HIZB_DATA.find(h => h.name === hizb2Num)?.details || '';
+                                        payload = { type: 'juzz', item: { number: item.id, level: selectedLevel, status, componentHizbs: [{ number: hizb1Num, details: hizb1Details, level: selectedLevel, status }, { number: hizb2Num, details: hizb2Details, level: selectedLevel, status }] } };
+                                    }
+                                    dispatch({ type: 'ADD_MEMORIZATION', payload });
+                                }}>✅</Button>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => {
+                                    let payload: any;
+                                    if (mode === 'surahPart') payload = { type: 'surahPart', item };
+                                    else if (mode === 'hizb') payload = { type: 'hizb', item: { number: item.name } };
+                                    else if (mode === 'juzz') payload = { type: 'juzz', item: { number: item.id } };
+                                    dispatch({ type: 'REMOVE_MEMORIZATION', payload });
+                                }}>❌</Button>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
         );
     };
 
-    const handleApplyStatus = (status: MemorizationStatus) => {
-        if (selectedIds.length === 0) {
-            dispatch({type: 'SET_TOAST', payload: 'Veuillez sélectionner au moins un élément.'});
-            return;
-        }
-        
-        dispatch({ 
-            type: 'UPDATE_MEMORIZATION_STATUS', 
-            payload: { type: selectionMode, ids: selectedIds, status } 
-        });
-        
-        dispatch({type: 'SET_TOAST', payload: `${selectedIds.length} élément(s) mis à jour avec le statut "${t(status)}"`});
-        setSelectedIds([]);
-    };
-
-    const getStatusLabel = (status: MemorizationStatus) => {
-        const labels = {
-            excellent: t('excellent'),
-            bon: t('bon'),
-            moyen: t('moyen'),
-            a_revoir: t('a_revoir'),
-        };
-        return labels[status] || status;
-    }
-
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Paramétrage de la Mémorisation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <p className="text-text-secondary">
-                    Gérez ici l'état de votre mémorisation. Sélectionnez un ou plusieurs éléments puis appliquez-leur un statut.
-                </p>
-                
-                <div className="grid grid-cols-3 gap-2">
-                    <Button variant={selectionMode === 'juzz' ? 'primary' : 'secondary'} onClick={() => { setSelectionMode('juzz'); setSelectedIds([]); }}>Juzz</Button>
-                    <Button variant={selectionMode === 'hizb' ? 'primary' : 'secondary'} onClick={() => { setSelectionMode('hizb'); setSelectedIds([]); }}>Hizb</Button>
-                    <Button variant={selectionMode === 'surah' ? 'primary' : 'secondary'} onClick={() => { setSelectionMode('surah'); setSelectedIds([]); }}>Sourate</Button>
-                </div>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <Card>
+                <CardHeader icon="📝">{t('quickMemorizationSet')}</CardHeader>
+                <div className="p-4 space-y-6">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-wrap gap-2 justify-center">
+                            {(['juzz', 'hizb', 'surahPart'] as SelectionMode[]).map(m => (
+                                <Button key={m} variant={mode === m ? 'primary' : 'secondary'} size="sm" onClick={() => setMode(m)}>
+                                    {t(m)}
+                                </Button>
+                            ))}
+                        </div>
 
-                <MultiSelect
-                    title={`Sélectionner par ${selectionMode}`}
-                    options={options[selectionMode]}
-                    selectedIds={selectedIds}
-                    onToggle={handleToggleSelection}
-                />
-
-                {selectedIds.length > 0 && (
-                    <div className="p-4 border-t border-dashed space-y-3">
-                        <h4 className="font-semibold text-center">Appliquer un statut à {selectedIds.length} élément(s) :</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <Button variant="success" onClick={() => handleApplyStatus('excellent')}>{getStatusLabel('excellent')}</Button>
-                            <Button variant="primary" onClick={() => handleApplyStatus('bon')}>{getStatusLabel('bon')}</Button>
-                            <Button variant="warning" onClick={() => handleApplyStatus('moyen')}>{getStatusLabel('moyen')}</Button>
-                            <Button variant="danger" onClick={() => handleApplyStatus('a_revoir')}>{getStatusLabel('a_revoir')}</Button>
+                        <div className="flex flex-col items-center gap-2 p-4 bg-bg-main rounded-2xl border border-dashed border-border-main">
+                            <span className="text-sm font-bold">{t('masteryLevelForShortcuts')}</span>
+                            <Select value={selectedLevel} onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)} className="max-w-xs">
+                                <option value="excellent">{t('excellent')}</option>
+                                <option value="bon">{t('bon')}</option>
+                                <option value="moyen">{t('moyen')}</option>
+                            </Select>
+                            <div className="flex gap-2 mt-2">
+                                <Button size="sm" variant="success" onClick={() => handleToggleAll(true)}>{t('allMemorized')}</Button>
+                                <Button size="sm" variant="danger" onClick={() => handleToggleAll(false)}>{t('allNotMemorized')}</Button>
+                            </div>
                         </div>
                     </div>
-                )}
-            </CardContent>
-        </Card>
+
+                    <div className="pt-4 border-t border-border-main">
+                        {renderSelectionList()}
+                    </div>
+                </div>
+            </Card>
+        </motion.div>
     );
 };
 

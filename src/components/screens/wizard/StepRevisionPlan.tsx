@@ -30,7 +30,7 @@ const StepRevisionPlan: React.FC<StepProps> = ({ formData, updateData, updateFre
                 </div>
             </div>
             {formData.revisionFrequency?.type === 'weekly' && (
-                <Select value={formData.revisionFrequency.value} onChange={e => updateFreq({ value: parseInt(e.target.value) })}>
+                <Select value={formData.revisionFrequency.value as number} onChange={e => updateFreq({ value: parseInt(e.target.value) })}>
                     {weekDays.map((day: string, i: number) => <option key={i} value={i}>{day}</option>)}
                 </Select>
             )}
@@ -38,7 +38,7 @@ const StepRevisionPlan: React.FC<StepProps> = ({ formData, updateData, updateFre
                 <Input
                     type='number'
                     min={2}
-                    value={formData.revisionFrequency.value > 1 ? formData.revisionFrequency.value : 2}
+                    value={(formData.revisionFrequency.value as number) > 1 ? (formData.revisionFrequency.value as number) : 2}
                     onChange={e => updateFreq({ value: parseInt(e.target.value) || 2 })}
                     placeholder={t('everyXDays', { count: 'X' })}
                 />

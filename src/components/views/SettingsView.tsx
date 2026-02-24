@@ -3,7 +3,7 @@ import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { useStore, useActiveProfileSelector, useSettingsSelector } from '@/context/AppContext';
 import { THEMES, COLORS } from '@/constants/ui';
 import Select from '@/components/ui/Select';
-import { Language, Theme } from '@/types';
+import { Language, Theme, AccentColor } from '@/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { ToggleSwitch } from '@/components/ui/Checkbox';
@@ -14,7 +14,7 @@ const SettingsView: React.FC = () => {
     const { state, dispatch, t } = useStore();
     const activeProfile = useActiveProfileSelector();
     const settings = useSettingsSelector();
-    
+
     const [name, setName] = useState(activeProfile?.name || '');
     const [isPasswordFormVisible, setIsPasswordFormVisible] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
@@ -42,7 +42,7 @@ const SettingsView: React.FC = () => {
         setIsPasswordFormVisible(false);
         alert(t('saved'));
     };
-    
+
     const handleRestoreData = (event: React.ChangeEvent<HTMLInputElement>) => {
         importUserData(event, () => window.location.reload());
     };
@@ -53,7 +53,7 @@ const SettingsView: React.FC = () => {
             dispatch({ type: 'SET_TOAST', payload: t('progressResetSuccess') });
         }
     };
-    
+
     const handleNavigateToMemorizationSettings = () => {
         dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'memorization-settings-view' });
     };
@@ -109,8 +109,8 @@ const SettingsView: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col gap-4">
-                        <Button variant="warning" onClick={() => { if(window.confirm(t('confirmChangeGoal'))) dispatch({ type: 'START_WIZARD', payload: {type: 'reading', mode: 'new'}})}}>{t('changeReadingGoal')}</Button>
-                        <Button variant="warning" onClick={() => { if(window.confirm(t('confirmChangeGoal'))) dispatch({ type: 'START_WIZARD', payload: {type: 'revision', mode: 'new'}})}}>{t('changeRevisionGoal')}</Button>
+                        <Button variant="warning" onClick={() => { if (window.confirm(t('confirmChangeGoal'))) dispatch({ type: 'START_WIZARD', payload: { type: 'reading', mode: 'new' } }) }}>{t('changeReadingGoal')}</Button>
+                        <Button variant="warning" onClick={() => { if (window.confirm(t('confirmChangeGoal'))) dispatch({ type: 'START_WIZARD', payload: { type: 'revision', mode: 'new' } }) }}>{t('changeRevisionGoal')}</Button>
                     </div>
                 </CardContent>
             </Card>
@@ -121,19 +121,19 @@ const SettingsView: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                     <div className='space-y-6'>
-                        <ToggleSwitch label={t('enableNotifications')} checked={settings.enableNotifications} onChange={e => dispatch({type: 'UPDATE_SETTINGS', payload: {enableNotifications: e.target.checked}})} />
+                        <ToggleSwitch label={t('enableNotifications')} checked={settings.enableNotifications} onChange={e => dispatch({ type: 'UPDATE_SETTINGS', payload: { enableNotifications: e.target.checked } })} />
                         {settings.enableNotifications && (
                             <Input
                                 label={t('notificationTimeLabel')}
                                 type="time"
                                 value={settings.notificationTime || ''}
-                                onChange={e => dispatch({ type: 'UPDATE_SETTINGS', payload: { notificationTime: e.target.value }})}
+                                onChange={e => dispatch({ type: 'UPDATE_SETTINGS', payload: { notificationTime: e.target.value } })}
                                 className="w-full"
                             />
                         )}
                         <div>
                             <label className='font-semibold block mb-2' id="theme-label">{t('theme')}</label>
-                            <Select aria-labelledby="theme-label" value={activeProfile.theme || 'light'} onChange={e => dispatch({type: 'UPDATE_PROFILE', payload: {theme: e.target.value as Theme}})}>
+                            <Select aria-labelledby="theme-label" value={activeProfile.theme || 'light'} onChange={e => dispatch({ type: 'UPDATE_PROFILE', payload: { theme: e.target.value as Theme } })}>
                                 {THEMES.map(theme => <option key={theme.id} value={theme.id}>{theme.icon} {t(theme.id)}</option>)}
                             </Select>
                         </div>
@@ -141,12 +141,12 @@ const SettingsView: React.FC = () => {
                             <label className='font-semibold block mb-2'>{t('accentColor')}</label>
                             <div className='grid grid-cols-8 gap-2'>
                                 {COLORS.map(color => (
-                                    <button 
-                                        key={color} 
-                                        type="button" 
-                                        style={{backgroundColor: color}} 
-                                        className={`w-10 h-10 rounded-full border-2 ${activeProfile.accentColor === color ? 'border-text-main' : 'border-transparent'}`} 
-                                        onClick={() => dispatch({type: 'UPDATE_PROFILE', payload: {accentColor: color}})} 
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        style={{ backgroundColor: color }}
+                                        className={`w-10 h-10 rounded-full border-2 ${activeProfile.accentColor === color ? 'border-text-main' : 'border-transparent'}`}
+                                        onClick={() => dispatch({ type: 'UPDATE_PROFILE', payload: { accentColor: color as AccentColor } })}
                                         aria-label={t('chooseColor', { color: color })}
                                     />
                                 ))}
@@ -161,36 +161,36 @@ const SettingsView: React.FC = () => {
                     <CardTitle>🌐 {t('language')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Select aria-label={t('language')} value={settings.lang} onChange={e => dispatch({type: 'UPDATE_SETTINGS', payload: {lang: e.target.value as Language}})}><option value="fr">🇫🇷 {t('french')}</option><option value="en">🇬🇧 {t('english')}</option><option value="ar">🇸🇦 {t('arabic')}</option></Select>
+                    <Select aria-label={t('language')} value={settings.lang} onChange={e => dispatch({ type: 'UPDATE_SETTINGS', payload: { lang: e.target.value as Language } })}><option value="fr">🇫🇷 {t('french')}</option><option value="en">🇬🇧 {t('english')}</option><option value="ar">🇸🇦 {t('arabic')}</option></Select>
                 </CardContent>
             </Card>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle>🧾 {t('dataExport')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col gap-3">
-                        <Button variant="secondary" onClick={() => dispatch({type: 'TOGGLE_SHARE_MODAL', payload: true})}>{t('shareProgress')}</Button>
+                        <Button variant="secondary" onClick={() => dispatch({ type: 'TOGGLE_SHARE_MODAL', payload: true })}>{t('shareProgress')}</Button>
                         <div className="p-4 border border-border-main rounded-lg space-y-3 bg-bg-main">
                             <p className="font-semibold text-sm">{t('filterByDateRange')}</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <Input 
-                                    type="date" 
-                                    label={t('startDate')} 
-                                    value={startDate} 
-                                    onChange={e => setStartDate(e.target.value)} 
+                                <Input
+                                    type="date"
+                                    label={t('startDate')}
+                                    value={startDate}
+                                    onChange={e => setStartDate(e.target.value)}
                                 />
-                                <Input 
-                                    type="date" 
-                                    label={t('endDate')} 
-                                    value={endDate} 
-                                    onChange={e => setEndDate(e.target.value)} 
+                                <Input
+                                    type="date"
+                                    label={t('endDate')}
+                                    value={endDate}
+                                    onChange={e => setEndDate(e.target.value)}
                                 />
                             </div>
-                            <Button 
-                                variant="secondary" 
-                                className="w-full" 
+                            <Button
+                                variant="secondary"
+                                className="w-full"
                                 onClick={() => generateProgressPDF(state, t, startDate, endDate)}
                             >
                                 {t('exportPDF')}
@@ -201,7 +201,7 @@ const SettingsView: React.FC = () => {
                     </div>
                 </CardContent>
             </Card>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle>⚖️ {t('termsOfUse')}</CardTitle>
@@ -218,8 +218,8 @@ const SettingsView: React.FC = () => {
                 <CardContent>
                     <div className='flex flex-col gap-3'>
                         <Button variant='warning' onClick={handleResetProgress}>{t('resetProgress')}</Button>
-                        <Button variant='danger' onClick={() => { if(window.confirm(t('logoutConfirm'))) dispatch({ type: 'LOGOUT' })}}>{t('logout')}</Button>
-                        <Button variant='danger' onClick={() => { if(window.confirm(t('confirmReset'))) dispatch({ type: 'RESET_APP' })}}>{t('resetApp')}</Button>
+                        <Button variant='danger' onClick={() => { if (window.confirm(t('logoutConfirm'))) dispatch({ type: 'LOGOUT' }) }}>{t('logout')}</Button>
+                        <Button variant='danger' onClick={() => { if (window.confirm(t('confirmReset'))) dispatch({ type: 'RESET_APP' }) }}>{t('resetApp')}</Button>
                     </div>
                 </CardContent>
             </Card>

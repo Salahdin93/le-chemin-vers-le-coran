@@ -9,8 +9,8 @@ const BadgeCard: React.FC<{ badge: Badge }> = ({ badge }) => {
     return (
         <div className={clsx(
             "p-6 rounded-lg border-2 text-center transition-all duration-300",
-            isUnlocked 
-                ? "border-yellow-400 bg-yellow-400/10" 
+            isUnlocked
+                ? "border-yellow-400 bg-yellow-400/10"
                 : "border-border-main bg-bg-main opacity-50"
         )}>
             <div className="text-5xl mb-4">{badge.icon}</div>
@@ -18,7 +18,7 @@ const BadgeCard: React.FC<{ badge: Badge }> = ({ badge }) => {
             <p className="text-sm text-text-secondary mt-1">{badge.description}</p>
             {isUnlocked && (
                 <p className="text-xs text-yellow-600 font-semibold mt-4">
-                    Débloqué le {new Date(badge.unlockedOn).toLocaleDateString()}
+                    Débloqué le {badge.unlockedOn ? new Date(badge.unlockedOn).toLocaleDateString() : ''}
                 </p>
             )}
         </div>

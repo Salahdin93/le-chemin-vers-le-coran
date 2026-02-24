@@ -1,5 +1,5 @@
 import { FULL_SURAH_LIST, HIZB_DATA } from '@/constants/quranData';
-import { MemorizationState, SurahPart } from '@/types';
+import { Memorizations, MemorizedSurahPart, MemorizedHizb, MemorizedJuzz } from '../types/types';
 
 const normalizeSurahName = (name: string): string => {
   return name
@@ -21,7 +21,7 @@ const normalizedSurahNameMap = new Map(
  * @returns Un tableau de nombres représentant les IDs des sourates.
  */
 export const getAllMemorizedSurahIds = (
-  memorization: MemorizationState | undefined
+  memorization: Memorizations | undefined
 ): number[] => {
   if (!memorization) {
     return [];
@@ -29,13 +29,13 @@ export const getAllMemorizedSurahIds = (
 
   const resultIds = new Set<number>();
 
-  memorization.surahParts.forEach(surah => {
+  memorization.surahParts.forEach((surah: MemorizedSurahPart) => {
     resultIds.add(surah.originalSurahId);
   });
 
   const hizbNumbers = new Set<number>();
-  memorization.hizbs.forEach(h => hizbNumbers.add(h.number));
-  memorization.juzz.forEach(j => {
+  memorization.hizbs.forEach((h: MemorizedHizb) => hizbNumbers.add(Number(h.number)));
+  memorization.juzz.forEach((j: MemorizedJuzz) => {
     const firstHizb = (j.number - 1) * 2 + 1;
     hizbNumbers.add(firstHizb);
     hizbNumbers.add(firstHizb + 1);

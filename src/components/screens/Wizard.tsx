@@ -1,9 +1,8 @@
-import React, { useState, useMemo, FC } from 'react';
+import { useState, useMemo, FC } from 'react';
 import { useStore } from '@/context/AppContext';
-import { WizardData, RevisionFrequency, Profile, ReadingGoal, RevisionGoal } from '@/types';
+import { WizardData, RevisionFrequency } from '@/types';
 import { LOGO_URL } from '@/constants/ui';
 import Button from '@/components/ui/Button';
-import { getInitialBadges } from '@/services/achievementLogic';
 
 import StepInitialChoice from './wizard/StepInitialChoice';
 import StepProfileInfo from './wizard/StepProfileInfo';
@@ -44,8 +43,8 @@ const Wizard: FC = () => {
         boosterSurahFreq: activeProfile?.goals.revision?.boosterSurahFreq || 7,
         resumeDay: 1,
         resumeRevisionIndex: 0,
-        accentColor: state.settings.accentColor,
-        theme: state.settings.theme,
+        accentColor: activeProfile?.accentColor || '#2E7D32',
+        theme: activeProfile?.theme || 'light',
         enableNotifications: state.settings.enableNotifications,
         resumeReadingHistory: {},
         resumeRevisionPlan: [],
@@ -54,7 +53,7 @@ const Wizard: FC = () => {
     });
 
     const updateData = (data: Partial<WizardData>) => setFormData(prev => ({ ...prev, ...data }));
-    
+
     const stepsConfig = useMemo(() => [
         { id: 'resumeStart', titleKey: 'resumeDayPrompt', component: StepResumeStart, condition: mode === 'resume' },
         { id: 'readingHistory', titleKey: 'history', component: StepReadingHistory, condition: mode === 'resume' && wantsReading && (formData.resumeDay ?? 1) > 1 },
@@ -69,7 +68,7 @@ const Wizard: FC = () => {
         { id: 'security', titleKey: 'security', component: StepSecurity, condition: flow === 'full' },
         { id: 'terms', titleKey: 'termsOfUse', component: StepTerms, condition: flow === 'full', requiredFields: ['termsAccepted'] },
     ], [mode, flow, wantsReading, wantsRevision, formData.resumeDay, formData.revisionSelection?.length, formData.resumeRevisionIndex]);
-    
+
     const activeSteps = useMemo(() => stepsConfig.filter(s => s.condition), [stepsConfig]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
@@ -89,12 +88,14 @@ const Wizard: FC = () => {
     const nextStep = () => { if (currentStepIndex < activeSteps.length - 1) setCurrentStepIndex(currentStepIndex + 1); };
     const prevStep = () => {
         if (currentStepIndex > 0) setCurrentStepIndex(currentStepIndex - 1);
-        else dispatch({type: 'SET_APP_SCREEN', payload: 'initial-choice'});
+        else dispatch({ type: 'SET_APP_SCREEN', payload: 'initial-choice' });
     };
 
     const handleFinish = () => {
         if (!isStepValid) return;
-        dispatch({type: 'FINISH_WIZARD', payload: { wizardData: formData, mode }});
+        const profileId = `profile_${Date.now()}`;
+        const startDate = new Date().toISOString().split('T')[0];
+        dispatch({ type: 'FINISH_WIZARD', payload: { wizardData: formData, mode, profileId, startDate } });
     };
 
     const CurrentStepComponent = activeSteps[currentStepIndex]?.component;
@@ -128,8 +129,8 @@ const Wizard: FC = () => {
                             </h3>
                         )}
                         <div className="w-full bg-border-main rounded-full h-2">
-                            <div 
-                                className="bg-primary h-2 rounded-full transition-all duration-500" 
+                            <div
+                                className="bg-primary h-2 rounded-full transition-all duration-500"
                                 style={{ width: `${((currentStepIndex + 1) / activeSteps.length) * 100}%` }}
                             ></div>
                         </div>

@@ -19,8 +19,8 @@ export interface HadithProgress {
 }
 
 export interface RevisionFrequency {
-    type: 'daily' | 'weekly' | 'custom';
-    value: number | number[]; 
+  type: 'daily' | 'weekly' | 'custom';
+  value: number | number[];
 }
 
 export interface HadithRevisionGoal {
@@ -44,7 +44,7 @@ export interface HadithHistoryEntry {
 
 export type Language = 'fr' | 'en' | 'ar';
 export type Theme = 'light' | 'dark' | 'sepia' | 'chalkboard' | 'wood' | 'nightblue' | 'sand' | 'emerald' | 'sunrise' | 'leafy' | 'pearl' | 'midnight' | 'aube' | 'crepuscule' | 'oasis';
-export type AccentColor = '#2E7D32' | '#D32F2F' | '#1976D2' | '#F57C00' | '#8E24AA' | '#00796B' | '#E65100' | '#3498DB' | '#2ECC71';
+export type AccentColor = string;
 export type Gender = 'male' | 'female';
 export type RevisionMode = 'sourate' | 'juzz' | 'hizb';
 export type ReadingStatus = 'done' | 'partial' | 'catchup' | 'not_read';
@@ -103,6 +103,17 @@ export interface EvaluationItem {
   itemName: string;
 }
 
+// Added missing EvaluationQuestion interface
+export interface EvaluationQuestion {
+  id: string;
+  type: 'hizb-sequence' | 'surah-in-hizb' | 'surah-sequence' | 'juzz-sequence';
+  questionText: string;
+  options?: string[];
+  correctAnswer: string;
+  itemId: string;
+  itemType: EvaluationContentType;
+}
+
 export interface EvaluationRecord {
   id: string;
   date: string;
@@ -115,8 +126,8 @@ export interface EvaluationPlan {
   mainContentType: EvaluationContentType;
   order: 'random' | 'ascending' | 'descending';
   itemsPerSession: {
-      main: number;
-      boosters: Partial<Record<EvaluationContentType, number>>;
+    main: number;
+    boosters: Partial<Record<EvaluationContentType, number>>;
   };
   isScheduled: boolean;
   frequency: RevisionFrequency;
@@ -204,12 +215,12 @@ export interface Profile {
     hadithRevision?: HadithRevisionGoal;
   };
   memorizations: Memorizations;
-  hadithProgress: HadithProgress;
-  hadithHistory: HadithHistoryEntry[];
-  difficulties: PersistentDifficulty[];
-  evaluationPlans: EvaluationPlan[];
   evaluationHistory: EvaluationRecord[];
   badges: Badge[];
+  hadithProgress?: HadithProgress;
+  hadithHistory?: HadithHistoryEntry[];
+  evaluationPlans?: EvaluationPlan[];
+  difficulties?: PersistentDifficulty[];
 }
 
 export interface ReadingHistoryEntry {
@@ -217,7 +228,7 @@ export interface ReadingHistoryEntry {
   adjustment: number;
   realPages: number;
   kahf?: boolean;
-  kahfStatus?: 'done' | 'partial' | 'not_read';
+  kahfStatus?: ReadingStatus;
   timeSpent?: number;
 }
 
@@ -319,13 +330,17 @@ export interface WizardData {
   enableNotifications?: boolean;
   resumeReadingHistory?: ReadingHistory;
   resumeRevisionPlan?: RevisionPlanDay[];
+  prioritizeWeaknesses?: boolean;
+  wantsRevision?: boolean;
+  wantsReading?: boolean;
 }
 
 export interface NotificationProps {
   id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  title?: string;
+  message?: string;
+  content?: React.ReactNode;
+  type: 'info' | 'success' | 'warning' | 'error' | 'danger';
 }
 
 export interface AppState {
@@ -371,7 +386,7 @@ export type AppAction =
   | { type: 'HIDE_TOAST' }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<Settings> }
   | { type: 'START_WIZARD'; payload: { type: WizardType; mode: WizardMode } }
-  | { type: 'FINISH_WIZARD'; payload: { wizardData: Partial<WizardData>, mode: WizardMode } }
+  | { type: 'FINISH_WIZARD'; payload: { wizardData: Partial<WizardData>, mode: WizardMode, profileId?: string, startDate?: string } }
   | { type: 'LOGOUT' }
   | { type: 'RESET_APP' }
   | { type: 'RESET_PROGRESS' }
@@ -406,4 +421,6 @@ export type AppAction =
   | { type: 'UPDATE_HADITH_STATUS'; payload: { hadithId: number; status: HadithMemorizationStatus } }
   | { type: 'SET_HADITH_REVISION_PLAN'; payload: { goal: HadithRevisionGoal; } }
   | { type: 'UPDATE_HADITH_REVISION_STATUS'; payload: { dayIndex: number; status: RevisionStatus } }
+  | { type: 'UPDATE_HADITH_PROGRESS'; payload: { hadithId: number; status: HadithMemorizationStatus; date: string } }
+  | { type: 'SET_APP_LANGUAGE'; payload: Language }
   | { type: 'COMPLETE_HADITH_REVISION_GOAL'; payload: { goal: CompletedHadithRevisionGoal } };

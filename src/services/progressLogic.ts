@@ -3,13 +3,14 @@ import { TOTAL_PAGES } from "@/constants/quranData";
 
 // Define thresholds for triggering the modal.
 // For example, trigger if the user is behind by more than 1.5 days worth of reading.
-const BEHIND_THRESHOLD_FACTOR = 1.5; 
+const BEHIND_THRESHOLD_FACTOR = 1.5;
 const AHEAD_THRESHOLD_FACTOR = 1.5;
 
 type ProgressStatus = 'behind' | 'ahead' | 'ontrack';
 
 export const checkReadingProgress = (state: AppState): ProgressStatus | null => {
-    const { profile, progress, plans } = state;
+    const { profiles, activeProfileId, progress, plans } = state;
+    const profile = profiles.find(p => p.id === activeProfileId);
 
     if (!profile?.goals.reading || !plans?.originalReading || !progress.startDate) {
         return null;
@@ -37,7 +38,7 @@ export const checkReadingProgress = (state: AppState): ProgressStatus | null => 
     const totalPagesRead = Object.values(progress.readingHistory).reduce((sum, day) => sum + day.realPages, 0);
 
     const difference = totalPagesRead - totalPagesPlanned;
-    
+
     // Calculate the average number of pages per day based on the original plan
     const totalPagesToRead = readingGoal.khatmas * TOTAL_PAGES;
     const averagePagesPerDay = totalPagesToRead / readingGoal.duration;

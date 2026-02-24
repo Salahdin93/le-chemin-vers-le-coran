@@ -1,162 +1,296 @@
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;500;600;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* =====================================================
+   DESIGN TOKENS — Ultra Premium Aesthetic
+   ===================================================== */
 @layer base {
   :root {
-    --accent-color: #2E7D32; /* Variable centrale pour la couleur d'accent */
-    
-    --primary-light: #A5D6A7;
-    --background-color-light: #F5F7FA;
-    --text-color-light: #1F2937; /* Un peu plus doux que le noir pur */
-    --card-bg-light: #FFFFFF;
-    --border-color-light: #D1D5DB; /* Bordure plus visible */
-    
-    --background-color-dark: #111827; /* Bleu très foncé au lieu de noir */
-    --text-color-dark: #E5E7EB;
-    --card-bg-dark: #1F2937;
-    --border-color-dark: #4B5563; /* Bordure plus visible */
-    
-    --success-color: #16A34A;
-    --warning-color: #F59E0B;
-    --danger-color: #EF4444;
-    
-    /* Variables par défaut (thème clair) */
-    --bg: var(--background-color-light);
-    --text: var(--text-color-light);
-    --card-bg: var(--card-bg-light);
-    --border-color: var(--border-color-light);
+    /* Dynamic accent (overridden by JS) */
+    --accent-color: #10b981;
+    --accent-glow: rgba(16, 185, 129, 0.4);
+
+    /* Semantic Colors */
+    --success-color: #059669;
+    --warning-color: #d97706;
+    --danger-color: #dc2626;
+
+    /* Light Theme (Premium Porcelain) */
+    --bg: #f8fafc;
+    --bg-secondary: #ffffff;
+    --card-bg: #ffffff;
+    --text: #0f172a;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
+
+    /* Legacy Aliases for safety */
+    --bg-main: var(--bg);
+    --text-main: var(--text);
+    --border-main: var(--border-color);
   }
 
-  /* Thèmes existants */
-  html.dark {
-    --bg: var(--background-color-dark);
-    --text: var(--text-color-dark);
-    --card-bg: var(--card-bg-dark);
-    --border-color: var(--border-color-dark);
-    --success-color: #22c55e;
-    --danger-color: #F87171;
+  /* ── Ultra Dark Premium (Night Sea) ── */
+  html.dark,
+  html:not(.light) {
+    --bg: #020617;
+    --bg-secondary: #0f172a;
+    --card-bg: #0f172a;
+    --text: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --accent-glow: rgba(16, 185, 129, 0.25);
+
+    /* Legacy Aliases */
+    --bg-main: var(--bg);
+    --text-main: var(--text);
+    --border-main: var(--border-color);
   }
-  
+
+  /* ── Theme Overrides (Dynamic) ── */
   html.sepia {
-    --bg: #f4ecd8;
-    --text: #4b392d;
-    --card-bg: #fefaf1;
-    --border-color: #e0d7c6;
-  }
-
-  html.chalkboard {
-    --bg: #2b2b2b;
-    --text: #f1f1f1;
-    --card-bg: #333;
-    --border-color: #444;
-  }
-
-  html.wood {
-    --bg: #e0c9a6;
-    --text: #2b1a0d;
-    --card-bg: #f5e6cc;
-    --border-color: #c2a87e;
-  }
-  
-  html.nightblue {
-    --bg: #0d1b2a;
-    --text: #ffffff;
-    --card-bg: #1b263b;
-    --border-color: #415a77;
-    --danger-color: #fab1a0;
-  }
-  
-  html.sand {
-    --bg: #fff6e1;
-    --text: #3e3119;
-    --card-bg: #fdf1cf;
-    --border-color: #e4d4ab;
-  }
-  
-  html.emerald {
-    --bg: #e8f5e9;
-    --text: #1b5e20;
-    --card-bg: #d0f0d8;
-    --border-color: #a5d6a7;
-  }
-
-  html.sunrise {
-    --bg: #fff6e1;
-    --text: #442b1c;
-    --card-bg: #ffecc2;
-    --border-color: #d4a373;
-  }
-  
-  html.leafy {
-    --bg: #e9fbe5;
-    --text: #264d00;
-    --card-bg: #d6f7c9;
-    --border-color: #a0cfa0;
-  }
-  
-  html.pearl {
-    --bg: #fdfdfd;
-    --text: #2e2e2e;
-    --card-bg: #f8f8f8;
-    --border-color: #cccccc;
+    --bg-main: #fcf6e4;
+    --bg-secondary: #fdfaf1;
+    --text-main: #433422;
+    --text-secondary: #8b7355;
+    --border-main: #e6dec9;
   }
 
   html.midnight {
-    --bg: #0a0c10;
-    --text: #e0e0e0;
-    --card-bg: #1c1f24;
-    --border-color: #2e3338;
+    --bg-main: #000000;
+    --bg-secondary: #0a0a0a;
+    --border-main: #1a1a1a;
   }
 
-  /* Nouveaux thèmes dynamiques */
-  html.aube { /* Thème Aube */
-    --bg: #FEF3C7; /* Fond jaune pâle */
-    --text: #92400E; /* Texte brun foncé */
-    --card-bg: #FFFBEB; /* Carte blanc cassé */
-    --border-color: #FCD34D; /* Bordure ambre */
-  }
-
-  html.crepuscule { /* Thème Crépuscule */
-    --bg: #1E1B4B; /* Fond indigo très foncé */
-    --text: #E0E7FF; /* Texte lavande clair */
-    --card-bg: #312E81; /* Carte indigo foncé */
-    --border-color: #4338CA; /* Bordure indigo */
-    --danger-color: #FCA5A5; /* Rouge plus doux pour le contraste */
-  }
-
-  html.oasis { /* Thème Oasis */
-    --bg: #F0FDF4; /* Fond vert très clair */
-    --text: #14532D; /* Texte vert foncé */
-    --card-bg: #DCFCE7; /* Carte vert clair */
-    --border-color: #86EFAC; /* Bordure verte */
-  }
-
-  * {
+  /* ── Global Styles ── */
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
   }
 
   html {
-    font-size: 16px; /* Taille de police de base augmentée */
+    font-size: 16px;
+    scroll-behavior: smooth;
   }
 
-  html, body {
-    font-family: 'Cairo', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
-    transition: background-color 0.3s, color 0.3s;
+  body {
+    font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+      color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     line-height: 1.6;
-    font-weight: 500;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    min-height: 100dvh;
+    overflow-x: hidden;
   }
 
   .font-amiri {
     font-family: 'Amiri', serif;
+    line-height: 2.2;
+    direction: rtl;
   }
+
+  .hadith-arabic {
+    line-height: 2.8;
+    padding: 1rem 0;
+  }
+
+  /* ── Modern Scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
+    border: 2px solid var(--bg-main);
+  }
+}
+
+/* =====================================================
+   COMPONENTS — Premium Visual Language
+   ===================================================== */
+@layer components {
+
+  /* Modern Glass Card */
+  .premium-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-main);
+    border-radius: 1.25rem;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .premium-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .glass-effect {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 1.5rem;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Islamic Pattern Overlay - More Subtle & Dynamic */
+  .geometric-overlay {
+    position: relative;
+  }
+
+  .geometric-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0l15.451 34.549L100 50l-34.549 15.451L50 100l-15.451-34.549L0 50l34.549-15.451z' fill='none' stroke='currentColor' stroke-width='0.5' stroke-opacity='0.05'/%3E%3C/svg%3E");
+    background-size: 80px 80px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* Premium Gradients */
+  .accent-gradient {
+    background: linear-gradient(135deg, var(--accent-color) 0%, #14b8a6 100%);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, var(--accent-color) 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Adaptive Glow */
+  .glow-box {
+    box-shadow: 0 0 30px -10px var(--accent-glow);
+  }
+
+  /* Animations */
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes pulse-soft {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+
+  /* Responsive Design Utilities */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Mobile Optimizations */
+  @media (max-width: 640px) {
+    .premium-card {
+      border-radius: 1rem;
+    }
+
+    h1 {
+      font-size: 1.875rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+/* ── Custom Component Enhancements ── */
+.btn-premium {
+  position: relative;
+  overflow: hidden;
+  transition: all 300ms ease;
+  transform: scale(1);
+}
+
+.btn-premium:active {
+  transform: scale(0.95);
+}
+
+.btn-premium::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: white;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.btn-premium:hover::after {
+  opacity: 0.1;
+}
+
+.input-premium {
+  background-color: transparent;
+  border-color: var(--border-main);
+  transition: all 0.3s ease;
+}
+
+.input-premium:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--accent-glow);
 }

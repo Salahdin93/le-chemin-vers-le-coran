@@ -10,7 +10,7 @@ import { MultiSelectGrid } from '../ui/MultiSelectGrid';
 import { ToggleSwitch } from '../ui/Checkbox';
 import { clsx } from 'clsx';
 import { FULL_SURAH_LIST, HIZB_DATA, JUZ_DATA } from '../../constants/quranData';
-import { HADITH_COLLECTION } from '../../constants/hadithdata';
+import { HADITH_COLLECTION } from '../../constants/hadithData';
 
 type PlanFormData = Partial<EvaluationPlan> & { id?: string };
 
@@ -23,7 +23,7 @@ const EvaluationView: React.FC = () => {
     const [editingPlan, setEditingPlan] = useState<PlanFormData | null>(null);
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [evaluationItems, setEvaluationItems] = useState<EvaluationItem[]>([]);
-    
+
     const [openBoosters, setOpenBoosters] = useState<Partial<Record<EvaluationContentType, boolean>>>({});
 
     const contentTypeToTranslationKey: Record<EvaluationContentType, string> = {
@@ -48,40 +48,40 @@ const EvaluationView: React.FC = () => {
     ];
 
     const handleCreateNew = () => {
-        setEditingPlan({ 
-            name: '', 
-            mainContentType: 'surahPart', 
-            order: 'random', 
+        setEditingPlan({
+            name: '',
+            mainContentType: 'surahPart',
+            order: 'random',
             itemsPerSession: { main: 5, boosters: {} },
-            isScheduled: false, 
-            frequency: { type: 'daily', value: 1 }, 
-            duration: 30, 
-            pool: [], 
-            boosterPools: {} 
+            isScheduled: false,
+            frequency: { type: 'daily', value: 1 },
+            duration: 30,
+            pool: [],
+            boosterPools: {}
         });
         setViewMode('form');
         setOpenBoosters({});
     };
 
-    const handleEdit = (plan: EvaluationPlan) => { 
-        setEditingPlan({ 
-            ...plan, 
+    const handleEdit = (plan: EvaluationPlan) => {
+        setEditingPlan({
+            ...plan,
             boosterPools: plan.boosterPools || {},
-            itemsPerSession: plan.itemsPerSession || { main: 5, boosters: {} } 
-        }); 
+            itemsPerSession: plan.itemsPerSession || { main: 5, boosters: {} }
+        });
         setViewMode('form');
         setOpenBoosters({});
     };
 
-    const handleDelete = (planId: string) => { 
+    const handleDelete = (planId: string) => {
         if (window.confirm(t('confirmDeletePlan'))) {
             dispatch({ type: 'REMOVE_EVALUATION_PLAN', payload: { id: planId } });
         }
     };
 
-    const handleCancel = () => { 
-        setViewMode('tabs'); 
-        setEditingPlan(null); 
+    const handleCancel = () => {
+        setViewMode('tabs');
+        setEditingPlan(null);
     };
 
     const handleSave = () => {
@@ -135,12 +135,12 @@ const EvaluationView: React.FC = () => {
             dispatch({ type: 'SET_TOAST', payload: t('noItemsToEvaluate') });
             return;
         }
-        
+
         sessionItems.sort(() => 0.5 - Math.random());
         setEvaluationItems(sessionItems);
         setIsEvaluating(true);
     };
-    
+
     const handleFinishEvaluation = (results: (EvaluationItem & { result: EvaluationStatus })[]) => {
         if (results.length > 0) dispatch({ type: 'SAVE_EVALUATION_RESULTS', payload: results });
         setIsEvaluating(false);
@@ -206,7 +206,7 @@ const EvaluationView: React.FC = () => {
             if (field === 'mainContentType') newState.pool = [];
             setEditingPlan(newState);
         };
-        
+
         const updateItemsPerSession = (type: 'main' | EvaluationContentType, value: number) => {
             setEditingPlan(prev => ({
                 ...prev!,
@@ -223,11 +223,11 @@ const EvaluationView: React.FC = () => {
         const updateBoosterPool = (type: EvaluationContentType, ids: (string | number)[]) => {
             setEditingPlan(prev => ({ ...prev!, boosterPools: { ...prev!.boosterPools, [type]: ids } }));
         };
-        
+
         const toggleBooster = (boosterType: EvaluationContentType) => {
             setOpenBoosters(prev => ({ ...prev, [boosterType]: !prev[boosterType] }));
         };
-        
+
         const updateFreq = (freq: Partial<RevisionFrequency>) => {
             updateField('frequency', { ...editingPlan.frequency!, ...freq });
         };
@@ -237,7 +237,7 @@ const EvaluationView: React.FC = () => {
         return (
             <div className="space-y-8">
                 <h2 className="text-xl font-bold">{editingPlan.id ? `${t('editPlan')} : ${editingPlan.name}` : t('createNewPlan')}</h2>
-                
+
                 <section>
                     <h3 className="text-lg font-semibold border-b border-border pb-2 mb-4">{t('generalInfo')}</h3>
                     <div className="space-y-4">
@@ -293,16 +293,16 @@ const EvaluationView: React.FC = () => {
                     <h3 className="text-lg font-semibold border-b border-border pb-2 mb-4">{t('scheduling')}</h3>
                     <ToggleSwitch label={t('enableScheduledEvaluation')} checked={!!editingPlan.isScheduled} onChange={(e) => updateField('isScheduled', e.target.checked)} />
                     <div className={clsx(!editingPlan.isScheduled && "opacity-50 pointer-events-none", "space-y-4 mt-4")}>
-                        <Input label={t('planDurationInDays')} type="number" min="1" value={editingPlan.duration} onChange={e => updateField('duration', parseInt(e.target.value) || 1)}/>
+                        <Input label={t('planDurationInDays')} type="number" min="1" value={editingPlan.duration} onChange={e => updateField('duration', parseInt(e.target.value) || 1)} />
                         <div>
                             <label className="font-semibold block mb-2">{t('evaluationFrequency')} </label>
                             <div className="flex gap-2 flex-wrap">
-                                <Button size='sm' variant={editingPlan.frequency?.type === 'daily' ? 'primary' : 'secondary'} onClick={()=>updateFreq({type:'daily'})}>{t('freqDaily')}</Button>
-                                <Button size='sm' variant={editingPlan.frequency?.type === 'weekly' ? 'primary' : 'secondary'} onClick={()=>updateFreq({type:'weekly'})}>{t('freqWeekly')}</Button>
-                                <Button size='sm' variant={editingPlan.frequency?.type === 'custom' ? 'primary' : 'secondary'} onClick={()=>updateFreq({type:'custom'})}>{t('freqCustom')}</Button>
+                                <Button size='sm' variant={editingPlan.frequency?.type === 'daily' ? 'primary' : 'secondary'} onClick={() => updateFreq({ type: 'daily' })}>{t('freqDaily')}</Button>
+                                <Button size='sm' variant={editingPlan.frequency?.type === 'weekly' ? 'primary' : 'secondary'} onClick={() => updateFreq({ type: 'weekly' })}>{t('freqWeekly')}</Button>
+                                <Button size='sm' variant={editingPlan.frequency?.type === 'custom' ? 'primary' : 'secondary'} onClick={() => updateFreq({ type: 'custom' })}>{t('freqCustom')}</Button>
                             </div>
-                            {editingPlan.frequency?.type === 'weekly' && <Select className="mt-2" value={editingPlan.frequency.value} onChange={e => updateFreq({value: parseInt(e.target.value)})}>{JSON.parse(t('dayOfWeek')).map((day:string, i:number) => <option key={i} value={i}>{day}</option>)}</Select>}
-                            {editingPlan.frequency?.type === 'custom' && <Input className="mt-2" type='number' min={2} value={editingPlan.frequency.value > 1 ? editingPlan.frequency.value : 2} onChange={e => updateFreq({value: parseInt(e.target.value)})} placeholder={t('everyXDays', {count: 'X'})} />}
+                            {editingPlan.frequency?.type === 'weekly' && <Select className="mt-2" value={editingPlan.frequency.value as number} onChange={e => updateFreq({ value: parseInt(e.target.value) })}>{JSON.parse(t('dayOfWeek')).map((day: string, i: number) => <option key={i} value={i}>{day}</option>)}</Select>}
+                            {editingPlan.frequency?.type === 'custom' && <Input className="mt-2" type='number' min={2} value={(editingPlan.frequency.value as number) > 1 ? (editingPlan.frequency.value as number) : 2} onChange={e => updateFreq({ value: parseInt(e.target.value) })} placeholder={t('everyXDays', { count: 'X' })} />}
                         </div>
                     </div>
                 </section>
@@ -317,8 +317,8 @@ const EvaluationView: React.FC = () => {
 
     return (
         <div className="p-4">
-            {viewMode === 'form' ? ( 
-                renderPlanForm() 
+            {viewMode === 'form' ? (
+                renderPlanForm()
             ) : (
                 <div className="space-y-4">
                     <div className="flex border-b border-border">

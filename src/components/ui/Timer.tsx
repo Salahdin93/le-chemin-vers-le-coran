@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Button from './Button';
-import { Play, Pause, Square, Redo } from 'lucide-react';
+import { Play, Pause, Square } from 'lucide-react';
 
 interface TimerProps {
   onStop: (seconds: number) => void;
@@ -16,7 +16,7 @@ const Timer: React.FC<TimerProps> = ({ onStop }) => {
   const [time, setTime] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<any>(null);
 
   useEffect(() => {
     if (isActive && !isPaused) {

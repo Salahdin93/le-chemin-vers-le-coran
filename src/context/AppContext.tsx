@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useSyncExternalStore } from 'react';
-import { AppState, AppAction, Profile, Memorizations, WizardData, ReadingGoal, RevisionGoal, EvaluationRecord, Juzz, Hizb, SurahPart, MemorizationStatus, MemorizedJuzz, MemorizedHizb, MemorizedSurahPart, NotificationProps, BadgeId, Settings, Theme, AccentColor, HadithMemorizationStatus, HadithRevisionGoal, HadithRevisionPlanDay, CompletedHadithRevisionGoal, RevisionStatus, EvaluationPlan, EvaluationItem } from '../types';
+import { AppState, AppAction, Profile, Memorizations, WizardData, WizardMode, EvaluationRecord, EvaluationStatus, EvaluationItem, Juzz, Hizb, SurahPart, MemorizationStatus, MemorizedJuzz, MemorizedHizb, MemorizedSurahPart, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan } from '../types/types';
 import { generateReadingPlan, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
@@ -14,7 +14,7 @@ const defaultState: AppState = {
   profiles: [],
   activeProfileId: null,
   settings: { lang: 'fr', enableNotifications: true, notificationTime: '09:00' },
-  progress: { startDate: null, currentReadingDay: 1, consecutiveDays: 0, totalPagesRead: 0, readingHistory: {}, currentRevisionIndex: 0, currentHadithRevisionIndex: 0, history: { reading: [], revision: [], toReview: [], hadithRevisionHistory: [] }},
+  progress: { startDate: null, currentReadingDay: 1, consecutiveDays: 0, totalPagesRead: 0, readingHistory: {}, currentRevisionIndex: 0, currentHadithRevisionIndex: 0, history: { reading: [], revision: [], toReview: [], hadithRevisionHistory: [] } },
   plans: { reading: null, revision: null, hadithRevision: null, originalReading: null },
   wizard: { isOpen: false, type: 'full', mode: 'new' },
   toast: { message: '', visible: false },
@@ -30,26 +30,27 @@ const getActiveProfile = (profiles: Profile[], activeProfileId: string | null) =
 
 function appReducer(state: AppState, action: AppAction): AppState {
   const activeProfile = getActiveProfile(state.profiles, state.activeProfileId);
-  
+
   const unlockBadge = (currentState: AppState, badgeId: BadgeId | null): AppState => {
-      if (!badgeId) return currentState;
-      const t = (key: string) => (TRANSLATIONS[currentState.settings.lang] as any)[key] || key;
-      const badgeInfo = getInitialBadges().find(b => b.id === badgeId);
-      
-      const newState = appReducer(currentState, { type: 'UNLOCK_BADGE', payload: badgeId });
-      
-      if (badgeInfo) {
-          return appReducer(newState, { type: 'SET_TOAST', payload: `${t('badgeUnlocked')}: ${badgeInfo.name}` });
-      }
-      return newState;
+    if (!badgeId) return currentState;
+    const t = (key: string) => (TRANSLATIONS[currentState.settings.lang] as any)[key] || key;
+    const badgeInfo = getInitialBadges().find(b => b.id === badgeId);
+
+    const newState = appReducer(currentState, { type: 'UNLOCK_BADGE', payload: badgeId });
+
+    if (badgeInfo) {
+      return appReducer(newState, { type: 'SET_TOAST', payload: `${t('badgeUnlocked')}: ${badgeInfo.name}` });
+    }
+    return newState;
   };
 
   switch (action.type) {
     case 'SET_LOADING': return { ...state, isLoading: action.payload };
     case 'INITIALIZE_STATE': {
       let initialState = action.payload;
-      if (initialState.profile && !initialState.profiles) {
-        const migratedProfile: Profile = { ...initialState.profile, id: `profile_${Date.now()}`, badges: getInitialBadges(), theme: 'light', accentColor: '#2E7D32', hadithProgress: {}, hadithHistory: [], evaluationPlans: [] };
+      if ((initialState as any).profile && !initialState.profiles) {
+        const legacyProfile = (initialState as any).profile;
+        const migratedProfile: Profile = { ...legacyProfile, id: `profile_legacy`, badges: getInitialBadges(), theme: 'light', accentColor: '#2E7D32', hadithProgress: {}, hadithHistory: [], evaluationPlans: [] };
         initialState.profiles = [migratedProfile];
         initialState.activeProfileId = migratedProfile.id;
         delete (initialState as any).profile;
@@ -59,7 +60,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
           if (!profile.difficulties) profile.difficulties = [];
           if (!(profile.memorizations as any).surahParts) { (profile.memorizations as any).surahParts = (profile.memorizations as any).surahs || []; }
           if (!profile.evaluationHistory) profile.evaluationHistory = [];
-          
+
           if (profile.evaluationPlan && !profile.evaluationPlans) {
             profile.evaluationPlans = [profile.evaluationPlan];
             delete profile.evaluationPlan;
@@ -101,46 +102,46 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'TOGGLE_READJUSTMENT_MODAL': return { ...state, readjustmentModal: action.payload };
     case 'START_WIZARD': return { ...state, appScreen: 'wizard', wizard: { isOpen: true, type: action.payload.type, mode: action.payload.mode } };
     case 'FINISH_WIZARD': {
-        const { wizardData } = action.payload;
-        const readingGoal = (wizardData as any).wantsReading ? { duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! } : undefined;
-        const revisionGoal = (wizardData as any).wantsRevision ? { selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as any).prioritizeWeaknesses! } : undefined;
-        const newProfile: Profile = {
-            id: `profile_${Date.now()}`,
-            name: wizardData.name || 'Utilisateur',
-            gender: wizardData.gender || 'male',
-            password: wizardData.password,
-            theme: wizardData.theme || 'light',
-            accentColor: wizardData.accentColor || '#2E7D32',
-            goals: { reading: readingGoal, revision: revisionGoal },
-            memorizations: { surahParts: [], hizbs: [], juzz: [] },
-            hadithProgress: {},
-            hadithHistory: [],
-            difficulties: [],
-            evaluationPlans: [],
-            evaluationHistory: [],
-            badges: getInitialBadges(),
-        };
-        const updatedProfiles = [...state.profiles, newProfile];
-        const t = (key: string, replacements?: any) => (TRANSLATIONS[state.settings.lang] as any)[key] || key;
-        const newProgress = { ...defaultState.progress, startDate: new Date().toISOString().split('T')[0] };
-        const readingPlan = newProfile.goals.reading ? generateReadingPlan(newProfile.goals.reading, newProgress.startDate) : null;
-        const revisionPlan = newProfile.goals.revision ? generateRevisionPlan(newProfile.goals.revision, newProgress.startDate, 1, t, newProfile.memorizations) : null;
-        return { 
-            ...state, 
-            profiles: updatedProfiles, 
-            activeProfileId: newProfile.id, 
-            progress: newProgress, 
-            plans: { ...state.plans, reading: readingPlan, originalReading: readingPlan, revision: revisionPlan }, 
-            appScreen: 'main', 
-            activeView: 'dashboard-view', 
-            wizard: { ...state.wizard, isOpen: false }, 
-            isLoading: false 
-        };
+      const { wizardData, profileId, startDate } = action.payload as { wizardData: Partial<WizardData>; mode: WizardMode; profileId: string; startDate: string };
+      const readingGoal = (wizardData as Record<string, unknown>).wantsReading ? { duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! } : undefined;
+      const revisionGoal = (wizardData as Record<string, unknown>).wantsRevision ? { selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined } : undefined;
+      const newProfile: Profile = {
+        id: profileId,
+        name: wizardData.name || 'Utilisateur',
+        gender: wizardData.gender || 'male',
+        password: wizardData.password,
+        theme: wizardData.theme || 'light',
+        accentColor: wizardData.accentColor || '#2E7D32',
+        goals: { reading: readingGoal, revision: revisionGoal },
+        memorizations: { surahParts: [], hizbs: [], juzz: [] },
+        hadithProgress: {},
+        hadithHistory: [],
+        difficulties: [],
+        evaluationPlans: [],
+        evaluationHistory: [],
+        badges: getInitialBadges(),
+      };
+      const updatedProfiles = [...state.profiles, newProfile];
+      const tFn = (key: string) => (TRANSLATIONS[state.settings.lang] as Record<string, string>)[key] || key;
+      const newProgress = { ...defaultState.progress, startDate };
+      const readingPlan = newProfile.goals.reading ? generateReadingPlan(newProfile.goals.reading, startDate) : null;
+      const revisionPlan = newProfile.goals.revision ? generateRevisionPlan(newProfile.goals.revision, startDate, 1, tFn, newProfile.memorizations) : null;
+      return {
+        ...state,
+        profiles: updatedProfiles,
+        activeProfileId: newProfile.id,
+        progress: newProgress,
+        plans: { ...state.plans, reading: readingPlan, originalReading: readingPlan, revision: revisionPlan },
+        appScreen: 'main',
+        activeView: 'dashboard-view',
+        wizard: { ...state.wizard, isOpen: false },
+        isLoading: false
+      };
     }
     case 'UPDATE_HADITH_STATUS': {
       if (!activeProfile) return state;
-      const { hadithId, status } = action.payload;
-      const newHistoryEntry = { date: new Date().toISOString(), hadithId, action: status };
+      const { hadithId, status, date } = action.payload as { hadithId: number; status: HadithMemorizationStatus; date: string };
+      const newHistoryEntry: HadithHistoryEntry = { date, hadithId, action: status };
       const newHadithHistory = [newHistoryEntry, ...(activeProfile.hadithHistory || [])];
       const newHadithProgress = { ...activeProfile.hadithProgress, [hadithId]: status };
       const updatedProfile = { ...activeProfile, hadithProgress: newHadithProgress, hadithHistory: newHadithHistory };
@@ -152,12 +153,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
       if (!activeProfile) return state;
       const { goal } = action.payload;
       const plan = generateHadithRevisionPlan(goal, state.progress.startDate || new Date().toISOString());
-      const updatedProfile = { ...activeProfile, goals: { ...activeProfile.goals, hadithRevision: goal }};
-      return { 
-          ...state, 
-          profiles: state.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p), 
-          plans: { ...state.plans, hadithRevision: plan },
-          progress: { ...state.progress, currentHadithRevisionIndex: 0 }
+      const updatedProfile = { ...activeProfile, goals: { ...activeProfile.goals, hadithRevision: goal } };
+      return {
+        ...state,
+        profiles: state.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p),
+        plans: { ...state.plans, hadithRevision: plan },
+        progress: { ...state.progress, currentHadithRevisionIndex: 0 }
       };
     }
     case 'UPDATE_HADITH_REVISION_STATUS': {
@@ -177,11 +178,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...defaultState, appScreen: 'language' };
     }
     case 'RESET_PROGRESS': {
-      if(!activeProfile || !state.progress.startDate) return state;
-      const freshProgress = {...defaultState.progress, startDate: new Date().toISOString().split('T')[0], history: state.progress.history};
-      const t = (key: string, replacements?: any) => (TRANSLATIONS[state.settings.lang] as any)[key] || key;
+      if (!activeProfile || !state.progress.startDate) return state;
+      const freshProgress = { ...defaultState.progress, startDate: new Date().toISOString().split('T')[0], history: state.progress.history };
+      const tFn = (key: string) => (TRANSLATIONS[state.settings.lang] as Record<string, string>)[key] || key;
       const readingPlan = activeProfile.goals.reading ? generateReadingPlan(activeProfile.goals.reading, freshProgress.startDate) : null;
-      const revisionPlan = activeProfile.goals.revision ? generateRevisionPlan(activeProfile.goals.revision, freshProgress.startDate, 1, t, activeProfile.memorizations) : null;
+      const revisionPlan = activeProfile.goals.revision ? generateRevisionPlan(activeProfile.goals.revision, freshProgress.startDate, 1, tFn, activeProfile.memorizations) : null;
       return { ...state, progress: freshProgress, plans: { ...state.plans, reading: readingPlan, originalReading: readingPlan, revision: revisionPlan, hadithRevision: null } };
     }
     case 'UPDATE_PLANS': return { ...state, plans: { ...state.plans, reading: action.payload.reading, revision: action.payload.revision } };
@@ -202,12 +203,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'ADVANCE_DAY': {
       if (!activeProfile?.goals.reading) return state;
       const newReadingDay = state.progress.currentReadingDay + 1;
-      const newState = { ...state, progress: { ...state.progress, currentReadingDay: newReadingDay, readingHistory: action.payload.newHistory, consecutiveDays: action.payload.newConsecutiveDays }, plans: { ...state.plans, reading: action.payload.recalculatedPlan }};
+      const newState = { ...state, progress: { ...state.progress, currentReadingDay: newReadingDay, readingHistory: action.payload.newHistory, consecutiveDays: action.payload.newConsecutiveDays }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
       const badge = checkConsecutiveDays(newState);
       return unlockBadge(newState, badge);
     }
     case 'UPDATE_READING_HISTORY': {
-      const newState = { ...state, progress: { ...state.progress, readingHistory: action.payload.newHistory }, plans: { ...state.plans, reading: action.payload.recalculatedPlan }};
+      const newState = { ...state, progress: { ...state.progress, readingHistory: action.payload.newHistory }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
       const badge = checkPageMilestone(newState);
       return unlockBadge(newState, badge);
     }
@@ -215,25 +216,26 @@ function appReducer(state: AppState, action: AppAction): AppState {
       if (!activeProfile) return state;
       const { revisionIndex, status, difficulties, hizbNum, timeSpent } = action.payload;
       const newRevisionPlan = state.plans.revision ? [...state.plans.revision] : [];
-      if (newRevisionPlan[revisionIndex]) { 
-        newRevisionPlan[revisionIndex].status = status; 
+      if (newRevisionPlan[revisionIndex]) {
+        newRevisionPlan[revisionIndex].status = status;
         newRevisionPlan[revisionIndex].difficulties = difficulties || [];
         if (timeSpent !== undefined) {
-            newRevisionPlan[revisionIndex].timeSpent = (newRevisionPlan[revisionIndex].timeSpent || 0) + timeSpent;
+          newRevisionPlan[revisionIndex].timeSpent = (newRevisionPlan[revisionIndex].timeSpent || 0) + timeSpent;
         }
       }
       const newToReviewHistory = [...state.progress.history.toReview];
       const existingHistoryIndex = newToReviewHistory.findIndex(item => item.day === newRevisionPlan[revisionIndex]?.day);
-      if(existingHistoryIndex > -1){ newToReviewHistory[existingHistoryIndex].status = status; newToReviewHistory[existingHistoryIndex].difficulties = difficulties || [];
-      } else if (status !== 'pending'){ const day = newRevisionPlan[revisionIndex]; newToReviewHistory.push({ day: day.day, units: day.units, date: new Date().toISOString(), status: status, difficulties: difficulties || []}); }
+      if (existingHistoryIndex > -1) {
+        newToReviewHistory[existingHistoryIndex].status = status; newToReviewHistory[existingHistoryIndex].difficulties = difficulties || [];
+      } else if (status !== 'pending') { const day = newRevisionPlan[revisionIndex]; newToReviewHistory.push({ day: day.day, units: day.units, date: new Date().toISOString(), status: status, difficulties: difficulties || [] }); }
       let newDifficulties = [...(activeProfile.difficulties || [])];
-      if(status === 'revised' && hizbNum){ newDifficulties = newDifficulties.filter(d => d.hizbNum !== hizbNum); }
-      if(status === 'to-review' && hizbNum && difficulties){
+      if (status === 'revised' && hizbNum) { newDifficulties = newDifficulties.filter(d => d.hizbNum !== hizbNum); }
+      if (status === 'to-review' && hizbNum && difficulties) {
         newDifficulties = newDifficulties.filter(d => d.hizbNum !== hizbNum);
         difficulties.forEach(surahName => { newDifficulties.push({ surahName, hizbNum }); });
       }
       const updatedProfile = { ...activeProfile, difficulties: newDifficulties };
-      const newState = { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p), progress: { ...state.progress, currentRevisionIndex: revisionIndex === state.progress.currentRevisionIndex ? state.progress.currentRevisionIndex + 1 : state.progress.currentRevisionIndex, history: { ...state.progress.history, toReview: newToReviewHistory }}, plans: { ...state.plans, revision: newRevisionPlan }};
+      const newState = { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p), progress: { ...state.progress, currentRevisionIndex: revisionIndex === state.progress.currentRevisionIndex ? state.progress.currentRevisionIndex + 1 : state.progress.currentRevisionIndex, history: { ...state.progress.history, toReview: newToReviewHistory } }, plans: { ...state.plans, revision: newRevisionPlan } };
       const badge = checkRevisionMilestone(newState);
       return unlockBadge(newState, badge);
     }
@@ -250,8 +252,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       if (!activeProfile) return state;
       const { type, item } = action.payload;
       const newMemorizations: Memorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
-      if (type === 'surahPart' && !newMemorizations.surahParts.find(s => s.id === item.id)) { newMemorizations.surahParts.push(item);
-      } else if (type === 'hizb' && !newMemorizations.hizbs.find(h => h.number === item.number)) { newMemorizations.hizbs.push(item);
+      if (type === 'surahPart' && !newMemorizations.surahParts.find(s => s.id === item.id)) {
+        newMemorizations.surahParts.push(item);
+      } else if (type === 'hizb' && !newMemorizations.hizbs.find(h => h.number === item.number)) {
+        newMemorizations.hizbs.push(item);
       } else if (type === 'juzz' && !newMemorizations.juzz.find(j => j.number === item.number)) { newMemorizations.juzz.push(item); }
       const updatedProfile = { ...activeProfile, memorizations: newMemorizations };
       const newState = { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
@@ -262,8 +266,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       if (!activeProfile) return state;
       const { type, item } = action.payload;
       const newMemorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
-      if (type === 'surahPart') { newMemorizations.surahParts = newMemorizations.surahParts.filter((s: SurahPart) => s.id !== item.id);
-      } else if (type === 'hizb') { newMemorizations.hizbs = newMemorizations.hizbs.filter((h: Hizb) => h.number !== item.number);
+      if (type === 'surahPart') {
+        newMemorizations.surahParts = newMemorizations.surahParts.filter((s: SurahPart) => s.id !== item.id);
+      } else if (type === 'hizb') {
+        newMemorizations.hizbs = newMemorizations.hizbs.filter((h: Hizb) => h.number !== item.number);
       } else if (type === 'juzz') { newMemorizations.juzz = newMemorizations.juzz.filter((j: Juzz) => j.number !== item.number); }
       const updatedProfile = { ...activeProfile, memorizations: newMemorizations };
       return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
@@ -275,40 +281,41 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'SAVE_EVALUATION_RESULTS': {
       if (!activeProfile) return state;
-      const results = action.payload;
-      const newRecord: EvaluationRecord = { id: new Date().toISOString(), date: new Date().toISOString(), items: results };
+      const results = action.payload as (EvaluationItem & { result: EvaluationStatus })[];
+      const evalDate = new Date().toISOString();
+      const newRecord: EvaluationRecord = { id: evalDate, date: evalDate, items: results };
       const newHistory = [newRecord, ...activeProfile.evaluationHistory];
       const newMemorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
       results.forEach((item: EvaluationItem & { result: EvaluationStatus }) => {
-          if (item.type === 'hadith') return; 
-          const status = item.result as MemorizationStatus;
-          const level = status === 'a_revoir' ? 'moyen' : status;
-          if (item.type === 'juzz') newMemorizations.juzz = newMemorizations.juzz.map((j: MemorizedJuzz) => item.itemId == j.number.toString() ? { ...j, status, level } : j);
-          else if (item.type === 'hizb') newMemorizations.hizbs = newMemorizations.hizbs.map((h: MemorizedHizb) => item.itemId == h.number ? { ...h, status, level } : h);
-          else if (item.type === 'surahPart') newMemorizations.surahParts = newMemorizations.surahParts.map((s: MemorizedSurahPart) => item.itemId === s.id ? { ...s, status, level } : s);
+        if (item.type === 'hadith') return;
+        const status = item.result as MemorizationStatus;
+        const level = status === 'a_revoir' ? 'moyen' : status;
+        if (item.type === 'juzz') newMemorizations.juzz = newMemorizations.juzz.map((j: MemorizedJuzz) => item.itemId == j.number.toString() ? { ...j, status, level } : j);
+        else if (item.type === 'hizb') newMemorizations.hizbs = newMemorizations.hizbs.map((h: MemorizedHizb) => item.itemId == h.number ? { ...h, status, level } : h);
+        else if (item.type === 'surahPart') newMemorizations.surahParts = newMemorizations.surahParts.map((s: MemorizedSurahPart) => item.itemId === s.id ? { ...s, status, level } : s);
       });
       const updatedProfile = { ...activeProfile, evaluationHistory: newHistory, memorizations: newMemorizations };
       const newState = { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
-      const badge = checkPerfectEvaluation(results, newState);
+      const badge = checkPerfectEvaluation(results as (EvaluationItem & { result: EvaluationStatus })[], newState);
       return unlockBadge(newState, badge);
     }
     case 'ADD_EVALUATION_PLAN': {
       if (!activeProfile) return state;
-      const newEvaluationPlans = [...activeProfile.evaluationPlans, action.payload];
+      const newEvaluationPlans = [...(activeProfile.evaluationPlans || []), action.payload];
       const updatedProfile = { ...activeProfile, evaluationPlans: newEvaluationPlans };
       return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
     }
     case 'UPDATE_EVALUATION_PLAN': {
       if (!activeProfile) return state;
       const updatedPlan = action.payload;
-      const newEvaluationPlans = activeProfile.evaluationPlans.map(plan => plan.id === updatedPlan.id ? { ...plan, ...updatedPlan } : plan);
+      const newEvaluationPlans = (activeProfile.evaluationPlans || []).map(plan => plan.id === updatedPlan.id ? { ...plan, ...updatedPlan } : plan);
       const updatedProfile = { ...activeProfile, evaluationPlans: newEvaluationPlans };
       return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
     }
     case 'REMOVE_EVALUATION_PLAN': {
       if (!activeProfile) return state;
       const { id } = action.payload;
-      const newEvaluationPlans = activeProfile.evaluationPlans.filter(plan => plan.id !== id);
+      const newEvaluationPlans = (activeProfile.evaluationPlans || []).filter(plan => plan.id !== id);
       const updatedProfile = { ...activeProfile, evaluationPlans: newEvaluationPlans };
       return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
     }
@@ -319,8 +326,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const { type, ids, status } = action.payload;
       const newMemorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
       const level = status === 'a_revoir' ? 'moyen' : status;
-      if (type === 'juzz') { newMemorizations.juzz = newMemorizations.juzz.map((j: MemorizedJuzz) => ids.includes(j.number) ? { ...j, status, level } : j);
-      } else if (type === 'hizb') { newMemorizations.hizbs = newMemorizations.hizbs.map((h: MemorizedHizb) => ids.includes(Number(h.number)) ? { ...h, status, level } : h);
+      if (type === 'juzz') {
+        newMemorizations.juzz = newMemorizations.juzz.map((j: MemorizedJuzz) => ids.includes(j.number) ? { ...j, status, level } : j);
+      } else if (type === 'hizb') {
+        newMemorizations.hizbs = newMemorizations.hizbs.map((h: MemorizedHizb) => ids.includes(Number(h.number)) ? { ...h, status, level } : h);
       } else if (type === 'surahPart') { newMemorizations.surahParts = newMemorizations.surahParts.map((s: MemorizedSurahPart) => ids.some(id => s.id === id) ? { ...s, status, level } : s); }
       const updatedProfile = { ...activeProfile, memorizations: newMemorizations };
       return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
@@ -354,13 +363,13 @@ export const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, defaultState);
   const activeProfile = useMemo(() => getActiveProfile(state.profiles, state.activeProfileId), [state.profiles, state.activeProfileId]);
-  
+
   const t = useCallback((key: string, replacements: Record<string, string | number> = {}): string => {
-      let translation = (TRANSLATIONS[state.settings.lang]?.[key]) || key;
-      Object.keys(replacements).forEach(rKey => {
-          translation = translation.replace(`{${rKey}}`, String(replacements[rKey]));
-      });
-      return translation;
+    let translation = (TRANSLATIONS[state.settings.lang]?.[key]) || key;
+    Object.keys(replacements).forEach(rKey => {
+      translation = translation.replace(`{${rKey}}`, String(replacements[rKey]));
+    });
+    return translation;
   }, [state.settings.lang]);
 
   useEffect(() => {
@@ -401,9 +410,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const scheduleNotification = () => {
       if (!state.settings.enableNotifications || !state.settings.notificationTime) return;
-      
+
       const [hours, minutes] = state.settings.notificationTime.split(':').map(Number);
-      
+
       const checkAndNotify = () => {
         const now = new Date();
         if (now.getHours() === hours && now.getMinutes() === minutes) {
@@ -414,7 +423,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           });
         }
       };
-      
+
       const intervalId = setInterval(checkAndNotify, 60000);
       return () => clearInterval(intervalId);
     };

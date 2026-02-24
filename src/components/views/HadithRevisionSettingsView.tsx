@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useStore, useActiveProfileSelector } from '../../context/AppContext';
+import React, { useState, useMemo } from 'react';
+import { useStore } from '../../context/AppContext';
 import Card, { CardHeader, CardTitle, CardContent } from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -22,7 +22,7 @@ const DayButton: React.FC<{ day: string; index: number; isSelected: boolean; onC
 
 const HadithRevisionSettingsView: React.FC = () => {
     const { dispatch, t, activeProfile } = useStore();
-    
+
     const initialGoal = activeProfile?.goals.hadithRevision;
 
     const [selectedHadiths, setSelectedHadiths] = useState<number[]>(initialGoal?.selectedHadiths || []);
@@ -34,14 +34,14 @@ const HadithRevisionSettingsView: React.FC = () => {
     const allHadithIds = HADITH_COLLECTION.map(h => h.id);
 
     const handleToggleHadith = (id: number) => {
-        setSelectedHadiths(prev => 
+        setSelectedHadiths(prev =>
             prev.includes(id) ? prev.filter(hId => hId !== id) : [...prev, id]
         );
     };
 
     const handleGeneratePlan = () => {
         if (selectedHadiths.length === 0 || hadithsPerSession <= 0) {
-            dispatch({ type: 'SET_TOAST', payload: t('errorInvalidHadithPlan', "Veuillez sélectionner au moins un hadith et un nombre de hadiths par session supérieur à zéro.") });
+            dispatch({ type: 'SET_TOAST', payload: t('errorInvalidHadithPlan') });
             return;
         }
 
@@ -57,7 +57,7 @@ const HadithRevisionSettingsView: React.FC = () => {
         return Math.ceil(selectedHadiths.length / hadithsPerSession);
     }, [selectedHadiths, hadithsPerSession]);
 
-    const daysOfWeek = JSON.parse(t('dayOfWeek', '["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]'));
+    const daysOfWeek = JSON.parse(t('dayOfWeek'));
 
     const handleWeeklyDayToggle = (dayIndex: number) => {
         const currentDays = (Array.isArray(frequency.value) ? frequency.value : []).filter(d => typeof d === 'number');
@@ -68,7 +68,7 @@ const HadithRevisionSettingsView: React.FC = () => {
     };
 
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -81,7 +81,7 @@ const HadithRevisionSettingsView: React.FC = () => {
                 <CardContent className="space-y-6">
                     {/* Section 1: Hadith Selection */}
                     <div>
-                        <h3 className="font-semibold text-lg mb-3">{t('selectHadithsForRevision', "1. Sélectionner les Hadiths à Réviser")}</h3>
+                        <h3 className="font-semibold text-lg mb-3">{t('selectHadithsForRevision')}</h3>
                         <div className="flex gap-2 mb-4">
                             <Button size="sm" onClick={() => setSelectedHadiths(allHadithIds)}>{t('selectAll')}</Button>
                             <Button size="sm" variant="ghost" onClick={() => setSelectedHadiths([])}>{t('deselectAll')}</Button>
@@ -106,9 +106,9 @@ const HadithRevisionSettingsView: React.FC = () => {
 
                     {/* Section 2: Session Settings */}
                     <div>
-                        <h3 className="font-semibold text-lg mb-3">{t('hadithSessionSettings', "2. Paramètres de Session")}</h3>
-                        <Input 
-                            label={t('hadithsPerSession', "Hadiths par session de révision")}
+                        <h3 className="font-semibold text-lg mb-3">{t('hadithSessionSettings')}</h3>
+                        <Input
+                            label={t('hadithsPerSession')}
                             type="number"
                             min="1"
                             value={hadithsPerSession}
@@ -118,10 +118,10 @@ const HadithRevisionSettingsView: React.FC = () => {
 
                     {/* Section 3: Frequency */}
                     <div>
-                        <h3 className="font-semibold text-lg mb-3">{t('revisionFrequency', "3. Fréquence de Révision")}</h3>
+                        <h3 className="font-semibold text-lg mb-3">{t('revisionFrequency')}</h3>
                         <div className="flex gap-2 rounded-lg bg-bg-main p-1">
                             {(['daily', 'weekly', 'custom'] as const).map(type => (
-                                <Button 
+                                <Button
                                     key={type}
                                     variant={frequency.type === type ? 'primary' : 'ghost'}
                                     onClick={() => setFrequency({ type, value: type === 'weekly' ? [] : 1 })}
@@ -142,10 +142,10 @@ const HadithRevisionSettingsView: React.FC = () => {
                             >
                                 {frequency.type === 'weekly' && (
                                     <div className='p-3 bg-bg-main rounded-lg'>
-                                        <p className="text-sm text-center mb-3">{t('selectDaysOfWeek', 'Sélectionnez les jours de révision')}</p>
+                                        <p className="text-sm text-center mb-3">{t('selectDaysOfWeek')}</p>
                                         <div className="flex justify-center gap-2">
                                             {daysOfWeek.map((day: string, index: number) => (
-                                                <DayButton 
+                                                <DayButton
                                                     key={index}
                                                     day={day}
                                                     index={index}
@@ -157,8 +157,8 @@ const HadithRevisionSettingsView: React.FC = () => {
                                     </div>
                                 )}
                                 {frequency.type === 'custom' && (
-                                    <Input 
-                                        label={t('everyXDays', { count: '' })}
+                                    <Input
+                                        label={t('everyXDays')}
                                         type="number"
                                         min="1"
                                         value={typeof frequency.value === 'number' ? frequency.value : 2}
@@ -172,9 +172,9 @@ const HadithRevisionSettingsView: React.FC = () => {
                     {/* Section 4: Summary & Generation */}
                     <div className="pt-4 border-t border-dashed">
                         <div className="p-4 bg-primary/10 rounded-lg text-center mb-4">
-                            <h4 className="font-bold text-primary">{t('planSummary', "Résumé du Plan")}</h4>
+                            <h4 className="font-bold text-primary">{t('planSummary')}</h4>
                             <p className="text-sm">
-                                {t('hadithPlanSummaryText', "Vous avez sélectionné {count} hadiths. Votre plan contiendra {days} sessions de révision.", { count: selectedHadiths.length, days: totalRevisionDays })}
+                                {t('hadithPlanSummaryText', { count: selectedHadiths.length, days: totalRevisionDays })}
                             </p>
                         </div>
                         <Button onClick={handleGeneratePlan} className="w-full" size="lg" disabled={selectedHadiths.length === 0}>

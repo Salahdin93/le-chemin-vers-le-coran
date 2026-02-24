@@ -15,6 +15,9 @@ export const ar = {
     "notificationTimeLabel": "وقت التذكير اليومي",
     "dailyReminderTitle": "تذكير يومي",
     "dailyReminderMessage": "لا تنسَ وردك اليومي من القراءة والمراجعة!",
+    "goodMorning": "صباح الخير",
+    "goodAfternoon": "مساء الخير",
+    "goodEvening": "مساء النور",
     "badgeUnlocked": "تم فتح شارة",
     "editProfile": "تعديل الملف الشخصي",
     "createProfile": "إنشاء ملف شخصي جديد",
@@ -100,7 +103,7 @@ export const ar = {
     "confirmPassword": "تأكيد كلمة المرور",
     "passwordMismatch": "كلمات المرور غير متطابقة أو قصيرة جدًا (4 أحرف على الأقل).",
     "finish": "إنهاء",
-    "back": "رجوع",
+
     "next": "التالي",
     "dashboard": "لوحة التحكم",
     "readingPlan": "خطة القراءة",
@@ -228,7 +231,7 @@ export const ar = {
     "statusInProgress": "قيد المراجعة",
     "statusMastered": "متقن",
     "previous": "السابق",
-    "next": "التالي",
+
     "hadithEvaluation": "تقييم الأحاديث",
     "hadithStats": "إحصائيات الأحاديث",
     "comingSoon": "هذه الميزة ستكون متاحة قريبا.",

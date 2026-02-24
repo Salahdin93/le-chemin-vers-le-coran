@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppProvider, useStore } from './context/AppContext';
 import LanguageScreen from './components/screens/LanguageScreen';
 import WelcomeScreen from './components/screens/WelcomeScreen';
@@ -27,28 +27,28 @@ function AppContent() {
 
   useEffect(() => {
     if (!showSplash && state.appScreen === 'splash') {
-        const savedState = localStorage.getItem('quranCompanionState_v7');
-        if (!savedState) {
-          dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
-          return;
-        }
+      const savedState = localStorage.getItem('quranCompanionState_v7');
+      if (!savedState) {
+        dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
+        return;
+      }
 
-        const parsedState = JSON.parse(savedState);
-        
-        if (parsedState.profiles && parsedState.profiles.length > 0) {
-            if (parsedState.activeProfileId) {
-                const lastActiveProfile = parsedState.profiles.find((p: Profile) => p.id === parsedState.activeProfileId);
-                if (lastActiveProfile?.password) {
-                    dispatch({ type: 'SET_APP_SCREEN', payload: 'profile-selection' });
-                } else {
-                    dispatch({ type: 'SET_APP_SCREEN', payload: 'main' });
-                }
-            } else {
-                dispatch({ type: 'SET_APP_SCREEN', payload: 'profile-selection' });
-            }
+      const parsedState = JSON.parse(savedState);
+
+      if (parsedState.profiles && parsedState.profiles.length > 0) {
+        if (parsedState.activeProfileId) {
+          const lastActiveProfile = parsedState.profiles.find((p: Profile) => p.id === parsedState.activeProfileId);
+          if (lastActiveProfile?.password) {
+            dispatch({ type: 'SET_APP_SCREEN', payload: 'profile-selection' });
+          } else {
+            dispatch({ type: 'SET_APP_SCREEN', payload: 'main' });
+          }
         } else {
-            dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' });
+          dispatch({ type: 'SET_APP_SCREEN', payload: 'profile-selection' });
         }
+      } else {
+        dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' });
+      }
     }
   }, [showSplash, state.appScreen, dispatch]);
 

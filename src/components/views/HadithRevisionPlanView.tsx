@@ -1,7 +1,7 @@
 import React from 'react';
 import Card, { CardHeader, CardContent } from '../ui/Card';
 import { useStore } from '../../context/AppContext';
-import { HadithRevisionPlanDay, RevisionStatus } from '../../types';
+import { RevisionStatus } from '../../types';
 import Button from '../ui/Button';
 import { clsx } from 'clsx';
 import EmptyState from '../ui/EmptyState';
@@ -11,19 +11,19 @@ import { Edit } from 'lucide-react';
 const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: i * 0.05,
-        duration: 0.5,
-        ease: "easeOut"
-      }
+        opacity: 1,
+        y: 0,
+        transition: {
+            delay: i * 0.05,
+            duration: 0.5,
+            ease: "easeOut" as any
+        }
     })
 };
 
 const HadithRevisionPlanView: React.FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
-    
+
     const revisionPlan = state.plans.hadithRevision;
     const revisionGoal = activeProfile?.goals.hadithRevision;
     const isPlanFinished = revisionGoal && state.progress.currentHadithRevisionIndex >= (revisionPlan?.length || 0);
@@ -35,7 +35,7 @@ const HadithRevisionPlanView: React.FC = () => {
         });
 
         const isCompleting = dayIndex === (revisionPlan?.length || 0) - 1;
-        if(isCompleting && revisionGoal && revisionPlan) {
+        if (isCompleting && revisionGoal && revisionPlan) {
             const completedGoal = {
                 count: revisionGoal.selectedHadiths.length,
                 duration: revisionPlan.length,
@@ -43,45 +43,45 @@ const HadithRevisionPlanView: React.FC = () => {
                 dailyPlan: [...revisionPlan.slice(0, dayIndex), { ...revisionPlan[dayIndex], status }]
             };
             dispatch({ type: 'COMPLETE_HADITH_REVISION_GOAL', payload: { goal: completedGoal } });
-            dispatch({type: 'SET_TOAST', payload: t('congratulations')});
+            dispatch({ type: 'SET_TOAST', payload: t('congratulations') });
         }
-        dispatch({type: 'SET_TOAST', payload: t('saved')});
+        dispatch({ type: 'SET_TOAST', payload: t('saved') });
     };
-    
-    const pastRevisions = revisionPlan?.filter((day, index) => index < state.progress.currentHadithRevisionIndex) || [];
-    
+
+    const pastRevisions = revisionPlan?.filter((_, index) => index < state.progress.currentHadithRevisionIndex) || [];
+
     const statusClasses: Record<RevisionStatus, string> = { 'revised': 'bg-green-500', 'to-review': 'bg-yellow-500', 'not_revised': 'bg-red-500', 'pending': "bg-gray-400" };
-    const statusText: Record<RevisionStatus, string> = { 'revised': t('revised'), 'to-review': t('toReview'), 'not_revised': t('notAchieved'), 'pending': t('pending', "En attente") };
+    const statusText: Record<RevisionStatus, string> = { 'revised': t('revised'), 'to-review': t('toReview'), 'not_revised': t('notAchieved'), 'pending': t('pending') };
 
     return (
         <div className="space-y-8">
             <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
                 <Card>
                     <CardHeader icon="✍️" className="flex justify-between items-center">
-                        {t('hadithRevisionPlan', "Plan de Révision des Hadiths")}
+                        {t('hadithRevisionPlan')}
                         {revisionPlan && revisionPlan.length > 0 && (
-                            <Button variant="ghost" size="sm" onClick={() => dispatch({type: 'SET_ACTIVE_VIEW', payload: 'hadith-revision-settings-view'})}>
+                            <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'hadith-revision-settings-view' })}>
                                 <Edit size={16} className="mr-2" />
-                                {t('editPlan', 'Modifier le plan')}
+                                {t('editPlan')}
                             </Button>
                         )}
                     </CardHeader>
                     <CardContent>
                         {!revisionPlan || revisionPlan.length === 0 ? (
                             <div className="p-4">
-                                <EmptyState 
+                                <EmptyState
                                     icon="🗺️"
-                                    title={t('noHadithRevisionPlan', "Aucun plan de révision de hadiths")}
-                                    message={t('createHadithRevisionPlanPrompt', "Établissez un plan pour ancrer durablement les hadiths dans votre mémoire.")}
-                                    actionText={t('setupRevisionPlan', "Configurer un plan")}
-                                    onActionClick={() => dispatch({type: 'SET_ACTIVE_VIEW', payload: 'hadith-revision-settings-view'})}
+                                    title={t('noHadithRevisionPlan')}
+                                    message={t('createHadithRevisionPlanPrompt')}
+                                    actionText={t('setupRevisionPlan')}
+                                    onActionClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'hadith-revision-settings-view' })}
                                 />
                             </div>
                         ) : isPlanFinished ? (
                             <div className="text-center py-12">
                                 <h3 className="text-3xl font-amiri mb-4">{t('congratulations')}</h3>
-                                <p className="mb-6">{t('hadithRevisionGoalCompleted', "Vous avez terminé votre objectif de révision des hadiths. Qu'Allah accepte.")}</p>
-                                <Button onClick={() => dispatch({type: 'SET_ACTIVE_VIEW', payload: 'hadith-revision-settings-view'})}>{t('newRevisionGoal')}</Button>
+                                <p className="mb-6">{t('hadithRevisionGoalCompleted')}</p>
+                                <Button onClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'hadith-revision-settings-view' })}>{t('newRevisionGoal')}</Button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -109,7 +109,7 @@ const HadithRevisionPlanView: React.FC = () => {
                                                             <span className='text-xs font-bold'>{statusText[day.status]}</span>
                                                         </div>
                                                     </div>
-                                                    <p className="font-semibold">{t('reviseHadiths', "Réviser les hadiths")} N°:</p>
+                                                    <p className="font-semibold">{t('reviseHadiths')} N°:</p>
                                                     <p className="text-sm font-semibold text-text-main/80">{day.hadithIds.join(', ')}</p>
                                                 </div>
                                                 {isCurrent && (
@@ -128,17 +128,17 @@ const HadithRevisionPlanView: React.FC = () => {
                     </CardContent>
                 </Card>
             </motion.div>
-            
+
             {pastRevisions.length > 0 && (
                 <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
                     <Card>
-                        <CardHeader icon="📚">{t('history', "Historique des révisions")}</CardHeader>
+                        <CardHeader icon="📚">{t('history')}</CardHeader>
                         <CardContent>
                             <ul className="space-y-2 max-h-60 overflow-y-auto">
                                 {pastRevisions.slice().reverse().map((day) => (
                                     <li key={day.day} className="p-3 bg-bg-main rounded-lg flex justify-between items-start">
                                         <div>
-                                            <p className="font-semibold">{t('day')} {day.day}: {t('hadithIdsLabel', "Hadiths")} {day.hadithIds.join(', ')}</p>
+                                            <p className="font-semibold">{t('day')} {day.day}: {t('hadithIdsLabel')} {day.hadithIds.join(', ')}</p>
                                             <span className="text-xs opacity-60">{new Date(day.date).toLocaleDateString(state.settings.lang)}</span>
                                         </div>
                                         <div className='flex items-center gap-2 shrink-0 ml-4'>

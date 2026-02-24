@@ -15,6 +15,9 @@ export const en = {
     "notificationTimeLabel": "Daily reminder time",
     "dailyReminderTitle": "Daily Reminder",
     "dailyReminderMessage": "Don't forget your daily reading and revision!",
+    "goodMorning": "Good Morning",
+    "goodAfternoon": "Good Afternoon",
+    "goodEvening": "Good Evening",
     "badgeUnlocked": "Badge unlocked",
     "editProfile": "Edit Profile",
     "createProfile": "Create a New Profile",
@@ -227,7 +230,7 @@ export const en = {
     "statusInProgress": "In Progress",
     "statusMastered": "Mastered",
     "previous": "Previous",
-    "next": "Next",
+
     "hadithEvaluation": "Hadith Evaluation",
     "hadithStats": "Hadith Statistics",
     "comingSoon": "This feature will be available soon.",

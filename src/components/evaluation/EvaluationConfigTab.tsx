@@ -22,8 +22,8 @@ const EvaluationConfigTab: React.FC<EvaluationConfigTabProps> = ({ evaluationSta
 
   const renderGridSelection = (mode: RevisionMode) => {
     const items = mode === 'hizb' ? HIZB_DATA.map((h, i) => ({ id: (i + 1).toString(), name: `Hizb ${h.name}`, details: h.details }))
-      : mode === 'juzz' ? JUZ_DATA.map(j => ({ id: j.id.toString(), name: `Juzz ${j.id}` }))
-      : MEMORIZATION_SURAH_OPTIONS.map(s => ({ id: s.id, name: s.name }));
+      : mode === 'juzz' ? JUZ_DATA.map(j => ({ id: j.id.toString(), name: `Juzz ${j.id}`, details: undefined as string | undefined }))
+        : MEMORIZATION_SURAH_OPTIONS.map(s => ({ id: s.id, name: s.name, details: undefined as string | undefined }));
     return (
       <div tabIndex={0} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 border border-border-main rounded-lg bg-bg-main focus:outline-none focus:ring-2 focus:ring-primary">
         {items.map(item => (
@@ -44,7 +44,7 @@ const EvaluationConfigTab: React.FC<EvaluationConfigTabProps> = ({ evaluationSta
         <div>
           <h4 className="font-bold mb-2">Configurer une session manuelle</h4>
           <div className="p-4 border border-border-main rounded-lg space-y-4">
-            <Input 
+            <Input
               label="Éléments par session"
               type="number"
               id="itemsPerSession"
@@ -67,26 +67,26 @@ const EvaluationConfigTab: React.FC<EvaluationConfigTabProps> = ({ evaluationSta
           </div>
         </div>
         <div>
-            <h4 className="font-bold mb-2">Lancer une session</h4>
-            <div className="p-4 border border-border-main rounded-lg space-y-4 bg-bg-main">
-                <div className="text-center">
-                    <p className="font-semibold text-lg">Prêt à commencer ?</p>
-                    <p className="text-sm text-text-secondary mt-1">Choisissez le type de session que vous souhaitez lancer.</p>
-                </div>
-                <Button onClick={onStartEvaluation} className="w-full" size="lg">
-                    🎲 Lancer une Session Aléatoire
-                </Button>
-                <Button 
-                    onClick={onStartFocusSession} 
-                    className="w-full !bg-amber-600 hover:!bg-amber-700" 
-                    size="lg"
-                    disabled={!hasWeakPoints}
-                    title={!hasWeakPoints ? "Aucun point faible à réviser pour le moment" : ""}
-                >
-                    🚀 Session Focus : Points Faibles
-                </Button>
-                 { !hasWeakPoints && <p className="text-xs text-center text-text-secondary mt-2">Masha'Allah, aucun point faible n'a été identifié dans vos dernières évaluations !</p>}
+          <h4 className="font-bold mb-2">Lancer une session</h4>
+          <div className="p-4 border border-border-main rounded-lg space-y-4 bg-bg-main">
+            <div className="text-center">
+              <p className="font-semibold text-lg">Prêt à commencer ?</p>
+              <p className="text-sm text-text-secondary mt-1">Choisissez le type de session que vous souhaitez lancer.</p>
             </div>
+            <Button onClick={onStartEvaluation} className="w-full" size="lg">
+              🎲 Lancer une Session Aléatoire
+            </Button>
+            <Button
+              onClick={onStartFocusSession}
+              className="w-full !bg-amber-600 hover:!bg-amber-700"
+              size="lg"
+              disabled={!hasWeakPoints}
+              title={!hasWeakPoints ? "Aucun point faible à réviser pour le moment" : ""}
+            >
+              🚀 Session Focus : Points Faibles
+            </Button>
+            {!hasWeakPoints && <p className="text-xs text-center text-text-secondary mt-2">Masha'Allah, aucun point faible n'a été identifié dans vos dernières évaluations !</p>}
+          </div>
         </div>
       </div>
     </div>

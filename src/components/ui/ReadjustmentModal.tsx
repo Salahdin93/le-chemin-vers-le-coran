@@ -1,78 +1,77 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './Modal';
-import { useStore } from '@/context/AppContext';
 import Button from './Button';
+import { clsx } from 'clsx';
+import { useStore } from '@/context/AppContext';
 
-const ReadjustmentModal: React.FC = () => {
-    const { state, dispatch } = useStore();
-    const { isOpen, type } = state.readjustmentModal;
+interface ReadjustmentModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: (selectedItems: string[]) => void;
+    title: string;
+    items: string[];
+}
 
-    const handleAdjustPace = () => {
-        dispatch({ type: 'ADJUST_PACE' });
-        dispatch({ type: 'SET_TOAST', payload: "Le rythme a été réajusté. Baaraka Allahu fik !" });
-        handleClose();
+const ReadjustmentModal: React.FC<ReadjustmentModalProps> = ({ isOpen, onClose, onConfirm, title, items }) => {
+    const { t } = useStore();
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+    const toggleItem = (item: string) => {
+        setSelectedItems(prev =>
+            prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+        );
     };
 
-    const handleExtendDuration = () => {
-        // Extend by 5 days for now, this could be made more dynamic
-        const extensionDays = 5; 
-        dispatch({ type: 'EXTEND_DURATION', payload: extensionDays });
-        dispatch({ type: 'SET_TOAST', payload: `L'objectif a été prolongé. Allahi sahal !` });
-        handleClose();
-    };
-    
-    // In a real scenario, you might want different logic for getting ahead.
-    // For now, we'll just offer to recalculate to read less per day.
-    const handleRecalculatePaceAhead = () => {
-        dispatch({ type: 'ADJUST_PACE' });
-        dispatch({ type: 'SET_TOAST', payload: "Le rythme a été réajusté. Jazzak Allahu Khayran !" });
-        handleClose();
-    };
-
-    const handleClose = () => {
-        dispatch({ type: 'TOGGLE_READJUSTMENT_MODAL', payload: { isOpen: false, type: null } });
-    };
-
-    const renderContent = () => {
-        if (type === 'behind') {
-            return (
-                <>
-                    <h3 className="text-xl font-bold mb-4">Retard sur l'objectif de lecture</h3>
-                    <p className="mb-6">Nous avons remarqué un retard sur votre plan. Que souhaitez-vous faire pour atteindre votre objectif ?</p>
-                    <div className="flex flex-col gap-3">
-                        <Button onClick={handleAdjustPace}>
-                            Réajuster le rythme <span className="text-xs opacity-80 ml-2">(lire plus chaque jour)</span>
-                        </Button>
-                        <Button variant="secondary" onClick={handleExtendDuration}>
-                            Prolonger l'objectif <span className="text-xs opacity-80 ml-2">(garder le même rythme)</span>
-                        </Button>
-                    </div>
-                </>
-            );
-        }
-
-        if (type === 'ahead') {
-            return (
-                <>
-                    <h3 className="text-xl font-bold mb-4">Avance sur l'objectif de lecture</h3>
-                    <p className="mb-6">Masha'Allah, vous êtes en avance ! Voulez-vous ajuster votre plan ?</p>
-                    <div className="flex flex-col gap-3">
-                        <Button onClick={handleRecalculatePaceAhead}>
-                            Réduire le rythme <span className="text-xs opacity-80 ml-2">(terminer à la date prévue)</span>
-                        </Button>
-                         <Button variant="secondary" onClick={handleClose}>
-                            Garder l'avance <span className="text-xs opacity-80 ml-2">(terminer plus tôt)</span>
-                        </Button>
-                    </div>
-                </>
-            );
-        }
-        return null;
+    const handleConfirm = () => {
+        onConfirm(selectedItems);
+        setSelectedItems([]);
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose}>
-            {renderContent()}
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <div className="space-y-6">
+                <div className="text-center">
+                    <h3 className="text-2xl font-bold text-primary mb-2">{title}</h3>
+                    <p className="text-text-main/70">{t('selectItemsToReview')}</p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto p-1">
+                    {items.map((item, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => toggleItem(item)}
+                            className={clsx(
+                                "flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-200",
+                                selectedItems.includes(item)
+                                    ? "bg-primary/10 border-primary shadow-sm"
+                                    : "bg-bg-secondary border-border-main hover:border-primary/50"
+                            )}
+                        >
+                            <span className="font-semibold">{item}</span>
+                            <div className={clsx(
+                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                                selectedItems.includes(item) ? "bg-primary border-primary" : "border-text-main/30"
+                            )}>
+                                {selectedItems.includes(item) && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                )}
+                            </div>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex gap-3">
+                    <Button onClick={onClose} variant="secondary" className="flex-1">{t('cancel')}</Button>
+                    <Button
+                        onClick={handleConfirm}
+                        variant="primary"
+                        className="flex-1"
+                        disabled={selectedItems.length === 0}
+                    >
+                        {t('confirm')}
+                    </Button>
+                </div>
+            </div>
         </Modal>
     );
 };

@@ -11,16 +11,16 @@ interface StepProps {
 }
 
 const StepReadingHistory: React.FC<StepProps> = ({ formData, updateData, t }) => {
-    
+
     const handleHistoryChange = (day: number, status: ReadingStatus, pagesStr: string) => {
         const pages = parseInt(pagesStr) || 0;
         const tempPlan = generateReadingPlan({
-            duration: formData.duration!, khatmas: formData.khatmas!, 
+            duration: formData.duration!, khatmas: formData.khatmas!,
             kahfOption: formData.kahfOption!, kahfPages: formData.kahfPages!
-        }, new Date().toISOString());
-        
+        } as any, new Date().toISOString());
+
         const planDay = tempPlan.find(p => p.day === day);
-        
+
         updateData({
             resumeReadingHistory: {
                 ...formData.resumeReadingHistory,
@@ -31,7 +31,7 @@ const StepReadingHistory: React.FC<StepProps> = ({ formData, updateData, t }) =>
 
     return (
         <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-            {Array.from({length: (formData.resumeDay || 1) - 1}, (_, i) => i + 1).map(day => {
+            {Array.from({ length: (formData.resumeDay || 1) - 1 }, (_, i) => i + 1).map(day => {
                 const dayKey = `day_${day}`;
                 const historyEntry = formData.resumeReadingHistory?.[dayKey];
                 return (

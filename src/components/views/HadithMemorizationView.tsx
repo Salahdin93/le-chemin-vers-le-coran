@@ -50,10 +50,10 @@ const HadithMemorizationView: React.FC = () => {
                         <p className="font-amiri text-2xl leading-loose">{currentHadith.arabic}</p>
                     </div>
                     <div className="p-4 bg-bg-main rounded-lg">
-                        <p className="italic">"{currentHadith.translations[state.settings.lang] || currentHadith.translations.en}"</p>
+                        <p className="italic">"{currentHadith.translations[state.settings.lang as keyof typeof currentHadith.translations] || (currentHadith.translations as any).en}"</p>
                     </div>
                     <p className="text-sm text-center text-text-main/70">
-                        <strong>{t('source')}:</strong> {currentHadith.source[state.settings.lang] || currentHadith.source.en}
+                        <strong>{t('source')}:</strong> {currentHadith.source[state.settings.lang as keyof typeof currentHadith.source] || (currentHadith.source as any).en}
                     </p>
                 </CardContent>
             </Card>
@@ -64,7 +64,7 @@ const HadithMemorizationView: React.FC = () => {
                 </CardHeader>
                 <CardContent className="flex flex-col sm:flex-row gap-2">
                     {statusOptions.map(opt => (
-                        <Button 
+                        <Button
                             key={opt.status}
                             variant={currentStatus === opt.status ? opt.variant : 'ghost'}
                             onClick={() => handleStatusChange(opt.status)}
