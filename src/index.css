@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --accent-color: #2E7D32; /* Variable centrale pour la couleur d'accent */
+    
+    --primary-light: #A5D6A7;
+    --background-color-light: #F5F7FA;
+    --text-color-light: #1F2937; /* Un peu plus doux que le noir pur */
+    --card-bg-light: #FFFFFF;
+    --border-color-light: #D1D5DB; /* Bordure plus visible */
+    
+    --background-color-dark: #111827; /* Bleu très foncé au lieu de noir */
+    --text-color-dark: #E5E7EB;
+    --card-bg-dark: #1F2937;
+    --border-color-dark: #4B5563; /* Bordure plus visible */
+    
+    --success-color: #16A34A;
+    --warning-color: #F59E0B;
+    --danger-color: #EF4444;
+    
+    /* Variables par défaut (thème clair) */
+    --bg: var(--background-color-light);
+    --text: var(--text-color-light);
+    --card-bg: var(--card-bg-light);
+    --border-color: var(--border-color-light);
+  }
+
+  /* Thèmes existants */
+  html.dark {
+    --bg: var(--background-color-dark);
+    --text: var(--text-color-dark);
+    --card-bg: var(--card-bg-dark);
+    --border-color: var(--border-color-dark);
+    --success-color: #22c55e;
+    --danger-color: #F87171;
+  }
+  
+  html.sepia {
+    --bg: #f4ecd8;
+    --text: #4b392d;
+    --card-bg: #fefaf1;
+    --border-color: #e0d7c6;
+  }
+
+  html.chalkboard {
+    --bg: #2b2b2b;
+    --text: #f1f1f1;
+    --card-bg: #333;
+    --border-color: #444;
+  }
+
+  html.wood {
+    --bg: #e0c9a6;
+    --text: #2b1a0d;
+    --card-bg: #f5e6cc;
+    --border-color: #c2a87e;
+  }
+  
+  html.nightblue {
+    --bg: #0d1b2a;
+    --text: #ffffff;
+    --card-bg: #1b263b;
+    --border-color: #415a77;
+    --danger-color: #fab1a0;
+  }
+  
+  html.sand {
+    --bg: #fff6e1;
+    --text: #3e3119;
+    --card-bg: #fdf1cf;
+    --border-color: #e4d4ab;
+  }
+  
+  html.emerald {
+    --bg: #e8f5e9;
+    --text: #1b5e20;
+    --card-bg: #d0f0d8;
+    --border-color: #a5d6a7;
+  }
+
+  html.sunrise {
+    --bg: #fff6e1;
+    --text: #442b1c;
+    --card-bg: #ffecc2;
+    --border-color: #d4a373;
+  }
+  
+  html.leafy {
+    --bg: #e9fbe5;
+    --text: #264d00;
+    --card-bg: #d6f7c9;
+    --border-color: #a0cfa0;
+  }
+  
+  html.pearl {
+    --bg: #fdfdfd;
+    --text: #2e2e2e;
+    --card-bg: #f8f8f8;
+    --border-color: #cccccc;
+  }
+
+  html.midnight {
+    --bg: #0a0c10;
+    --text: #e0e0e0;
+    --card-bg: #1c1f24;
+    --border-color: #2e3338;
+  }
+
+  /* Nouveaux thèmes dynamiques */
+  html.aube { /* Thème Aube */
+    --bg: #FEF3C7; /* Fond jaune pâle */
+    --text: #92400E; /* Texte brun foncé */
+    --card-bg: #FFFBEB; /* Carte blanc cassé */
+    --border-color: #FCD34D; /* Bordure ambre */
+  }
+
+  html.crepuscule { /* Thème Crépuscule */
+    --bg: #1E1B4B; /* Fond indigo très foncé */
+    --text: #E0E7FF; /* Texte lavande clair */
+    --card-bg: #312E81; /* Carte indigo foncé */
+    --border-color: #4338CA; /* Bordure indigo */
+    --danger-color: #FCA5A5; /* Rouge plus doux pour le contraste */
+  }
+
+  html.oasis { /* Thème Oasis */
+    --bg: #F0FDF4; /* Fond vert très clair */
+    --text: #14532D; /* Texte vert foncé */
+    --card-bg: #DCFCE7; /* Carte vert clair */
+    --border-color: #86EFAC; /* Bordure verte */
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-size: 16px; /* Taille de police de base augmentée */
+  }
+
+  html, body {
+    font-family: 'Cairo', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    transition: background-color 0.3s, color 0.3s;
+    line-height: 1.6;
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .font-amiri {
+    font-family: 'Amiri', serif;
+  }
+}
