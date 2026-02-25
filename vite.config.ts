@@ -13,7 +13,7 @@ export default defineConfig({
         name: 'Le Chemin Vers Le Coran',
         short_name: 'Le Chemin',
         description: 'Votre compagnon pour la lecture et la révision du Coran',
-        theme_color: '#ffffff',
+        theme_color: '#2E7D32',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [

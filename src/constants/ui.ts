@@ -1,5 +1,5 @@
-export const LOGO_URL = "https://i.postimg.cc/MvFHgV5v/logo.png";
-export const LOGO_URL_DARK = "https://i.postimg.cc/x8xRYmtk/Logo-Dark.png";
+export const LOGO_URL = "/logo.png";
+export const LOGO_URL_DARK = "/logo-dark.png";
 
 export const COLORS = [
     '#D92D20', // 1. Rouge Cardinal
