@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Card, { CardContent } from '@/components/ui/Card';
+import Card from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
 import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLogic';

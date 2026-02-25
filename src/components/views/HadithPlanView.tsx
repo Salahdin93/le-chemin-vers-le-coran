@@ -1,24 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStore, useActiveProfileSelector } from '../../context/AppContext';
 import { HADITH_COLLECTION } from '../../constants/hadithData';
 import { Hadith, HadithMemorizationStatus } from '../../types';
 import { clsx } from 'clsx';
-import Card, { CardHeader, CardTitle, CardContent } from '../ui/Card';
-import Button from '../ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff } from 'lucide-react';
+import {
+    Eye, EyeOff, CheckCircle2, Circle, Clock,
+    Sparkles, Quote,
+    Search, Activity
+} from 'lucide-react';
 
-const HadithCard: React.FC<{ hadith: Hadith; status: HadithMemorizationStatus }> = ({ hadith, status }) => {
+const HadithCard: React.FC<{ hadith: Hadith; status: HadithMemorizationStatus; index: number }> = ({ hadith, status, index }) => {
     const { state, dispatch, t } = useStore();
     const [showTranslation, setShowTranslation] = useState(false);
 
-    const statusStyles: Record<HadithMemorizationStatus, string> = {
-        non_lu: 'border-border-main',
-        lu: 'border-blue-500',
-        en_memorisation: 'border-yellow-500',
-        a_reprendre: 'border-red-500',
-        acquis: 'border-green-500',
+    const statusConfig: Record<HadithMemorizationStatus, { color: string, icon: any, label: string }> = {
+        non_lu: { color: 'border-border-main/20 bg-bg-secondary/30', icon: Circle, label: t('statusNotStarted') },
+        lu: { color: 'border-blue-500/30 bg-blue-500/5', icon: Eye, label: t('statusLu') },
+        en_memorisation: { color: 'border-warning/30 bg-warning/5', icon: Clock, label: t('statusEnMemorisation') },
+        a_reprendre: { color: 'border-danger/30 bg-danger/5', icon: Activity, label: t('statusARependre') },
+        acquis: { color: 'border-success/30 bg-success/5', icon: CheckCircle2, label: t('statusAcquis') },
     };
+
+    const config = statusConfig[status];
 
     const handleStatusChange = (newStatus: HadithMemorizationStatus) => {
         dispatch({ type: 'UPDATE_HADITH_STATUS', payload: { hadithId: hadith.id, status: newStatus } });
@@ -26,68 +30,151 @@ const HadithCard: React.FC<{ hadith: Hadith; status: HadithMemorizationStatus }>
     };
 
     return (
-        <Card className={clsx('!p-0 flex flex-col border-2 transition-colors', statusStyles[status])}>
-            <CardHeader>
-                <CardTitle className="text-primary">{t('hadithNumber', { number: hadith.id })}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col space-y-4">
-                <div className="p-4 bg-bg-main rounded-lg min-h-[100px]">
-                    <p className="font-amiri text-xl leading-relaxed rtl text-right">{hadith.arabic}</p>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}
+            className={clsx('premium-card !p-0 flex flex-col border-2 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 group', config.color)}
+        >
+            <div className="p-6 border-b border-border-main/10 flex justify-between items-center bg-white/5">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-xs font-black shadow-lg border border-white/5">
+                        #{hadith.id}
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Hadith</span>
                 </div>
-                
+                <div className={clsx("flex items-center gap-2 px-3 py-1 rounded-full border text-[8px] font-black uppercase tracking-[0.2em]", config.color.replace('border-', 'text-').split(' ')[0])}>
+                    <config.icon size={10} />
+                    {config.label}
+                </div>
+            </div>
+
+            <div className="p-8 flex-1 flex flex-col space-y-6 relative">
+                <div className="absolute top-4 right-6 opacity-[0.03] pointer-events-none group-hover:opacity-[0.07] transition-opacity">
+                    <Quote size={80} />
+                </div>
+
+                <div className="relative">
+                    <p className="font-amiri text-2xl leading-[2.5] text-right dir-rtl text-text-main group-hover:text-accent-color transition-colors selection:bg-accent-color/20">{hadith.arabic}</p>
+                </div>
+
                 <AnimatePresence>
-                    {showTranslation && state.settings.lang !== 'ar' && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <div className="p-3 bg-border-main/20 rounded-lg text-sm italic">
-                                "{hadith.translations[state.settings.lang] || hadith.translations.en}"
+                    {(showTranslation || state.settings.lang === 'ar') && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                            <div className="p-6 bg-slate-900/40 rounded-2xl text-sm leading-relaxed font-medium text-text-secondary border border-white/5 shadow-inner">
+                                <span className="text-accent-color/40 mr-2 text-lg">“</span>
+                                {hadith.translations[(state.settings.lang === 'ar' ? 'en' : state.settings.lang) as 'fr' | 'en'] || hadith.translations.en}
+                                <span className="text-accent-color/40 ml-2 text-lg">”</span>
                             </div>
+                            <p className="text-[9px] font-bold opacity-30 mt-4 uppercase tracking-widest text-center">Source: {hadith.source[state.settings.lang as keyof typeof hadith.source] || hadith.source.en}</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
-                
-                <div className="mt-auto pt-4 space-y-3">
+
+                <div className="mt-auto pt-6 space-y-6">
                     {state.settings.lang !== 'ar' && (
-                        <Button variant="ghost" onClick={() => setShowTranslation(!showTranslation)} className="gap-2 w-full">
-                            {showTranslation ? <EyeOff size={16} /> : <Eye size={16} />}
+                        <button onClick={() => setShowTranslation(!showTranslation)} className="w-full h-10 rounded-xl bg-bg-secondary flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 hover:bg-accent-color hover:text-white transition-all">
+                            {showTranslation ? <EyeOff size={14} /> : <Eye size={14} />}
                             {showTranslation ? t('hideTranslation') : t('showTranslation')}
-                        </Button>
+                        </button>
                     )}
-                    <div className="space-y-2">
-                         <h5 className="text-sm font-bold pt-2 border-t border-dashed">{t('status')}:</h5>
-                         <div className="grid grid-cols-2 gap-2">
-                            <Button size="sm" variant="primary" onClick={() => handleStatusChange('lu')}>{t('statusLu')}</Button>
-                            <Button size="sm" variant="ghost" className="bg-yellow-500/20 text-yellow-700" onClick={() => handleStatusChange('en_memorisation')}>{t('statusEnMemorisation')}</Button>
-                            <Button size="sm" variant="warning" onClick={() => handleStatusChange('a_reprendre')}>{t('statusARependre')}</Button>
-                            <Button size="sm" variant="success" onClick={() => handleStatusChange('acquis')}>{t('statusAcquis')}</Button>
-                         </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        {[
+                            { s: 'lu', v: 'secondary', l: t('statusLu') },
+                            { s: 'en_memorisation', v: 'ghost', l: t('statusEnMemorisation'), c: 'bg-warning/10 text-warning hover:bg-warning hover:text-white' },
+                            { s: 'a_reprendre', v: 'ghost', l: t('statusARependre'), c: 'bg-danger/10 text-danger hover:bg-danger hover:text-white' },
+                            { s: 'acquis', v: 'accent', l: t('statusAcquis') }
+                        ].map(opt => (
+                            <button
+                                key={opt.s}
+                                onClick={() => handleStatusChange(opt.s as any)}
+                                className={clsx(
+                                    "h-10 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all",
+                                    status === opt.s ? "bg-accent-color text-white shadow-lg scale-105" : (opt.c || "bg-bg-secondary text-text-main/40 hover:bg-bg-main hover:text-text-main")
+                                )}
+                            >
+                                {opt.l}
+                            </button>
+                        ))}
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </motion.div>
     );
 };
 
 const HadithPlanView: React.FC = () => {
+    const { state, t } = useStore();
     const activeProfile = useActiveProfileSelector();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterStatus, setFilterStatus] = useState<HadithMemorizationStatus | 'all'>('all');
 
     if (!activeProfile) return null;
+    const progress = activeProfile.hadithProgress || {};
 
-    const hadithProgress = activeProfile.hadithProgress || {};
+    const filteredHadiths = useMemo(() => {
+        return HADITH_COLLECTION.filter(h => {
+            const matchesSearch = h.arabic.includes(searchQuery) ||
+                ((h.translations as any)[state.settings.lang === 'ar' ? 'en' : state.settings.lang]?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+            const status = progress[h.id] || 'non_lu';
+            const matchesFilter = filterStatus === 'all' || status === filterStatus;
+            return matchesSearch && matchesFilter;
+        });
+    }, [searchQuery, filterStatus, progress, state.settings.lang]);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {HADITH_COLLECTION.map(hadith => (
-                <HadithCard
-                    key={hadith.id}
-                    hadith={hadith}
-                    status={hadithProgress[hadith.id] || 'non_lu'}
-                />
-            ))}
+        <div className="space-y-12 pb-32">
+            <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-10 pb-12 border-b-2 border-border-main/50">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-accent-color/10 rounded-2xl text-accent-color">
+                            <Sparkles size={28} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30">Le Trésor de la Sounnah</span>
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-black text-gradient tracking-tight">Les 100 Hadiths</h1>
+                    <p className="text-text-secondary font-medium text-lg leading-relaxed max-w-2xl">Une sélection précieuse de paroles prophétiques courtes et profondes pour embellir votre quotidien et fortifier votre foi.</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
+                    <div className="relative group flex-1 sm:w-80">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-text-main/20 group-hover:text-accent-color transition-colors" size={20} />
+                        <input
+                            type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Rechercher un hadith..."
+                            className="w-full h-16 bg-bg-secondary/40 backdrop-blur-xl border-2 border-border-main/10 rounded-2xl pl-16 pr-8 text-sm font-bold placeholder:text-text-main/20 focus:outline-none focus:border-accent-color/50 transition-all shadow-inner"
+                        />
+                    </div>
+                    <div className="flex gap-2 p-1.5 bg-bg-secondary/40 backdrop-blur-xl rounded-2xl border-2 border-border-main/10 shadow-inner overflow-x-auto no-scrollbar">
+                        {['all', 'non_lu', 'en_memorisation', 'acquis'].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFilterStatus(f as any)}
+                                className={clsx("px-6 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
+                                    filterStatus === f ? "bg-accent-color text-white shadow-xl" : "text-text-main/30 hover:text-text-main")}
+                            >
+                                {f === 'all' ? 'Tous' : t(f === 'non_lu' ? 'statusNotStarted' : f === 'acquis' ? 'statusMastered' : 'statusInProgress')}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </header>
+
+            <AnimatePresence mode="popLayout">
+                {filteredHadiths.length > 0 ? (
+                    <motion.div layout className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8 md:gap-10">
+                        {filteredHadiths.map((h, i) => (
+                            <HadithCard key={h.id} hadith={h} status={progress[h.id] || 'non_lu'} index={i % 20} />
+                        ))}
+                    </motion.div>
+                ) : (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 text-center">
+                        <div className="w-24 h-24 bg-bg-secondary rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 opacity-20">
+                            <Search size={48} />
+                        </div>
+                        <p className="text-xl font-black opacity-30 uppercase tracking-widest">Aucun hadith trouvé</p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

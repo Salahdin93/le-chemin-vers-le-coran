@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Card, { CardHeader } from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -9,26 +8,32 @@ import { HADITH_COLLECTION } from '@/constants/hadithData';
 import { checkAndGroupMemorizations } from '@/services/memorizationLogic';
 import Modal from '@/components/ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { motion, AnimatePresence } from 'framer-motion';
+import { clsx } from 'clsx';
+import {
+    BookOpen, Brain, LayoutGrid, Clock,
+    Trash2, Plus, Info, Star, ChevronRight, Activity, Sparkles, BookMarked
+} from 'lucide-react';
 
 type FormType = 'surahPart' | 'hizb' | 'juzz' | null;
 
 const StatusIndicator: React.FC<{ status: MemorizationStatus | HadithMemorizationStatus }> = ({ status }) => {
-    const statusClasses: Record<MemorizationStatus | HadithMemorizationStatus, string> = {
-        excellent: 'bg-green-500',
-        bon: 'bg-blue-500',
-        moyen: 'bg-yellow-500',
-        a_revoir: 'bg-red-500',
-        acquis: 'bg-green-500',
-        en_memorisation: 'bg-blue-500',
-        a_reprendre: 'bg-yellow-500',
-        lu: 'bg-gray-400',
-        non_lu: 'bg-gray-300'
+    const colors: Record<string, string> = {
+        excellent: 'bg-success ring-success/20',
+        bon: 'bg-accent-color ring-accent-color/20',
+        moyen: 'bg-warning ring-warning/20',
+        a_revoir: 'bg-danger ring-danger/20',
+        acquis: 'bg-success ring-success/20',
+        en_memorisation: 'bg-accent-color ring-accent-color/20',
+        a_reprendre: 'bg-warning ring-warning/20',
+        lu: 'bg-blue-500 ring-blue-500/10',
+        non_lu: 'bg-text-secondary/20 ring-text-secondary/10'
     };
+
     return (
-        <div className={`w-3 h-3 rounded-full ${statusClasses[status]}`}></div>
+        <div className={clsx("w-2.5 h-2.5 rounded-full ring-4 shadow-[0_0_8px_rgba(0,0,0,0.1)]", colors[status] || colors.bon)}></div>
     );
 };
-
 
 const MemorizationView: React.FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
@@ -80,7 +85,6 @@ const MemorizationView: React.FC = () => {
 
         if (payload) {
             dispatch({ type: 'ADD_MEMORIZATION', payload });
-
             const { updatedMemorizations, groupedItems } = checkAndGroupMemorizations(tempMemorizations);
             if (groupedItems.length > 0) {
                 dispatch({ type: 'UPDATE_MEMORIZATIONS', payload: updatedMemorizations });
@@ -100,27 +104,17 @@ const MemorizationView: React.FC = () => {
         }
     };
 
-    const showHizbDetails = (hizb: MemorizedHizb) => {
-        setModalContent({
-            title: `${t('hizb')} ${hizb.number} - ${hizb.details}`,
-            items: hizb.componentSurahParts.map(s => ({ name: s.name, level: s.level, status: s.status }))
-        });
-    };
-
-    const showJuzzDetails = (juzz: MemorizedJuzz) => {
-        setModalContent({
-            title: `${t('juzz')} ${juzz.number}`,
-            items: juzz.componentHizbs.map(h => ({ name: `${t('hizb')} ${h.number} - ${h.details}`, level: h.level, status: h.status }))
-        });
-    };
-
     const handleHadithStatusChange = (hadithId: number, status: HadithMemorizationStatus) => {
         dispatch({ type: 'UPDATE_HADITH_STATUS', payload: { hadithId, status } });
         dispatch({ type: 'SET_TOAST', payload: t('saved') });
         setSelectedHadith(null);
     };
 
-    const levelClasses: Record<MemorizationLevel, string> = { excellent: "bg-green-100 text-green-800", bon: "bg-blue-100 text-blue-800", moyen: "bg-yellow-100 text-yellow-800" };
+    const levelClasses: Record<MemorizationLevel, string> = {
+        excellent: "bg-success/10 text-success border border-success/20",
+        bon: "bg-accent-color/10 text-accent-color border border-accent-color/20",
+        moyen: "bg-warning/10 text-warning border border-warning/20"
+    };
     const levels = { excellent: t('excellent'), bon: t('bon'), moyen: t('moyen') };
     const hadithStatusText: Record<HadithMemorizationStatus, string> = {
         'acquis': t('statusAcquis'),
@@ -143,160 +137,217 @@ const MemorizationView: React.FC = () => {
         else if (formType === 'juzz') options = JUZ_DATA.map(j => ({ value: j.id.toString(), label: `${t('juzz')} ${j.id}` }));
 
         return (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-8 p-6 glass-card border-none bg-accent-color/5 space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-accent-color">Ajouter {t(formType)}</h3>
-                    <button onClick={() => setFormType(null)} className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Ignorer</button>
-                </div>
-                <Select className="h-12 text-sm font-bold" onChange={e => setSelectedItemId(e.target.value)} defaultValue={selectedItemId}>
-                    <option value="" disabled>{t('select')}</option>
-                    {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </Select>
-                <div className="grid grid-cols-2 gap-3">
-                    <Select className="h-12 text-sm font-bold" onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)} defaultValue={selectedLevel}>
-                        <option value="bon">{levels.bon}</option>
-                        <option value="excellent">{levels.excellent}</option>
-                        <option value="moyen">{levels.moyen}</option>
-                    </Select>
-                    <Button variant="accent" onClick={handleAddItem} className="h-12" disabled={!selectedItemId}>{t('add')}</Button>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="p-8 premium-card border-none bg-accent-color/5 shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-color/5 to-transparent pointer-events-none" />
+                <div className="relative z-10 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Plus className="text-accent-color" size={20} />
+                            <h3 className="text-lg font-black tracking-tight">{t('add')} {t(formType)}</h3>
+                        </div>
+                        <button onClick={() => setFormType(null)} className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Annuler</button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">{t('selection')}</label>
+                            <Select className="h-14 rounded-2xl bg-bg-main border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" onChange={e => setSelectedItemId(e.target.value)} defaultValue={selectedItemId}>
+                                <option value="" disabled>{t('selectItem')}</option>
+                                {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">{t('level')}</label>
+                            <Select className="h-14 rounded-2xl bg-bg-main border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)} defaultValue={selectedLevel}>
+                                <option value="bon">{levels.bon}</option>
+                                <option value="excellent">{levels.excellent}</option>
+                                <option value="moyen">{levels.moyen}</option>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <Button
+                        variant="accent"
+                        onClick={handleAddItem}
+                        className="w-full h-14 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-accent-color/20"
+                        disabled={!selectedItemId}
+                    >
+                        {t('confirmAddition')}
+                    </Button>
                 </div>
             </motion.div>
         );
     };
 
     return (
-        <div className="space-y-8 md:space-y-12 pb-32 px-2 md:px-0">
-            <header className="pb-8 border-b border-border-main flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                    <h1 className="text-3xl md:text-4xl font-black text-gradient mb-2">{t('memorizedTitle')}</h1>
-                    <p className="text-text-secondary font-medium text-sm md:text-base">{t('memorizedSubtitle') || 'Consacrez vos progrès et gardez une trace de vos accomplissements sacrés.'}</p>
+        <div className="space-y-12 pb-32 px-4 md:px-0">
+            <header className="pb-8 border-b border-border-main flex flex-col xl:flex-row xl:items-end justify-between gap-10">
+                <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-accent-color/10 rounded-2xl text-accent-color">
+                            <Brain size={32} />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl md:text-5xl font-black text-gradient">{t('memorizedTitle') || 'Mon Trésor Sacré'}</h1>
+                            <p className="text-text-secondary font-medium text-sm md:text-base mt-1">{t('memorizedSubtitle') || 'Consacrez vos progrès et gardez une trace de vos accomplissements sacrés.'}</p>
+                        </div>
+                    </div>
                 </div>
+
                 {!formType && (
-                    <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                        <Button variant="secondary" size="sm" className="flex-1 md:flex-none h-11 px-6 rounded-full text-xs font-black uppercase tracking-widest" onClick={() => setFormType('surahPart')}>+ {t('surah')}</Button>
-                        <Button variant="secondary" size="sm" className="flex-1 md:flex-none h-11 px-6 rounded-full text-xs font-black uppercase tracking-widest" onClick={() => setFormType('hizb')}>+ {t('hizb')}</Button>
-                        <Button variant="secondary" size="sm" className="flex-1 md:flex-none h-11 px-6 rounded-full text-xs font-black uppercase tracking-widest" onClick={() => setFormType('juzz')}>+ {t('juzz')}</Button>
+                    <div className="flex flex-wrap gap-3 w-full xl:w-auto">
+                        <button onClick={() => setFormType('surahPart')} className="flex-1 xl:flex-none h-12 px-6 rounded-xl bg-bg-secondary hover:bg-bg-main transition-all border border-border-main/50 text-[10px] font-black uppercase tracking-widest shadow-sm">+ {t('surah')}</button>
+                        <button onClick={() => setFormType('hizb')} className="flex-1 xl:flex-none h-12 px-6 rounded-xl bg-bg-secondary hover:bg-bg-main transition-all border border-border-main/50 text-[10px] font-black uppercase tracking-widest shadow-sm">+ {t('hizb')}</button>
+                        <button onClick={() => setFormType('juzz')} className="flex-1 xl:flex-none h-12 px-6 rounded-xl bg-bg-secondary hover:bg-bg-main transition-all border border-border-main/50 text-[10px] font-black uppercase tracking-widest shadow-sm">+ {t('juzz')}</button>
                     </div>
                 )}
             </header>
 
-            {renderForm()}
+            <AnimatePresence mode="wait">
+                {formType && renderForm()}
+            </AnimatePresence>
 
             <Tabs defaultValue="juzz" className="w-full">
-                <TabsList className="flex items-center gap-1 p-1 bg-bg-secondary/50 backdrop-blur-md rounded-2xl border border-border-main/50 mb-8 overflow-x-auto no-scrollbar">
-                    <TabsTrigger value="juzz" className="flex-1 min-w-[100px] h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('memorizedJuzz')}</TabsTrigger>
-                    <TabsTrigger value="hizb" className="flex-1 min-w-[100px] h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('memorizedHizbs')}</TabsTrigger>
-                    <TabsTrigger value="surah" className="flex-1 min-w-[100px] h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('memorizedSurahs')}</TabsTrigger>
-                    <TabsTrigger value="hadith" className="flex-1 min-w-[100px] h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('hadith')}</TabsTrigger>
+                <TabsList className="inline-flex items-center gap-2 p-1.5 bg-bg-secondary/50 backdrop-blur-xl rounded-2xl border border-border-main/50 mb-12">
+                    {['juzz', 'hizb', 'surah', 'hadith'].map(tab => (
+                        <TabsTrigger
+                            key={tab}
+                            value={tab}
+                            className="px-8 h-10 rounded-xl data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                        >
+                            {t(`tab_${tab}`) || t(tab === 'surah' ? 'memorizedSurahs' : tab === 'juzz' ? 'memorizedJuzz' : tab === 'hizb' ? 'memorizedHizbs' : 'hadith')}
+                        </TabsTrigger>
+                    ))}
                 </TabsList>
 
                 <AnimatePresence mode="wait">
-                    <TabsContent value="juzz" className="space-y-4 outline-none">
+                    <TabsContent value="juzz" className="space-y-6 outline-none">
                         {memorizations.juzz.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {memorizations.juzz.map(j => (
-                                    <motion.div key={j.number} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="premium-card p-5 group flex justify-between items-center transition-all hover-glow">
-                                        <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => showJuzzDetails(j)}>
-                                            <div className="w-12 h-12 rounded-xl bg-accent-color/10 flex items-center justify-center text-accent-color shadow-inner">
-                                                <span className="text-lg font-black">{j.number}</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {memorizations.juzz.map((j, i) => (
+                                    <motion.div
+                                        key={j.number}
+                                        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
+                                        className="premium-card p-8 group flex flex-col gap-6 transition-all hover-glow border-2 border-border-main/30 relative overflow-hidden"
+                                    >
+                                        <div className="absolute -right-6 -top-6 opacity-[0.03] rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                                            <LayoutGrid size={120} />
+                                        </div>
+                                        <div className="flex justify-between items-start relative z-10">
+                                            <div className="w-14 h-14 rounded-[1.25rem] bg-accent-color/10 flex items-center justify-center text-accent-color shadow-inner">
+                                                <span className="text-2xl font-black">{j.number}</span>
                                             </div>
-                                            <div>
-                                                <h4 className="text-sm font-black uppercase tracking-tight">{t('juzz')} {j.number}</h4>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <StatusIndicator status={j.status || 'bon'} />
-                                                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{levels[j.level]}</span>
-                                                </div>
+                                            <div className="flex flex-col items-end">
+                                                <button onClick={() => handleRemoveItem('juzz', j)} className="p-2 rounded-xl bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all hover:scale-110">
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </div>
-                                        <button onClick={() => handleRemoveItem('juzz', j)} className="p-2 rounded-lg hover:bg-danger/10 text-text-main/10 hover:text-danger transition-all opacity-0 group-hover:opacity-100">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
-                                        </button>
+                                        <div className="relative z-10 cursor-pointer" onClick={() => setModalContent({ title: `${t('juzz')} ${j.number}`, items: j.componentHizbs.map(h => ({ name: `${t('hizb')} ${h.number} - ${h.details}`, level: h.level, status: h.status })) })}>
+                                            <h4 className="text-xl font-black tracking-tight mb-2">{t('juzz')} {j.number}</h4>
+                                            <div className="flex items-center gap-3">
+                                                <StatusIndicator status={j.status || 'bon'} />
+                                                <span className={clsx("px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest", levelClasses[j.level])}>{levels[j.level]}</span>
+                                            </div>
+                                        </div>
+                                        <div className="pt-6 border-t border-border-main/30 flex justify-between items-center relative z-10">
+                                            <span className="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em]">{j.componentHizbs.length} {t('hizbs')}</span>
+                                            <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-accent-color" />
+                                        </div>
                                     </motion.div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="p-12 text-center glass-card border-none bg-bg-main/30">
-                                <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noMemorizedJuzz')}</p>
-                            </div>
+                            <EmptyState label={t('noMemorizedJuzz')} icon={<LayoutGrid size={48} />} />
                         )}
                     </TabsContent>
 
-                    <TabsContent value="hizb" className="space-y-4 outline-none">
+                    <TabsContent value="hizb" className="space-y-6 outline-none">
                         {memorizations.hizbs.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {memorizations.hizbs.map(h => (
-                                    <motion.div key={h.number} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="premium-card p-5 group flex justify-between items-center transition-all hover-glow">
-                                        <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => showHizbDetails(h)}>
-                                            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shadow-inner">
-                                                <span className="text-lg font-black">{h.number}</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {memorizations.hizbs.map((h, i) => (
+                                    <motion.div
+                                        key={h.number}
+                                        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
+                                        className="premium-card p-6 flex items-center justify-between transition-all hover-glow border-2 border-border-main/30 group"
+                                    >
+                                        <div className="flex items-center gap-5 flex-1 cursor-pointer" onClick={() => setModalContent({ title: `${t('hizb')} ${h.number} - ${h.details}`, items: h.componentSurahParts.map(s => ({ name: s.name, level: s.level, status: s.status })) })}>
+                                            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner group-hover:scale-110 transition-transform">
+                                                <span className="text-xl font-black">{h.number}</span>
                                             </div>
-                                            <div>
-                                                <h4 className="text-sm font-black uppercase tracking-tight line-clamp-1">{t('hizb')} {h.number} — {h.details}</h4>
-                                                <div className="flex items-center gap-2 mt-1">
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-base font-black tracking-tight truncate mb-1">{t('hizb')} {h.number}</h4>
+                                                <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-3 line-clamp-1">{h.details}</p>
+                                                <div className="flex items-center gap-3">
                                                     <StatusIndicator status={h.status || 'bon'} />
-                                                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{levels[h.level]}</span>
+                                                    <span className={clsx("px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest", levelClasses[h.level])}>{levels[h.level]}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={() => handleRemoveItem('hizb', h)} className="p-2 rounded-lg hover:bg-danger/10 text-text-main/10 hover:text-danger transition-all opacity-0 group-hover:opacity-100">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
+                                        <button onClick={() => handleRemoveItem('hizb', h)} className="p-3 rounded-xl hover:bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all">
+                                            <Trash2 size={16} />
                                         </button>
                                     </motion.div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="p-12 text-center glass-card border-none bg-bg-main/30">
-                                <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noMemorizedHizbs')}</p>
-                            </div>
+                            <EmptyState label={t('noMemorizedHizbs')} icon={<Clock size={48} />} />
                         )}
                     </TabsContent>
 
-                    <TabsContent value="surah" className="space-y-4 outline-none">
+                    <TabsContent value="surah" className="space-y-6 outline-none">
                         {memorizations.surahParts.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {memorizations.surahParts.map(s => (
-                                    <motion.div key={s.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="premium-card p-5 group flex justify-between items-center transition-all hover-glow">
-                                        <div className="flex items-center gap-4 flex-1">
-                                            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 shadow-inner">
-                                                <span className="text-sm font-black italic">S</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {memorizations.surahParts.map((s, i) => (
+                                    <motion.div
+                                        key={s.id}
+                                        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
+                                        className="premium-card p-6 flex flex-col justify-between transition-all hover-glow border-2 border-border-main/30 group relative overflow-hidden h-40"
+                                    >
+                                        <div className="flex justify-between items-start relative z-10">
+                                            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600 shadow-inner">
+                                                <BookOpen size={20} />
                                             </div>
-                                            <div>
-                                                <h4 className="text-sm font-black uppercase tracking-tight">{s.name}</h4>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <StatusIndicator status={s.status || 'bon'} />
-                                                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{levels[s.level]}</span>
-                                                </div>
+                                            <button onClick={() => handleRemoveItem('surahPart', s)} className="p-2 rounded-xl bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                        <div className="relative z-10 mt-4">
+                                            <h4 className="text-lg font-black tracking-tight mb-2 truncate">{s.name}</h4>
+                                            <div className="flex items-center gap-3">
+                                                <StatusIndicator status={s.status || 'bon'} />
+                                                <span className={clsx("px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest", levelClasses[s.level])}>{levels[s.level]}</span>
                                             </div>
                                         </div>
-                                        <button onClick={() => handleRemoveItem('surahPart', s)} className="p-2 rounded-lg hover:bg-danger/10 text-text-main/10 hover:text-danger transition-all opacity-0 group-hover:opacity-100">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
-                                        </button>
                                     </motion.div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="p-12 text-center glass-card border-none bg-bg-main/30">
-                                <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noMemorizedSurahs')}</p>
-                            </div>
+                            <EmptyState label={t('noMemorizedSurahs')} icon={<Star size={48} />} />
                         )}
                     </TabsContent>
 
-                    <TabsContent value="hadith" className="space-y-4 outline-none">
+                    <TabsContent value="hadith" className="space-y-6 outline-none">
                         {memorizedHadiths.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {memorizedHadiths.map(h => {
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {memorizedHadiths.map((h, i) => {
                                     const status = activeProfile.hadithProgress?.[h.id] || 'non_lu';
                                     return (
-                                        <motion.div key={h.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="premium-card p-5 group flex justify-between items-center transition-all hover-glow cursor-pointer" onClick={() => setSelectedHadith(h)}>
-                                            <div className="flex items-center gap-4 flex-1">
-                                                <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600 shadow-inner">
-                                                    <span className="text-sm font-black">{h.id}</span>
+                                        <motion.div
+                                            key={h.id}
+                                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                                            className="premium-card p-6 flex items-center justify-between transition-all hover-glow border-2 border-border-main/30 group cursor-pointer"
+                                            onClick={() => setSelectedHadith(h)}
+                                        >
+                                            <div className="flex items-center gap-5 flex-1 min-w-0">
+                                                <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-600 shadow-inner group-hover:scale-110 transition-transform">
+                                                    <span className="text-xl font-black">{h.id}</span>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="text-xs font-bold font-amiri rtl text-right truncate opacity-60 mb-1">{h.arabic}</h4>
-                                                    <div className="flex items-center gap-2">
+                                                    <h4 className="text-xs font-bold font-amiri rtl text-right truncate opacity-30 mb-2">{h.arabic}</h4>
+                                                    <div className="flex items-center gap-3">
                                                         <StatusIndicator status={status} />
-                                                        <span className="text-[10px] font-bold text-accent-color uppercase tracking-widest">{hadithStatusText[status]}</span>
+                                                        <span className="text-[10px] font-black text-accent-color uppercase tracking-widest">{hadithStatusText[status]}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -305,67 +356,94 @@ const MemorizationView: React.FC = () => {
                                 })}
                             </div>
                         ) : (
-                            <div className="p-12 text-center glass-card border-none bg-bg-main/30">
-                                <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noMemorizedHadiths')}</p>
-                            </div>
+                            <EmptyState label={t('noMemorizedHadiths')} icon={<BookMarked size={48} />} />
                         )}
                     </TabsContent>
                 </AnimatePresence>
             </Tabs>
 
-            {/* Modals with Premium Styling */}
+            {/* Modals */}
             <Modal isOpen={!!modalContent} onClose={() => setModalContent(null)}>
                 {modalContent && (
-                    <div className="space-y-6">
-                        <header className="border-b border-border-main pb-4">
-                            <h3 className="text-2xl font-black text-gradient">{modalContent.title}</h3>
+                    <div className="space-y-8 p-2">
+                        <header className="border-b border-border-main pb-6">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-accent-color/10 rounded-xl text-accent-color">
+                                    <Activity size={20} />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30">Détails de progression</span>
+                            </div>
+                            <h3 className="text-3xl font-black tracking-tight text-gradient">{modalContent.title}</h3>
                         </header>
-                        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 no-scrollbar">
+                        <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-4 no-scrollbar">
                             {modalContent.items.map((item, index) => (
-                                <div key={item.name + index} className='flex justify-between items-center p-4 rounded-2xl bg-bg-secondary border border-border-main/50'>
-                                    <div className="flex items-center gap-3">
+                                <div key={item.name + index} className='flex justify-between items-center p-5 rounded-2xl bg-bg-secondary/40 border border-border-main/30 group hover:bg-bg-secondary transition-colors'>
+                                    <div className="flex items-center gap-4">
                                         <StatusIndicator status={item.status || 'bon'} />
-                                        <span className="text-sm font-bold">{item.name}</span>
+                                        <span className="text-base font-black tracking-tight">{item.name}</span>
                                     </div>
-                                    <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${levelClasses[item.level]}`}>{levels[item.level]}</span>
+                                    <span className={clsx("px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full", levelClasses[item.level])}>{levels[item.level]}</span>
                                 </div>
                             ))}
                         </div>
-                        <Button variant="accent" onClick={() => setModalContent(null)} className="w-full h-12">Fermer</Button>
+                        <Button variant="secondary" onClick={() => setModalContent(null)} className="w-full h-14 rounded-2xl font-black text-xs uppercase tracking-widest border-border-main/50">Fermer</Button>
                     </div>
                 )}
             </Modal>
 
             <Modal isOpen={!!selectedHadith} onClose={() => setSelectedHadith(null)}>
                 {selectedHadith && (
-                    <div className="space-y-8">
-                        <header className="flex items-center justify-between border-b border-border-main pb-4">
-                            <h3 className="text-2xl font-black text-gradient">{t('hadithNumber', { number: selectedHadith.id })}</h3>
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Collection Arba'in</span>
+                    <div className="space-y-10 p-2">
+                        <header className="flex items-center justify-between border-b border-border-main pb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-600">
+                                    <BookMarked size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="text-3xl font-black tracking-tight">{t('hadithNumber', { number: selectedHadith.id })}</h3>
+                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-20">Collection Arba'in An-Nawawi</span>
+                                </div>
+                            </div>
                         </header>
-                        <div className="space-y-6 text-left max-h-[60vh] overflow-y-auto pr-2 no-scrollbar">
-                            <div className="p-8 glass-card border-none bg-accent-color/5 shadow-inner">
-                                <p className='font-amiri text-2xl rtl text-right leading-loose text-text-main/90'>{selectedHadith.arabic}</p>
+
+                        <div className="space-y-8 text-left max-h-[60vh] overflow-y-auto pr-4 no-scrollbar">
+                            <div className="p-10 premium-card border-none bg-accent-color/5 shadow-inner relative overflow-hidden">
+                                <Sparkles className="absolute -right-4 -top-4 opacity-[0.05] text-accent-color" size={80} />
+                                <p className='font-amiri text-3xl rtl text-right leading-[2.5] text-text-main/90'>{selectedHadith.arabic}</p>
                             </div>
-                            <div className="p-6 rounded-2xl border border-dashed border-border-main text-sm md:text-base italic leading-relaxed text-text-secondary">
-                                "{selectedHadith.translations[state.settings.lang as keyof typeof selectedHadith.translations] || selectedHadith.translations.en}"
+
+                            <div className="p-8 rounded-[2rem] border-2 border-dashed border-border-main/50 bg-bg-secondary/20 relative">
+                                <Info className="absolute -left-3 -top-3 text-border-main" size={24} />
+                                <p className="text-base md:text-lg font-medium leading-relaxed italic text-text-secondary opacity-80">
+                                    "{selectedHadith.translations[state.settings.lang as keyof typeof selectedHadith.translations] || selectedHadith.translations.en}"
+                                </p>
                             </div>
-                            <div className='pt-8 border-t border-border-main'>
-                                <h4 className='text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-6 text-center'>{t('updateStatus')}</h4>
-                                <div className='grid grid-cols-2 gap-3'>
-                                    <Button variant='secondary' className="h-12 text-xs font-black uppercase" onClick={() => handleHadithStatusChange(selectedHadith.id, 'lu')}>{t('statusLu')}</Button>
-                                    <Button variant='secondary' className="h-12 text-xs font-black uppercase border-blue-500/30 text-blue-600" onClick={() => handleHadithStatusChange(selectedHadith.id, 'en_memorisation')}>{t('statusEnMemorisation')}</Button>
-                                    <Button variant='secondary' className="h-12 text-xs font-black uppercase border-orange-500/30 text-orange-600" onClick={() => handleHadithStatusChange(selectedHadith.id, 'a_reprendre')}>{t('statusARependre')}</Button>
-                                    <Button variant='accent' className="h-12 text-xs font-black uppercase" onClick={() => handleHadithStatusChange(selectedHadith.id, 'acquis')}>{t('statusAcquis')}</Button>
+
+                            <div className='pt-10 border-t border-border-main/30'>
+                                <h4 className='text-[10px] font-black uppercase tracking-[0.3em] opacity-30 mb-8 text-center'>{t('updateStatus')}</h4>
+                                <div className='grid grid-cols-2 gap-4'>
+                                    <button onClick={() => handleHadithStatusChange(selectedHadith.id, 'lu')} className="h-14 rounded-2xl bg-bg-secondary border border-border-main/50 text-[10px] font-black uppercase tracking-widest hover:bg-bg-main transition-all">{t('statusLu')}</button>
+                                    <button onClick={() => handleHadithStatusChange(selectedHadith.id, 'en_memorisation')} className="h-14 rounded-2xl bg-accent-color/5 border border-accent-color/20 text-[10px] font-black uppercase tracking-widest text-accent-color hover:bg-accent-color/10 transition-all">{t('statusEnMemorisation')}</button>
+                                    <button onClick={() => handleHadithStatusChange(selectedHadith.id, 'a_reprendre')} className="h-14 rounded-2xl bg-warning/5 border border-warning/20 text-[10px] font-black uppercase tracking-widest text-warning hover:bg-warning/10 transition-all">{t('statusARependre')}</button>
+                                    <button onClick={() => handleHadithStatusChange(selectedHadith.id, 'acquis')} className="h-14 rounded-2xl bg-success text-white shadow-lg shadow-success/20 text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all">{t('statusAcquis')}</button>
                                 </div>
                             </div>
                         </div>
-                        <Button variant="ghost" onClick={() => setSelectedHadith(null)} className="w-full">Fermer</Button>
+                        <Button variant="ghost" onClick={() => setSelectedHadith(null)} className="w-full text-text-main/20 hover:text-text-main font-black uppercase tracking-widest text-[10px]">Fermer le Hadith</Button>
                     </div>
                 )}
             </Modal>
         </div>
     );
 };
+
+const EmptyState: React.FC<{ label: string, icon: React.ReactNode }> = ({ label, icon }) => (
+    <div className="p-24 text-center premium-card border-none bg-bg-secondary/40 flex flex-col items-center gap-6">
+        <div className="w-20 h-20 bg-bg-main rounded-[2rem] flex items-center justify-center text-text-main/5 shadow-inner">
+            {icon}
+        </div>
+        <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{label}</p>
+    </div>
+);
 
 export default MemorizationView;

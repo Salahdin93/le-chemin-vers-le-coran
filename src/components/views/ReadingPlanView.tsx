@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Card from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
 import { ReadingStatus, PlanDay } from '@/types';
 import Button from '@/components/ui/Button';
@@ -8,8 +7,8 @@ import Modal from '@/components/ui/Modal';
 import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLogic';
 import { TOTAL_PAGES } from '@/constants/quranData';
 import InputModal from '@/components/ui/InputModal';
-import { motion } from 'framer-motion';
-import { Clock, CheckCircle2, Circle, ArrowRight, Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Clock, CheckCircle2, Circle, ArrowRight, Star, BookOpen, Calendar, ChevronRight } from 'lucide-react';
 
 const cardVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -17,7 +16,7 @@ const cardVariants = {
         opacity: 1,
         y: 0,
         transition: {
-            delay: i * 0.1,
+            delay: i * 0.05,
             duration: 0.7,
             ease: [0.23, 1, 0.32, 1] as any
         }
@@ -25,16 +24,26 @@ const cardVariants = {
 };
 
 const HadithAlKahf: React.FC = () => (
-    <div className="text-sm text-left space-y-4">
-        <p className="font-black text-2xl text-gradient">Sourate Al-Kahf</p>
-        <div className="p-6 glass-card border-none shadow-inner bg-accent-color/5">
-            <p className="font-amiri text-2xl rtl text-right leading-loose text-text-main/90 mb-4">
+    <div className="text-sm text-left space-y-6 p-2">
+        <div className="flex items-center gap-4 mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-accent-color/10 flex items-center justify-center text-accent-color">
+                <Star size={24} fill="currentColor" />
+            </div>
+            <h3 className="text-2xl font-black text-gradient tracking-tight">Sourate Al-Kahf</h3>
+        </div>
+        <div className="p-8 rounded-[2rem] bg-bg-secondary/50 border border-border-main/50 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+                <BookOpen size={120} />
+            </div>
+            <p className="font-amiri text-3xl rtl text-right leading-[2.5] text-text-main/90 mb-8 relative z-10">
                 عن أبي سعيد الخدري رضي الله عنه قال النبي صلى الله عليه و سلم : من قرأ سورةَ الكهفِ في يومِ الجمعةِ أضاء له من النورِ ما بين الجمُعتَينِ
             </p>
-            <p className="text-sm italic opacity-80 border-t border-border-main pt-4">
-                "Celui qui lit la sourate Al Kahf le jour du vendredi, il est éclairé par une lumière entre les deux vendredis."
-            </p>
-            <p className="text-[10px] opacity-50 mt-2 font-bold uppercase tracking-widest">(Rapporté par Al Bayhaqi)</p>
+            <div className="relative z-10">
+                <p className="text-sm md:text-base italic font-medium opacity-80 border-l-4 border-accent-color pl-6 py-2">
+                    "Celui qui lit la sourate Al Kahf le jour du vendredi, il est éclairé par une lumière entre les deux vendredis."
+                </p>
+                <p className="text-[10px] opacity-40 mt-6 font-black uppercase tracking-[0.2em] text-right">(Rapporté par Al Bayhaqi)</p>
+            </div>
         </div>
     </div>
 );
@@ -49,34 +58,48 @@ const GlobalProgressCard: React.FC = () => {
     const percentage = totalPagesToRead > 0 ? Math.round((totalPagesRead / totalPagesToRead) * 100) : 0;
 
     return (
-        <Card className="overflow-visible !bg-slate-900 border-white/5 text-white shadow-2xl">
-            <div className="absolute -top-3 left-6 md:left-8 px-4 py-1 bg-white text-slate-900 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl z-10">
+        <div className="premium-card !bg-slate-900 border-none text-white shadow-2xl relative overflow-hidden group">
+            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-accent-color/10 rounded-full blur-[100px] group-hover:bg-accent-color/20 transition-all duration-1000" />
+            <div className="absolute top-0 left-0 px-6 py-2 bg-accent-color text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-br-2xl shadow-lg z-10">
                 {t('overallProgress')}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 p-6 md:p-8">
-                <div className="relative flex flex-col items-center justify-center col-span-2 md:col-span-1 border-b md:border-b-0 md:border-r border-white/5 pb-4 md:pb-0">
-                    <svg className="w-20 h-20 md:w-24 md:h-24 -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="6" className="text-white/10" fill="transparent" />
-                        <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="6" className="text-accent-color" fill="transparent" strokeDasharray="282.7" strokeDashoffset={282.7 - (percentage / 100) * 282.7} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
-                    </svg>
-                    <span className="absolute text-lg md:text-xl font-black">{percentage}%</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-8 pt-12">
+                <div className="relative flex flex-col items-center justify-center col-span-2 md:col-span-1 border-b md:border-b-0 md:border-r border-white/5 pb-6 md:pb-0">
+                    <div className="relative">
+                        <svg className="w-24 h-24 -rotate-90 scale-110" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="8" className="text-white/5" fill="transparent" />
+                            <circle
+                                cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="8"
+                                className="text-accent-color" fill="transparent"
+                                strokeDasharray="282.7" strokeDashoffset={282.7 - (Math.min(100, percentage) / 100) * 282.7}
+                                strokeLinecap="round"
+                                style={{ transition: 'stroke-dashoffset 1.5s cubic-bezier(0.23, 1, 0.32, 1)', filter: 'drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.5))' }}
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-2xl font-black">{percentage}%</span>
+                        </div>
+                    </div>
                 </div>
                 <div className="flex flex-col justify-center">
-                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('pagesRead')}</span>
-                    <span className="text-xl md:text-2xl font-black leading-none">{totalPagesRead} <span className="text-xs md:text-sm opacity-40">/ {totalPagesToRead}</span></span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 mb-2">{t('pagesRead')}</span>
+                    <span className="text-2xl font-black tracking-tight">{totalPagesRead} <span className="text-sm opacity-20">/ {totalPagesToRead}</span></span>
                 </div>
                 <div className="flex flex-col justify-center">
-                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('pagesPerDay')}</span>
-                    <span className="text-xl md:text-2xl font-black leading-none">~{Math.round(totalPagesRead / Math.max(1, state.progress.currentReadingDay - 1))}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 mb-2">{t('pagesPerDay')}</span>
+                    <span className="text-2xl font-black tracking-tight">~{Math.round(totalPagesRead / Math.max(1, state.progress.currentReadingDay - 1))}</span>
                 </div>
-                <div className="flex flex-col justify-center border-l border-white/5 pl-4 md:pl-0">
-                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('status')}</span>
-                    <span className="text-base md:text-lg font-bold text-accent-color flex items-center gap-2">
-                        <Star size={14} fill="currentColor" /> {percentage >= 100 ? 'Terminé !' : 'En chemin...'}
+                <div className="flex flex-col justify-center border-l border-white/5 pl-6 md:pl-0">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 mb-2">{t('status')}</span>
+                    <span className={clsx(
+                        "text-base font-black flex items-center gap-2",
+                        percentage >= 100 ? "text-success" : "text-accent-color"
+                    )}>
+                        <Star size={16} fill="currentColor" /> {percentage >= 100 ? 'Accompli !' : 'En Voyage...'}
                     </span>
                 </div>
             </div>
-        </Card>
+        </div>
     );
 }
 
@@ -130,22 +153,25 @@ const ReadingPlanView: React.FC = () => {
         const cDays = (s === 'done' || s === 'catchup') ? state.progress.consecutiveDays + 1 : 0;
         const rPlan = state.plans.originalReading ? recalculateFuturePlan(state.plans.originalReading, h, d + 1) : null;
         dispatch({ type: 'ADVANCE_DAY', payload: { newHistory: h, newConsecutiveDays: cDays, recalculatedPlan: rPlan! } });
-
-        if (readingGoal && d === readingGoal.duration) {
-            // Optionnel: peut-être naviguer ou montrer un modal spécial
-        }
         dispatch({ type: 'SET_TOAST', payload: t('saved') });
     };
 
     return (
-        <div className="space-y-8 md:space-y-12 pb-24 px-2 md:px-0">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-                <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-border-main pb-8">
-                    <div>
-                        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-gradient">{t('readingPlan')}</h2>
-                        <p className="text-text-secondary font-medium mt-1 text-sm md:text-base">{t('readingPlanSubtitle') || 'Suivez votre progression quotidienne vers la Khatma'}</p>
+        <div className="space-y-12 pb-32 px-4 md:px-0">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-10 border-b border-border-main pb-12">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-accent-color/10 rounded-2xl text-accent-color">
+                                <BookOpen size={32} />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gradient">{t('readingPlan')}</h1>
+                                <p className="text-text-secondary font-medium mt-1 text-sm md:text-base">{t('readingPlanSubtitle') || 'Suivez votre progression quotidienne vers la Khatma'}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="w-full lg:w-auto">
+                    <div className="w-full xl:w-[600px]">
                         <GlobalProgressCard />
                     </div>
                 </header>
@@ -156,47 +182,103 @@ const ReadingPlanView: React.FC = () => {
                     const status = state.progress.readingHistory[`day_${day.day}`]?.status || 'not_read';
                     const isCurrent = day.day === state.progress.currentReadingDay;
                     const isEditing = editingDay === day.day;
+                    const hizbDetails = getHizbDetailsFromPage(day.startPage);
+                    const endHizbDetails = getHizbDetailsFromPage(day.endPage);
 
                     return (
                         <motion.div key={day.day} custom={i} initial="hidden" animate="visible" variants={cardVariants}>
                             <div
                                 className={clsx(
-                                    "premium-card h-full p-6 flex flex-col gap-5 border-2 transition-all group hover-glow",
-                                    isCurrent ? "border-accent-color ring-4 ring-accent-color/5" : "border-border-main/50"
+                                    "premium-card h-full p-8 flex flex-col gap-6 border-2 transition-all relative overflow-hidden group",
+                                    isCurrent ? "border-accent-color ring-8 ring-accent-color/5 shadow-premium" : "border-border-main/50 bg-bg-secondary/40",
+                                    status === 'done' && !isCurrent && "opacity-60 grayscale-[0.5] border-success/10"
                                 )}
                                 onClick={() => !isCurrent && setEditingDay(isEditing ? null : day.day)}
                             >
+                                {day.isKahfDay && (
+                                    <div
+                                        onClick={(e) => { e.stopPropagation(); setKahfModalOpen(true); }}
+                                        className="absolute top-0 right-0 p-3 bg-accent-color text-white rounded-bl-2xl cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                                    >
+                                        <Star size={14} fill="currentColor" />
+                                    </div>
+                                )}
+
                                 <div className="flex justify-between items-start">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color mb-1">Jour {day.day}</span>
-                                        <h4 className="text-xl font-black">{getHizbDetailsFromPage(day.startPage).surahName}</h4>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Calendar size={12} className="text-accent-color opacity-50" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color">{t('day')} {day.day}</span>
+                                        </div>
+                                        <h4 className="text-xl font-black tracking-tight">{hizbDetails.surahName}</h4>
                                     </div>
                                     <div className={clsx(
-                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
-                                        status === 'done' ? "bg-success/10 text-success" : "bg-bg-main text-text-secondary"
+                                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
+                                        status === 'done' ? "bg-success shadow-lg shadow-success/20 text-white" : "bg-bg-main border border-border-main/50 text-text-main/20"
                                     )}>
-                                        {status === 'done' ? <CheckCircle2 size={24} /> : isCurrent ? <Circle size={24} className="animate-pulse" /> : <Clock size={24} className="opacity-40" />}
+                                        {status === 'done' ? <CheckCircle2 size={24} /> : isCurrent ? <Circle size={24} className="animate-pulse text-accent-color" /> : <Clock size={20} />}
                                     </div>
                                 </div>
 
-                                <div className="space-y-1">
-                                    <p className="text-sm font-bold flex items-center gap-2">
-                                        <span className="opacity-40">p. {day.startPage}</span>
-                                        <ArrowRight size={14} className="opacity-20" />
-                                        <span className="opacity-40">p. {day.endPage}</span>
-                                    </p>
-                                    <p className="text-[10px] font-black uppercase tracking-widest bg-bg-main self-start px-2 py-0.5 rounded-md opacity-60">
-                                        Hizb {getHizbDetailsFromPage(day.startPage).hizbNum} → {getHizbDetailsFromPage(day.endPage).hizbNum}
-                                    </p>
+                                <div className="space-y-4 flex-1">
+                                    <div className="p-4 rounded-2xl bg-bg-main/50 border border-border-main/30 flex items-center justify-between group-hover:bg-bg-main transition-colors">
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1">{t('start')}</span>
+                                            <span className="text-sm font-bold">p. {day.startPage}</span>
+                                        </div>
+                                        <ArrowRight size={14} className="opacity-20 mx-2" />
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1">{t('end')}</span>
+                                            <span className="text-sm font-bold">p. {day.endPage}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 p-2 px-3 bg-accent-color/5 rounded-xl border border-accent-color/10 self-start">
+                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-accent-color">
+                                            Hizb {hizbDetails.hizbNum} <ChevronRight size={8} className="inline mx-1" /> {endHizbDetails.hizbNum}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                {(isCurrent || isEditing) && (
-                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="grid grid-cols-2 gap-2 mt-2 pt-4 border-t border-dashed border-border-main">
-                                        <Button size="sm" variant="success" onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'done'); }}>{t('goalAchieved')}</Button>
-                                        <Button size="sm" variant="warning" onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'partial'); }}>{t('partial')}</Button>
-                                        <Button size="sm" variant="accent" onClick={(e) => { e.stopPropagation(); handleAdvance(); }}>Suivant →</Button>
-                                    </motion.div>
-                                )}
+                                <AnimatePresence>
+                                    {(isCurrent || isEditing) && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0, y: 10 }}
+                                            animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                            exit={{ opacity: 0, height: 0, y: 10 }}
+                                            className="space-y-3 pt-6 border-t border-dashed border-border-main/50 overflow-hidden"
+                                        >
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    className="rounded-xl h-10 font-black"
+                                                    variant={status === 'done' ? 'success' : 'secondary'}
+                                                    onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'done'); }}
+                                                >
+                                                    {t('goalAchieved')}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    className="rounded-xl h-10 font-black"
+                                                    variant="warning"
+                                                    onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'partial'); }}
+                                                >
+                                                    {t('partial')}
+                                                </Button>
+                                            </div>
+                                            {isCurrent && (
+                                                <Button
+                                                    size="md"
+                                                    variant="accent"
+                                                    className="w-full rounded-xl h-11 font-black shadow-lg shadow-accent-color/20"
+                                                    onClick={(e) => { e.stopPropagation(); handleAdvance(); }}
+                                                >
+                                                    Suivant →
+                                                </Button>
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         </motion.div>
                     );
@@ -205,7 +287,7 @@ const ReadingPlanView: React.FC = () => {
 
             <Modal isOpen={kahfModalOpen} onClose={() => setKahfModalOpen(false)}>
                 <HadithAlKahf />
-                <Button variant="accent" onClick={() => setKahfModalOpen(false)} className="mt-8 w-full">Compris</Button>
+                <Button variant="accent" onClick={() => setKahfModalOpen(false)} className="mt-10 w-full h-12 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-accent-color/20 transition-all hover:scale-[1.02] active:scale-[0.98]">Je l'ai lue ! (Barakallah u feek)</Button>
             </Modal>
 
             <InputModal

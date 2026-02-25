@@ -5,7 +5,7 @@ import { RevisionPlanDay, RevisionStatus } from '@/types';
 import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, AlertCircle, Zap } from 'lucide-react';
+import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid } from 'lucide-react';
 
 const cardVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -13,7 +13,7 @@ const cardVariants = {
         opacity: 1,
         y: 0,
         transition: {
-            delay: i * 0.1,
+            delay: i * 0.05,
             duration: 0.7,
             ease: [0.23, 1, 0.32, 1] as any
         }
@@ -51,15 +51,15 @@ const RevisionPlanView: React.FC = () => {
 
     if (!revisionPlan) {
         return (
-            <Card className="text-center py-12 flex flex-col items-center gap-6">
-                <div className="w-20 h-20 bg-accent-color/10 rounded-full flex items-center justify-center text-accent-color">
-                    <Brain size={40} />
+            <Card className="text-center py-20 flex flex-col items-center gap-8 premium-card border-none bg-bg-secondary/40">
+                <div className="w-24 h-24 bg-accent-color/10 rounded-[2.5rem] flex items-center justify-center text-accent-color shadow-2xl shadow-accent-color/10 animate-bounce-subtle">
+                    <Brain size={48} />
                 </div>
-                <div>
-                    <h3 className="text-2xl font-black mb-2">{t('noGoalsYet')}</h3>
-                    <p className="text-text-secondary">{t('revisionEmptySubtitle') || 'Vous n\'avez pas encore défini d\'objectif de révision.'}</p>
+                <div className="max-w-md">
+                    <h3 className="text-3xl font-black mb-3 text-gradient">{t('noGoalsYet')}</h3>
+                    <p className="text-text-secondary font-medium leading-relaxed">{t('revisionEmptySubtitle') || 'Vous n\'avez pas encore défini d\'objectif de révision pour fortifier votre mémoire.'}</p>
                 </div>
-                <Button variant="accent" onClick={() => dispatch({ type: 'START_WIZARD', payload: { type: 'revision', mode: 'new' } })}>
+                <Button variant="accent" size="lg" className="rounded-2xl px-10 h-14 font-black shadow-xl shadow-accent-color/20" onClick={() => dispatch({ type: 'START_WIZARD', payload: { type: 'revision', mode: 'new' } })}>
                     {t('newMemorizationGoal')}
                 </Button>
             </Card>
@@ -69,56 +69,68 @@ const RevisionPlanView: React.FC = () => {
     const filteredPlan = revisionPlan.filter(day => filter === 'all' || day.status === filter);
 
     return (
-        <div className="space-y-8 md:space-y-12 pb-24 px-2 md:px-0">
+        <div className="space-y-12 pb-32 px-4 md:px-0">
             {/* Header Stats */}
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-b border-border-main pb-10">
-                <div className="max-w-xl">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2.5 md:p-3 accent-gradient rounded-2xl text-white shadow-lg shadow-accent-color/20 transition-transform hover:scale-105">
-                            <Brain size={24} className="md:w-7 md:h-7" />
+            <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-10 border-b border-border-main pb-12">
+                <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-accent-color/10 rounded-2xl text-accent-color">
+                            <Brain size={32} />
                         </div>
-                        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-gradient">{t('revisionTitle')}</h2>
+                        <div>
+                            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gradient">{t('revisionTitle')}</h1>
+                            <p className="text-text-secondary font-medium mt-1 text-sm md:text-base">
+                                {t('revisionSubtitle') || 'Entretenez vos acquis et fortifiez votre mémoire grâce à une révision structurée.'}
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-text-secondary font-medium leading-relaxed text-sm md:text-base">
-                        {t('revisionSubtitle') || 'Entretenez vos acquis et fortifiez votre mémoire grâce à une révision structurée et régulière.'}
-                    </p>
                 </div>
 
-                <div className="grid grid-cols-2 lg:flex gap-3 md:gap-4 w-full lg:w-auto">
-                    <div className="p-4 md:p-6 premium-card border-none bg-slate-900 text-white flex-1 lg:min-w-[160px] text-center shadow-2xl">
-                        <span className="text-3xl md:text-4xl font-black block text-accent-color mb-1">{progressPercent}%</span>
-                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t('totalProgress')}</span>
+                <div className="grid grid-cols-2 lg:flex gap-4 w-full xl:w-auto">
+                    <div className="p-8 premium-card border-none bg-slate-900 border-white/5 text-white flex-1 xl:min-w-[200px] shadow-2xl relative overflow-hidden group">
+                        <div className="absolute -right-10 -bottom-10 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                            <LayoutGrid size={80} />
+                        </div>
+                        <span className="text-4xl font-black block text-accent-color mb-2">{progressPercent}%</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t('totalProgress')}</span>
                     </div>
-                    <div className="p-4 md:p-6 premium-card border-none bg-accent-color/5 flex-1 lg:min-w-[160px] text-center border-accent-color/10 ring-1 ring-accent-color/5">
-                        <span className="text-3xl md:text-4xl font-black block text-text-main mb-1">{pastRevisionsCount} <span className="text-base md:text-lg opacity-30">/ {totalDays}</span></span>
-                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary">{t('daysCompleted')}</span>
+                    <div className="p-8 premium-card border-none bg-bg-secondary/40 flex-1 xl:min-w-[200px] shadow-xl relative overflow-hidden group">
+                        <div className="absolute -right-10 -bottom-10 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                            <CheckCircle2 size={80} />
+                        </div>
+                        <span className="text-4xl font-black block text-text-main mb-2">{pastRevisionsCount} <span className="text-lg opacity-20">/ {totalDays}</span></span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary">{t('daysCompleted')}</span>
                     </div>
                 </div>
             </header>
 
-            {/* Filter Chips */}
-            <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-                {(['all', 'revised', 'to-review', 'not_revised', 'pending'] as const).map(f => (
-                    <Button
-                        key={f}
-                        size="sm"
-                        variant={filter === f ? 'accent' : 'secondary'}
-                        onClick={() => setFilter(f)}
-                        className="rounded-full shadow-none"
-                    >
-                        {t(f === 'all' ? 'showAll' : f)}
-                    </Button>
-                ))}
+            {/* Filters */}
+            <div className="flex items-center gap-6 overflow-x-auto pb-2 no-scrollbar">
+                <div className="flex items-center gap-2 bg-bg-secondary/50 p-1.5 rounded-2xl border border-border-main/50">
+                    {(['all', 'revised', 'to-review', 'not_revised', 'pending'] as const).map(f => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={clsx(
+                                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                filter === f
+                                    ? "bg-accent-color text-white shadow-lg shadow-accent-color/20"
+                                    : "text-text-main/40 hover:text-text-main hover:bg-bg-main"
+                            )}
+                        >
+                            {t(f === 'all' ? 'showAll' : f)}
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Grid of Days */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <AnimatePresence mode="popLayout">
                     {filteredPlan.map((day, i) => {
                         const dayIndex = revisionPlan.indexOf(day);
                         const isCurrent = dayIndex === state.progress.currentRevisionIndex;
-                        const bgColor = day.status === 'revised' ? 'bg-success/5' : day.status === 'to-review' ? 'bg-warning/5' : 'bg-transparent';
-                        const dotColor = day.status === 'revised' ? 'bg-success' : day.status === 'to-review' ? 'bg-warning' : day.status === 'not_revised' ? 'bg-danger' : 'bg-text-secondary/20';
+                        const statusColor = day.status === 'revised' ? 'text-success' : day.status === 'to-review' ? 'text-warning' : day.status === 'not_revised' ? 'text-danger' : 'text-text-main/20';
 
                         return (
                             <motion.div
@@ -131,44 +143,55 @@ const RevisionPlanView: React.FC = () => {
                                 variants={cardVariants}
                             >
                                 <div className={clsx(
-                                    "premium-card h-full p-6 flex flex-col gap-6 border-2 transition-all group",
-                                    isCurrent ? "border-accent-color ring-8 ring-accent-color/5" : "border-border-main/40",
-                                    bgColor
+                                    "premium-card h-full p-8 flex flex-col gap-8 border-2 transition-all relative overflow-hidden group",
+                                    isCurrent ? "border-accent-color ring-8 ring-accent-color/5 shadow-premium" : "border-border-main/50 bg-bg-secondary/40",
+                                    day.status === 'revised' && !isCurrent && "opacity-60 grayscale-[0.5] border-success/10"
                                 )}>
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color mb-1">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color mb-2 block">
                                                 {t('day')} {dayIndex + 1}
                                             </span>
-                                            <div className="flex items-center gap-2">
-                                                <div className={clsx("w-2 h-2 rounded-full", dotColor)} />
-                                                <h4 className="text-xl font-black">{day.units.map(u => u.text).join(' + ')}</h4>
-                                            </div>
+                                            <h4 className="text-2xl font-black tracking-tight">{day.units.map(u => u.text).join(' + ')}</h4>
                                         </div>
-                                        {isCurrent && <Zap size={20} className="text-accent-color animate-pulse" fill="currentColor" />}
+                                        <div className={clsx(
+                                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
+                                            day.status === 'revised' ? "bg-success text-white shadow-lg shadow-success/20" :
+                                                day.status === 'to-review' ? "bg-warning text-white shadow-lg shadow-warning/20" :
+                                                    "bg-bg-main border border-border-main/50",
+                                            statusColor
+                                        )}>
+                                            {day.status === 'revised' ? <CheckCircle2 size={24} /> :
+                                                day.status === 'to-review' ? <Clock size={24} /> :
+                                                    isCurrent ? <Circle size={24} className="animate-pulse" /> : <Clock size={20} />}
+                                        </div>
                                     </div>
 
                                     <div className="flex-1 space-y-3">
                                         {day.units.map((unit, j) => (
-                                            <div key={j} className="flex items-center gap-3 p-3 glass-card border-none bg-bg-main/50 rounded-xl group-hover:bg-bg-main transition-colors">
-                                                <div className="w-8 h-8 rounded-lg bg-accent-color/10 flex items-center justify-center text-accent-color">
-                                                    <span className="text-[10px] font-bold">{j + 1}</span>
+                                            <div key={j} className="flex items-center gap-4 p-4 rounded-2xl bg-bg-main/50 border border-border-main/30 group-hover:bg-bg-main transition-colors">
+                                                <div className="w-10 h-10 rounded-xl bg-accent-color/10 flex items-center justify-center text-accent-color font-black text-xs">
+                                                    {j + 1}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-bold">{unit.text}</span>
-                                                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">{unit.surahs}</span>
+                                                    <span className="text-base font-black tracking-tight">{unit.text}</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">{unit.surahs}</span>
                                                 </div>
                                             </div>
                                         ))}
 
                                         {isCurrent && currentSurahNames.length > 0 && (
-                                            <div className="mt-4 p-4 bg-danger/5 border border-danger/20 rounded-2xl flex gap-3 items-start animate-bounce-subtle">
-                                                <AlertCircle size={18} className="text-danger shrink-0" />
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="mt-4 p-4 bg-danger/5 border border-danger/20 rounded-2xl flex gap-4 items-start"
+                                            >
+                                                <AlertCircle size={20} className="text-danger shrink-0 mt-0.5" />
                                                 <div className="space-y-1">
-                                                    <p className="text-[10px] font-black text-danger uppercase tracking-[0.2em]">{t('difficultyWarning')}</p>
-                                                    <p className="text-xs font-bold leading-tight">{currentSurahNames.join(', ')}</p>
+                                                    <p className="text-[9px] font-black text-danger uppercase tracking-[0.2em]">{t('difficultyWarning')}</p>
+                                                    <p className="text-xs font-bold leading-relaxed">{currentSurahNames.join(', ')}</p>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         )}
                                     </div>
 
@@ -177,7 +200,7 @@ const RevisionPlanView: React.FC = () => {
                                             <Button
                                                 size="sm"
                                                 variant={day.status === 'revised' ? 'success' : 'secondary'}
-                                                className="h-11 font-black"
+                                                className="h-12 font-black rounded-xl shadow-lg shadow-success/5"
                                                 onClick={() => handleStatusUpdate(day, 'revised')}
                                             >
                                                 {t('revised')}
@@ -185,7 +208,7 @@ const RevisionPlanView: React.FC = () => {
                                             <Button
                                                 size="sm"
                                                 variant={day.status === 'to-review' ? 'warning' : 'secondary'}
-                                                className="h-11 font-black"
+                                                className="h-12 font-black rounded-xl shadow-lg shadow-warning/5"
                                                 onClick={() => handleStatusUpdate(day, 'to-review')}
                                             >
                                                 {t('toReview')}

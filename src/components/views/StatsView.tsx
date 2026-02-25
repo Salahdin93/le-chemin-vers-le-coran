@@ -1,12 +1,13 @@
 import React from 'react';
 import { useStore } from '../../context/AppContext';
-import Card, { CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { processWeeklyReadingData, processWeeklyRevisionData } from '../../services/statsLogic';
 import EmptyState from '../ui/EmptyState';
 import { TOTAL_PAGES } from '../../constants/quranData';
 import { HADITH_COLLECTION } from '../../constants/hadithData';
 import { HadithMemorizationStatus } from '../../types';
+import { motion } from 'framer-motion';
+import { BarChart3, PieChart as PieChartIcon, TrendingUp, Activity, Award } from 'lucide-react';
 
 const RADIAN = Math.PI / 180;
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
@@ -15,7 +16,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
   return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="bold">
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-[10px] font-black">
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
@@ -51,7 +52,7 @@ const StatsView: React.FC = () => {
   }
 
   const hadithStatusData = [
-    { name: t('statusAcquis'), value: hadithStatusCounts.acquis || 0, color: '#10b981' },
+    { name: t('statusAcquis'), value: hadithStatusCounts.acquis || 0, color: 'var(--accent-color)' },
     { name: t('statusEnMemorisation'), value: hadithStatusCounts.en_memorisation || 0, color: '#3b82f6' },
     { name: t('statusARependre'), value: hadithStatusCounts.a_reprendre || 0, color: '#f59e0b' },
     { name: t('statusLu'), value: hadithStatusCounts.lu || 0, color: '#64748b' },
@@ -62,48 +63,88 @@ const StatsView: React.FC = () => {
   const noData = weeklyReadingData.length === 0 && weeklyRevisionData.length === 0;
 
   return (
-    <div className="space-y-12 pb-32 px-2 md:px-0">
-      <header className="pb-8 border-b border-border-main">
-        <h1 className="text-3xl md:text-4xl font-black text-gradient mb-2">{t('statistics')}</h1>
-        <p className="text-text-secondary font-medium text-sm md:text-base">{t('statsSubtitle') || 'Analysez vos efforts et visualisez votre ascension spirituelle.'}</p>
+    <div className="space-y-12 pb-32 px-4 md:px-0">
+      <header className="pb-8 border-b border-border-main flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-5xl font-black text-gradient mb-2">{t('statistics')}</h1>
+          <p className="text-text-secondary font-medium text-sm md:text-base">{t('statsSubtitle') || 'Analysez vos efforts et visualisez votre ascension spirituelle.'}</p>
+        </div>
+        <div className="flex items-center gap-3 p-1 bg-bg-secondary/50 rounded-2xl border border-border-main/50 self-start md:self-auto">
+          <div className="px-4 py-2 flex items-center gap-2">
+            <Activity size={16} className="text-accent-color" />
+            <span className="text-[10px] font-black uppercase tracking-widest">{t('liveStats') || 'Live Update'}</span>
+          </div>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      {/* Main Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="!bg-accent-color/5 border-accent-color/10 shadow-none ring-1 ring-accent-color/5 overflow-visible h-full flex flex-col items-center justify-center p-8">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color mb-4">{t('readingProgress')}</span>
-            <p className="text-5xl md:text-6xl font-black mb-2">{readingProgressPercent}%</p>
-            <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{totalPagesRead} / {totalPagesGoal} pages</p>
-          </Card>
+          <div className="premium-card p-8 flex flex-col items-center justify-center relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-accent-color/5 rounded-full blur-2xl group-hover:bg-accent-color/10 transition-colors" />
+            <TrendingUp size={24} className="text-accent-color mb-4 opacity-40" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary mb-2">{t('readingProgress')}</span>
+            <p className="text-5xl font-black text-gradient leading-none mb-4">{readingProgressPercent}%</p>
+            <div className="w-full h-1 bg-bg-secondary rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${readingProgressPercent}%` }}
+                className="h-full bg-accent-color shadow-[0_0_10px_rgba(var(--accent-rgb),0.5)]"
+              />
+            </div>
+            <p className="mt-4 text-[10px] font-bold opacity-40 uppercase tracking-widest">{totalPagesRead} / {totalPagesGoal} pages</p>
+          </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="!bg-blue-500/5 border-blue-500/10 shadow-none ring-1 ring-blue-500/5 overflow-visible h-full flex flex-col items-center justify-center p-8">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4">{t('revisionProgress')}</span>
-            <p className="text-5xl md:text-6xl font-black mb-2">{revisionProgressPercent}%</p>
-            <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{revisionDaysDone} / {totalRevisionDays} {t('days')}</p>
-          </Card>
+          <div className="premium-card p-8 flex flex-col items-center justify-center relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
+            <Activity size={24} className="text-blue-500 mb-4 opacity-40" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary mb-2">{t('revisionProgress')}</span>
+            <p className="text-5xl font-black text-blue-500 leading-none mb-4">{revisionProgressPercent}%</p>
+            <div className="w-full h-1 bg-bg-secondary rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${revisionProgressPercent}%` }}
+                className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+              />
+            </div>
+            <p className="mt-4 text-[10px] font-bold opacity-40 uppercase tracking-widest">{revisionDaysDone} / {totalRevisionDays} {t('days')}</p>
+          </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="!bg-yellow-500/5 border-yellow-500/10 shadow-none ring-1 ring-yellow-500/5 overflow-visible h-full flex flex-col items-center justify-center p-8 sm:col-span-2 lg:col-span-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 mb-4">{t('hadithProgress')}</span>
-            <p className="text-5xl md:text-6xl font-black mb-2">{masteredHadiths}<span className="text-2xl opacity-20 mx-2">/</span>{totalHadiths}</p>
-            <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{t('hadithsMastered')}</p>
-          </Card>
+          <div className="premium-card p-8 flex flex-col items-center justify-center relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-yellow-500/5 rounded-full blur-2xl group-hover:bg-yellow-500/10 transition-colors" />
+            <Award size={24} className="text-yellow-500 mb-4 opacity-40" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary mb-2">{t('hadithProgress')}</span>
+            <div className="flex items-baseline gap-2 mb-4">
+              <p className="text-5xl font-black text-yellow-500 leading-none">{masteredHadiths}</p>
+              <span className="text-xl font-black opacity-20">/ {totalHadiths}</span>
+            </div>
+            <div className="w-full h-1 bg-bg-secondary rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(masteredHadiths / totalHadiths) * 100}%` }}
+                className="h-full bg-yellow-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+              />
+            </div>
+            <p className="mt-4 text-[10px] font-bold opacity-40 uppercase tracking-widest">{t('hadithsMastered')}</p>
+          </div>
         </motion.div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Hadith Distribution */}
         <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }}>
-          <Card className="p-0 overflow-hidden border-none shadow-premium bg-slate-900 text-white">
-            <CardHeader className="p-8 border-b border-white/5">
-              <CardTitle className="text-lg font-black uppercase tracking-[0.2em] flex items-center gap-3">
-                <span className="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+          <div className="premium-card p-0 overflow-hidden flex flex-col h-full">
+            <header className="p-8 border-b border-border-main bg-bg-secondary/30">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3">
+                <PieChartIcon size={18} className="text-yellow-500" />
                 {t('hadithStats')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8">
+              </h3>
+            </header>
+            <div className="p-8 flex-1 flex flex-col items-center">
               <div className="w-full h-72">
                 <ResponsiveContainer>
                   <PieChart>
@@ -113,80 +154,143 @@ const StatsView: React.FC = () => {
                       cy="50%"
                       labelLine={false}
                       label={renderCustomizedLabel}
-                      outerRadius={100}
-                      innerRadius={40}
+                      outerRadius={110}
+                      innerRadius={50}
+                      paddingAngle={5}
                       dataKey="value"
                     >
                       {hadithStatusData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', color: 'white' }} />
-                    <Legend iconType="circle" />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'rgba(var(--bg-secondary-rgb), 0.95)',
+                        border: '1px solid var(--border-main)',
+                        borderRadius: '1rem',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend
+                      iconType="circle"
+                      formatter={(value) => <span className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">{value}</span>}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </motion.div>
 
+        {/* Activity Charts */}
         {noData ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-            <Card className="h-full flex items-center justify-center border-dashed border-2 border-border-main/50 bg-bg-main/30">
-              <EmptyState icon={<BarChart size={48} className="opacity-10" />} title={t('noDataYet')} message={t('statsAppearHere')} />
-            </Card>
+            <div className="h-full flex items-center justify-center border-2 border-dashed border-border-main/50 rounded-[2.5rem] bg-bg-main/30 p-12">
+              <EmptyState icon={<BarChart3 size={48} className="opacity-10" />} title={t('noDataYet')} message={t('statsAppearHere')} />
+            </div>
           </motion.div>
         ) : (
           <div className="space-y-8">
             {weeklyReadingData.length > 0 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-                <Card className="premium-card p-0 overflow-hidden border-none shadow-premium">
-                  <CardHeader className="p-6 border-b border-border-main">
-                    <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full bg-accent-color" />
+                <div className="premium-card p-0 overflow-hidden">
+                  <header className="p-6 border-b border-border-main bg-bg-secondary/30">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3">
+                      <BarChart3 size={18} className="text-accent-color" />
                       {t('readingActivity')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
+                    </h3>
+                  </header>
+                  <div className="p-8">
                     <div className="h-48 md:h-64">
                       <ResponsiveContainer>
                         <BarChart data={weeklyReadingData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                          <XAxis dataKey="week" tick={{ fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                          <Tooltip cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }} contentStyle={{ background: 'var(--card-bg)', borderColor: 'var(--border-main)', borderRadius: '0.75rem', fontSize: '12px' }} />
-                          <Bar dataKey="pages" fill="var(--accent-color)" radius={[4, 4, 0, 0]} barSize={24} />
+                          <XAxis
+                            dataKey="week"
+                            tick={{ fontSize: 9, fontWeight: 900, fill: 'currentColor', opacity: 0.3 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 9, fontWeight: 900, fill: 'currentColor', opacity: 0.3 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip
+                            cursor={{ fill: 'rgba(var(--accent-rgb), 0.05)' }}
+                            contentStyle={{
+                              background: 'var(--card-bg)',
+                              borderColor: 'var(--border-main)',
+                              borderRadius: '0.75rem',
+                              fontSize: '10px',
+                              fontWeight: 'bold'
+                            }}
+                          />
+                          <Bar
+                            dataKey="pages"
+                            fill="var(--accent-color)"
+                            radius={[8, 8, 0, 0]}
+                            barSize={32}
+                            className="drop-shadow-[0_0_10px_rgba(var(--accent-rgb),0.3)]"
+                          />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </motion.div>
             )}
 
             {weeklyRevisionData.length > 0 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
-                <Card className="premium-card p-0 overflow-hidden border-none shadow-premium">
-                  <CardHeader className="p-6 border-b border-border-main">
-                    <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <div className="premium-card p-0 overflow-hidden">
+                  <header className="p-6 border-b border-border-main bg-bg-secondary/30">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3">
+                      <Activity size={18} className="text-blue-500" />
                       {t('revisionActivity')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
+                    </h3>
+                  </header>
+                  <div className="p-8">
                     <div className="h-48 md:h-64">
                       <ResponsiveContainer>
                         <BarChart data={weeklyRevisionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                          <XAxis dataKey="week" tick={{ fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                          <YAxis allowDecimals={false} tick={{ fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                          <Tooltip cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }} contentStyle={{ background: 'var(--card-bg)', borderColor: 'var(--border-main)', borderRadius: '0.75rem', fontSize: '12px' }} />
-                          <Bar dataKey="units" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
+                          <XAxis
+                            dataKey="week"
+                            tick={{ fontSize: 9, fontWeight: 900, fill: 'currentColor', opacity: 0.3 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            allowDecimals={false}
+                            tick={{ fontSize: 9, fontWeight: 900, fill: 'currentColor', opacity: 0.3 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip
+                            cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
+                            contentStyle={{
+                              background: 'var(--card-bg)',
+                              borderColor: 'var(--border-main)',
+                              borderRadius: '0.75rem',
+                              fontSize: '10px',
+                              fontWeight: 'bold'
+                            }}
+                          />
+                          <Bar
+                            dataKey="units"
+                            fill="#3b82f6"
+                            radius={[8, 8, 0, 0]}
+                            barSize={32}
+                            className="drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+                          />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </motion.div>
             )}
           </div>
