@@ -14,9 +14,9 @@ export const dbService = {
         if (!user) return [];
 
         const { data, error } = await supabase
-            .from('profiles')
+            .from('profils')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('ID de l\'utilisateur', user.id)
             .order('created_at', { ascending: true });
 
         if (error) {
@@ -25,20 +25,22 @@ export const dbService = {
         }
 
         return (data || []).map(row => ({
-            ...row,
-            // Conversion des champs JSONB si nécessaire
+            id: row.id,
+            name: row.name,
+            gender: row.gender,
+            password: row.password,
+            theme: row.theme,
+            accentColor: row.couleur_accent,
             goals: row.goals || {},
-            memorizations: row.memorizations || { surahParts: [], hizbs: [], juzz: [] },
-            hadithProgress: row.hadith_progress || {},
-            hadithHistory: row.hadith_history || [],
-            evaluationPlans: row.evaluation_plans || [],
+            memorizations: row.memorisations || { surahParts: [], hizbs: [], juzz: [] },
+            hadithProgress: row.hadith_progression || {},
+            hadithHistory: row.hadith_historique || [],
+            evaluationPlans: row.plans_evaluation || [],
             difficulties: row.difficulties || [],
-            evaluationHistory: row.evaluation_history || [],
+            evaluationHistory: row.historique_evaluation || [],
             badges: row.badges || [],
-            progress: row.progress || null,
-            plans: row.plans || null,
-            // Mappage des noms snake_case vers camelCase si nécessaire
-            accentColor: row.accent_color
+            progress: row.progression || null,
+            plans: row.plans || null
         }));
     },
 
@@ -51,27 +53,27 @@ export const dbService = {
 
         const profileData = {
             id: profile.id,
-            user_id: user.id,
+            "ID de l'utilisateur": user.id,
             name: profile.name,
             gender: profile.gender,
             password: profile.password,
             theme: profile.theme,
-            accent_color: profile.accentColor,
+            couleur_accent: profile.accentColor,
             goals: profile.goals,
-            memorizations: profile.memorizations,
-            hadith_progress: profile.hadithProgress,
-            hadith_history: profile.hadithHistory,
-            evaluation_plans: profile.evaluationPlans,
+            memorisations: profile.memorizations,
+            hadith_progression: profile.hadithProgress,
+            hadith_historique: profile.hadithHistory,
+            plans_evaluation: profile.evaluationPlans,
             difficulties: profile.difficulties,
-            evaluation_history: profile.evaluationHistory,
+            historique_evaluation: profile.evaluationHistory,
             badges: profile.badges,
-            progress: progress || profile.progress,
+            progression: progress || profile.progress,
             plans: plans || profile.plans,
             updated_at: new Date().toISOString()
         };
 
         const { error } = await supabase
-            .from('profiles')
+            .from('profils')
             .upsert(profileData);
 
         if (error) {
@@ -86,7 +88,7 @@ export const dbService = {
      */
     async deleteProfile(profileId: string): Promise<boolean> {
         const { error } = await supabase
-            .from('profiles')
+            .from('profils')
             .delete()
             .eq('id', profileId);
 
@@ -105,9 +107,9 @@ export const dbService = {
         if (!user) return null;
 
         const { data, error } = await supabase
-            .from('user_settings')
+            .from('paramètres utilisateur')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('ID de l\'utilisateur', user.id)
             .single();
 
         if (error && error.code !== 'PGRST116') { // PGRST116 = No rows found
@@ -119,11 +121,11 @@ export const dbService = {
 
         return {
             settings: {
-                lang: data.lang,
-                enableNotifications: data.enable_notifications,
-                notificationTime: data.notification_time,
+                lang: data.langue,
+                enableNotifications: data.activer_notifications,
+                notificationTime: data.heure_de_notification,
             },
-            activeProfileId: data.active_profile_id
+            activeProfileId: data.id_profil_actuel
         };
     },
 
@@ -135,16 +137,16 @@ export const dbService = {
         if (!user) return false;
 
         const settingsData = {
-            user_id: user.id,
-            lang: settings.lang,
-            enable_notifications: settings.enableNotifications,
-            notification_time: settings.notificationTime,
-            active_profile_id: activeProfileId,
+            "ID de l'utilisateur": user.id,
+            langue: settings.lang,
+            activer_notifications: settings.enableNotifications,
+            heure_de_notification: settings.notificationTime,
+            id_profil_actuel: activeProfileId,
             updated_at: new Date().toISOString()
         };
 
         const { error } = await supabase
-            .from('user_settings')
+            .from('paramètres utilisateur')
             .upsert(settingsData);
 
         if (error) {
@@ -161,7 +163,7 @@ export const dbService = {
         // On sauvegarde chaque profil
         for (const profile of state.profiles) {
             if (profile.id === state.activeProfileId) {
-                // Pour le profil actif, on utilise l'état global actuel (progress, plans)
+                // Pour le profil actif, on utilise l'état global actuel (progression, plans)
                 await this.saveProfile(profile, state.progress, state.plans);
             } else {
                 await this.saveProfile(profile);

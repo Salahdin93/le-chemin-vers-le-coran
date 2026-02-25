@@ -4,6 +4,7 @@ import { useStore } from '@/context/AppContext';
 import { WizardData, RevisionFrequency } from '@/types';
 import { LOGO_URL_DARK } from '@/constants/ui';
 import Button from '@/components/ui/Button';
+import { generateUUID } from '@/utils/uuid';
 
 import StepInitialChoice from './wizard/StepInitialChoice';
 import StepProfileInfo from './wizard/StepProfileInfo';
@@ -108,7 +109,7 @@ const Wizard: FC = () => {
 
     const handleFinish = () => {
         if (!isStepValid) return;
-        const profileId = `profile_${Date.now()}`;
+        const profileId = generateUUID();
         const startDate = new Date().toISOString().split('T')[0];
         dispatch({ type: 'FINISH_WIZARD', payload: { wizardData: formData, mode, profileId, startDate } });
     };

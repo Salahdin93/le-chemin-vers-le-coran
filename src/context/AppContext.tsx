@@ -8,6 +8,7 @@ import { TRANSLATIONS } from '../translations';
 import { appStateSchema } from '../schemas/appStateSchema';
 import { dbService } from '../lib/dbService';
 import { supabase } from '../lib/supabase';
+import { generateUUID } from '../utils/uuid';
 
 const defaultState: AppState = {
   isLoading: false,
@@ -59,6 +60,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
       if (initialState.profiles) {
         initialState.profiles.forEach((profile: Profile & { evaluationPlan?: EvaluationPlan }) => {
+          // Migration des anciens IDs vers des UUIDs valides pour Supabase
+          if (profile.id && !profile.id.includes('-') && !profile.id.startsWith('auth_')) {
+            const oldId = profile.id;
+            profile.id = generateUUID();
+            if (initialState.activeProfileId === oldId) {
+              initialState.activeProfileId = profile.id;
+            }
+          }
+
           if (!profile.difficulties) profile.difficulties = [];
           if (!(profile.memorizations as any).surahParts) { (profile.memorizations as any).surahParts = (profile.memorizations as any).surahs || []; }
           if (!profile.evaluationHistory) profile.evaluationHistory = [];
@@ -398,6 +408,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
             };
             dispatch({ type: 'INITIALIZE_STATE', payload: newState });
             return;
+          } else {
+            // Si l'utilisateur est connecté mais n'a RIEN sur Supabase, on tente de sauver le local actuel vers Supabase
+            console.log('📤 Empty remote, syncing local state to Supabase...');
+            const savedStateJSON = localStorage.getItem('quranCompanionState_v7');
+            if (savedStateJSON) {
+              try {
+                const parsedState = JSON.parse(savedStateJSON);
+                await dbService.syncFullState(parsedState);
+              } catch (e) {
+                console.error("Failed to sync local state to empty remote", e);
+              }
+            }
           }
         }
 
