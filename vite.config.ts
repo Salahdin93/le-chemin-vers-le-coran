@@ -8,19 +8,29 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'logo.svg', 'apple-touch-icon.png'],
+      includeAssets: ['logo.png', 'logo-dark.png', 'logo.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Le Chemin Vers Le Coran',
-        short_name: 'Coran Path',
+        short_name: 'Le Chemin',
         description: 'Votre compagnon pour la lecture et la révision du Coran',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
           {
-            src: 'logo.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: 'logo.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'any maskable',
           },
         ],
