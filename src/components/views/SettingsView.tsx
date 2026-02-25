@@ -58,19 +58,9 @@ const SettingsView: React.FC = () => {
             bg: 'bg-purple-500/10',
             content: (
                 <div className="space-y-6">
-                    {user ? (
-                        <div className="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/20 mb-4 flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Compte lié</p>
-                                <p className="text-xs font-bold text-white truncate max-w-[150px]">{user.email}</p>
-                            </div>
-                            <Button variant="ghost" size="sm" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest border-white/10 hover:bg-white/5" onClick={async () => { await supabase.auth.signOut(); setUser(null); }}>
-                                Déconnexion
-                            </Button>
-                        </div>
-                    ) : (
+                    {!user && !activeProfile.isLinked && (
                         <Button variant="accent" size="sm" className="w-full rounded-xl shadow-lg shadow-accent-color/20 mb-6 py-4" onClick={() => dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' })}>
-                            <Globe size={16} className="mr-2" /> Connecter mon compte
+                            <Globe size={16} className="mr-2" /> {t('connectAccount') || 'Connecter mon compte'}
                         </Button>
                     )}
 
@@ -81,7 +71,7 @@ const SettingsView: React.FC = () => {
                         onChange={e => setName(e.target.value)}
                         onBlur={e => handleNameChange(e.target.value)}
                         placeholder="Votre nom"
-                        className="bg-bg-main/50"
+                        className="bg-bg-secondary"
                     />
                     <div className="flex items-center justify-between p-4 bg-bg-main/50 rounded-2xl border border-border-main/50">
                         <div className="flex flex-col">
@@ -105,9 +95,9 @@ const SettingsView: React.FC = () => {
                 <div className="space-y-4">
                     {isPasswordFormVisible ? (
                         <form onSubmit={handleChangePassword} className="space-y-4">
-                            <Input label={t('currentPassword')} type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="bg-bg-main/50 h-10" />
-                            <Input label={t('newPassword')} type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="bg-bg-main/50 h-10" />
-                            <Input label={t('confirmPassword')} type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} required className="bg-bg-main/50 h-10" />
+                            <Input label={t('currentPassword')} type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="bg-bg-secondary h-10" />
+                            <Input label={t('newPassword')} type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="bg-bg-secondary h-10" />
+                            <Input label={t('confirmPassword')} type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} required className="bg-bg-secondary h-10" />
                             <div className="grid grid-cols-2 gap-2">
                                 <Button type="submit" size="sm" className="w-full rounded-xl">{t('updatePassword') || 'Valider'}</Button>
                                 <Button variant="ghost" size="sm" className="w-full rounded-xl" onClick={() => setIsPasswordFormVisible(false)}>{t('cancel')}</Button>

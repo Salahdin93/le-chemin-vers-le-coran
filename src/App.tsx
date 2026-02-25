@@ -8,6 +8,8 @@ import MainAppView from './components/layout/MainAppView';
 import InitialChoiceScreen from './components/screens/InitialChoiceScreen';
 import ProfileSelectionScreen from './components/screens/ProfileSelectionScreen';
 import LoadingOverlay from './components/ui/LoadingOverlay';
+import PWAInstallPrompt from './components/ui/PWAInstallPrompt';
+import NotificationContainer from './components/ui/NotificationContainer';
 import ErrorBoundary from './components/ErrorBoundary';
 import SplashScreen from './components/screens/SplashScreen';
 import { AnimatePresence } from 'framer-motion';
@@ -60,6 +62,8 @@ function AppContent() {
           {renderScreen()}
         </div>
       </AnimatePresence>
+      <PWAInstallPrompt />
+      <NotificationContainer />
       <LoadingOverlay isLoading={state.isLoading} />
     </>
   );

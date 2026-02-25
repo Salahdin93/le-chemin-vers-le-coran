@@ -223,6 +223,7 @@ export interface Profile {
   hadithHistory?: HadithHistoryEntry[];
   evaluationPlans?: EvaluationPlan[];
   difficulties?: PersistentDifficulty[];
+  isLinked?: boolean;
 }
 
 export interface ReadingHistoryEntry {

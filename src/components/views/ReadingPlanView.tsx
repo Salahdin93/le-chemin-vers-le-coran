@@ -116,7 +116,28 @@ const ReadingPlanView: React.FC = () => {
 
     const readingGoal = activeProfile?.goals.reading;
     const readingPlan = state.plans.reading;
-    if (!readingGoal || !readingPlan) return null;
+
+    if (!readingGoal || !readingPlan) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 p-8">
+                <div className="w-32 h-32 accent-gradient rounded-[3rem] flex items-center justify-center text-white shadow-premium animate-bounce-subtle">
+                    <BookOpen size={64} />
+                </div>
+                <div className="space-y-4 max-w-sm">
+                    <h2 className="text-3xl font-black tracking-tight">{t('noReadingPlanTitle')}</h2>
+                    <p className="text-text-secondary font-medium">{t('noReadingPlanMessage')}</p>
+                </div>
+                <Button
+                    variant="accent"
+                    size="lg"
+                    className="px-12 h-16 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-accent-color/20"
+                    onClick={() => dispatch({ type: 'START_WIZARD', payload: { type: 'reading', mode: 'new' } })}
+                >
+                    {t('createPlan')}
+                </Button>
+            </div>
+        );
+    }
 
     const handleStatusChange = (day: PlanDay, status: ReadingStatus, isKahfUpdate: boolean = false) => {
         const executeUpdate = (adjustment: number) => {

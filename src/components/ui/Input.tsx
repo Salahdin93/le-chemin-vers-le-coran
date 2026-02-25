@@ -48,9 +48,9 @@ const Input: React.FC<InputProps> = ({ label, id, className, wrapperClassName, i
                 'focus:bg-white/15 focus:border-emerald-400/50 focus:ring-emerald-400/10',
               ]
               : [
-                'border border-border-main bg-bg-secondary/50 text-text-main',
-                'focus:bg-bg-secondary focus:border-accent-color/50 focus:ring-accent-color/5',
-                'placeholder:text-text-main/20 placeholder:font-normal',
+                'border-2 border-border-main/50 bg-bg-secondary text-text-main',
+                'focus:bg-bg-secondary focus:border-accent-color focus:ring-accent-color/10',
+                'placeholder:text-text-main/30 placeholder:font-normal shadow-inner',
               ],
             icon && 'pl-12',
             className

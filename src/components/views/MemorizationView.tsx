@@ -151,14 +151,14 @@ const MemorizationView: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">{t('selection')}</label>
-                            <Select className="h-14 rounded-2xl bg-bg-main border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" onChange={e => setSelectedItemId(e.target.value)} defaultValue={selectedItemId}>
+                            <Select className="h-14 rounded-2xl bg-bg-secondary border-2 border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" onChange={e => setSelectedItemId(e.target.value)} defaultValue={selectedItemId}>
                                 <option value="" disabled>{t('selectItem')}</option>
                                 {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </Select>
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">{t('level')}</label>
-                            <Select className="h-14 rounded-2xl bg-bg-main border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)} defaultValue={selectedLevel}>
+                            <Select className="h-14 rounded-2xl bg-bg-secondary border-2 border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)} defaultValue={selectedLevel}>
                                 <option value="bon">{levels.bon}</option>
                                 <option value="excellent">{levels.excellent}</option>
                                 <option value="moyen">{levels.moyen}</option>
@@ -213,7 +213,7 @@ const MemorizationView: React.FC = () => {
                         <TabsTrigger
                             key={tab}
                             value={tab}
-                            className="px-8 h-10 rounded-xl data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                            className="px-8 h-10 rounded-xl text-text-main/50 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xl text-[10px] font-black uppercase tracking-widest transition-all"
                         >
                             {t(`tab_${tab}`) || t(tab === 'surah' ? 'memorizedSurahs' : tab === 'juzz' ? 'memorizedJuzz' : tab === 'hizb' ? 'memorizedHizbs' : 'hadith')}
                         </TabsTrigger>
