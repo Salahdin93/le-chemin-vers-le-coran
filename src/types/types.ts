@@ -335,6 +335,18 @@ export interface WizardData {
   prioritizeWeaknesses?: boolean;
   wantsRevision?: boolean;
   wantsReading?: boolean;
+  // Hadith plan
+  wantsHadith?: boolean;
+  hadithType?: 'lecture' | 'revision'; // renamed from memorisation per user request
+  hadithPerDay?: number;
+  hadithDuration?: number;
+  hadithFrequency?: RevisionFrequency;
+  prioritizeHadithWeaknesses?: boolean;
+  hadithSelection?: number[]; // list of hadith numbers (1-40 or 1-100)
+  // Resume an existing reading when creating new profile
+  resumeExistingReading?: boolean;
+  existingDaysRead?: number;
+  existingPagesRead?: number;
 }
 
 export interface NotificationProps {

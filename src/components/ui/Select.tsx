@@ -6,21 +6,31 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   className?: string;
   wrapperClassName?: string;
   children: React.ReactNode;
+  variant?: 'default' | 'wizard';
 }
 
-const Select: React.FC<SelectProps> = ({ label, id, className, wrapperClassName, children, ...props }) => {
+const Select: React.FC<SelectProps> = ({ label, id, className, wrapperClassName, children, variant = 'default', ...props }) => {
+  const isWizard = variant === 'wizard';
   return (
     <div className={clsx('w-full', wrapperClassName)}>
       {label && (
-        <label htmlFor={id} className="block mb-2 font-semibold text-text-main text-left">
+        <label
+          htmlFor={id}
+          className={clsx(
+            'block mb-2 text-[10px] font-black uppercase tracking-[0.2em] ml-1',
+            isWizard ? 'text-emerald-200/70' : 'font-semibold text-text-main'
+          )}
+        >
           {label}
         </label>
       )}
       <select
         id={id}
         className={clsx(
-          'w-full px-4 py-2.5 rounded-lg border border-border-main bg-bg-main text-text-main',
-          'focus:border-primary focus:ring-2 focus:ring-primary/50 focus:outline-none transition-colors duration-300',
+          'w-full px-4 py-3 rounded-xl border transition-colors duration-300 focus:outline-none focus:ring-2',
+          isWizard
+            ? 'bg-white/10 border-white/15 text-white focus:border-emerald-400/50 focus:ring-emerald-400/10'
+            : 'bg-bg-main text-text-main border-border-main focus:border-primary focus:ring-primary/50',
           className
         )}
         {...props}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useStore } from '@/context/AppContext';
 import { Profile } from '@/types';
 import Button from '@/components/ui/Button';
@@ -13,11 +14,17 @@ const ProfileCard = React.memo<{ profile: Profile; onSelect: () => void; onEdit:
             <div className="group relative transition-transform duration-300 ease-out hover:-translate-y-1">
                 <button
                     onClick={onSelect}
-                    className="w-full p-6 text-center bg-card-bg border-2 border-border-main rounded-xl shadow-md hover:border-accent hover:shadow-lg transition-all"
+                    className="w-full p-8 text-center glass-card border-none hover:bg-white/10 shadow-premium transition-all duration-500 group-hover:scale-[1.02]"
                 >
-                    <div className="text-5xl mb-4">{profile.gender === 'female' ? '🧕' : '🧔‍♂️'}</div>
-                    <h3 className="text-xl font-bold truncate">{profile.name}</h3>
-                    {profile.password && <span className="text-xs text-text-main/60">🔒 {t('protected')}</span>}
+                    <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-500 drop-shadow-lg">
+                        {profile.gender === 'female' ? '🧕' : '🧔‍♂️'}
+                    </div>
+                    <h3 className="text-xl font-black text-white truncate mb-1">{profile.name}</h3>
+                    {profile.password && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/20 text-[10px] text-amber-400 font-bold uppercase tracking-widest border border-amber-400/20">
+                            🔒 {t('protected')}
+                        </div>
+                    )}
                 </button>
                 <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
@@ -108,11 +115,28 @@ const ProfileSelectionScreen: React.FC = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-bg-main flex flex-col items-center justify-center p-4">
-                <header className="text-center mb-8">
-                    <img src={logoSrc} alt="Logo" className="w-48 h-48 mx-auto object-contain mb-4" />
-                    <h1 className="text-3xl font-bold">{state.profiles.length > 0 ? t('whoIsThis') : t('welcome')}</h1>
-                    <p className="text-text-main/70">{state.profiles.length > 0 ? t('selectProfileToContinue') : t('createFirstProfile')}</p>
+            <div className="min-h-screen dynamic-bg geometric-overlay flex flex-col items-center justify-center p-4 overflow-hidden" style={{ background: 'linear-gradient(160deg, #052e16 0%, #064e3b 35%, #065f46 60%, #047857 100%)' }}>
+                {/* Background glows */}
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-color/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+                <header className="relative text-center mb-12 z-10">
+                    <motion.div
+                        initial={{ y: -20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        className="relative inline-block mb-6"
+                    >
+                        <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full" />
+                        <img src={logoSrc} alt="Logo" className="w-40 h-40 mx-auto object-contain relative drop-shadow-2xl" />
+                    </motion.div>
+
+                    <h1 className="text-4xl font-black mb-2 text-white tracking-tight">
+                        {state.profiles.length > 0 ? t('whoIsThis') : t('welcome')}
+                    </h1>
+                    <p className="text-emerald-100/60 font-medium tracking-wide uppercase text-xs">
+                        {state.profiles.length > 0 ? t('selectProfileToContinue') : t('createFirstProfile')}
+                    </p>
+                    <div className="w-16 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent mx-auto mt-6" />
                 </header>
 
                 <main className="w-full max-w-4xl">
@@ -129,9 +153,15 @@ const ProfileSelectionScreen: React.FC = () => {
                         ))}
                     </div>
 
-                    <div className="text-center">
-                        <Button onClick={handleOpenCreator} size="lg" className="gap-2">
-                            <Plus size={20} /> {t('addProfile')}
+                    <div className="text-center mt-12 mb-8">
+                        <Button
+                            variant="accent"
+                            size="lg"
+                            className="w-full max-w-xs py-5 gap-3 shadow-2xl transform active:scale-95 transition-all"
+                            onClick={handleOpenCreator}
+                        >
+                            <Plus size={20} className="stroke-[3px]" />
+                            <span className="tracking-tight">{t('addProfile') || 'Ajouter un nouveau profil'}</span>
                         </Button>
                     </div>
                 </main>

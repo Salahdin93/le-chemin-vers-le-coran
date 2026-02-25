@@ -25,15 +25,16 @@ const StepResumeRevision: React.FC<StepProps> = ({ formData, updateData, t }) =>
     }, [formData.revisionSelection, formData.revisionMode, formData.unitsPerDay, formData.revisionDuration, formData.revisionFrequency, formData.boosterSurahs, formData.boosterSurahFreq, t]);
 
     if ((formData.revisionSelection || []).length === 0) {
-        return <p className="text-sm text-yellow-600">Veuillez d'abord sélectionner les unités à réviser à l'étape précédente.</p>
+        return <p className="text-sm text-amber-300 bg-amber-900/20 p-4 rounded-xl border border-amber-900/30 font-medium">{t('selectUnitsFirst')}</p>
     }
     return (
         <Select
-            label="Point de départ de la révision"
+            label={t('resumeRevisionPoint')}
             value={formData.resumeRevisionIndex}
             onChange={e => updateData({ resumeRevisionIndex: parseInt(e.target.value) })}
+            variant="wizard"
         >
-            <option value={0}>Commencer au début</option>
+            <option value={0}>{t('startFromBeginning')}</option>
             {tempPlan.map((day, index) =>
                 <option key={index} value={index}>
                     {t('day')} {day.day}: {day.units.map(u => u.text).join(' + ')}

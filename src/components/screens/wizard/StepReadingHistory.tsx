@@ -35,13 +35,14 @@ const StepReadingHistory: React.FC<StepProps> = ({ formData, updateData, t }) =>
                 const dayKey = `day_${day}`;
                 const historyEntry = formData.resumeReadingHistory?.[dayKey];
                 return (
-                    <div key={day} className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 items-center">
-                        <label className="font-semibold">{t('day')} {day}</label>
+                    <div key={day} className="p-3 rounded-xl bg-white/5 border border-white/5 mb-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50 block mb-2">{t('day')} {day}</label>
                         <div className="grid grid-cols-2 gap-2">
                             <Select
                                 aria-label={`Jour ${day} status`}
                                 value={historyEntry?.status || 'done'}
                                 onChange={e => handleHistoryChange(day, e.target.value as ReadingStatus, (document.getElementById(`pages-day-${day}`) as HTMLInputElement)?.value || '0')}
+                                variant="wizard"
                             >
                                 <option value="done">{t('goalAchieved')}</option>
                                 <option value="partial">{t('partial')}</option>
@@ -53,6 +54,7 @@ const StepReadingHistory: React.FC<StepProps> = ({ formData, updateData, t }) =>
                                 placeholder="Pages"
                                 value={historyEntry?.realPages ?? ''}
                                 onChange={e => handleHistoryChange(day, historyEntry?.status || 'done', e.target.value)}
+                                variant="wizard"
                             />
                         </div>
                     </div>

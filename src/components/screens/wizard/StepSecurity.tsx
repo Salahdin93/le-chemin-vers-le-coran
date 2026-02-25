@@ -16,12 +16,14 @@ const StepSecurity: React.FC<StepProps> = ({ formData, updateData, t }) => {
                 type="password"
                 value={formData.password || ''}
                 onChange={e => updateData({ password: e.target.value })}
+                variant="wizard"
             />
             <Input
                 label={t('confirmPassword')}
                 type="password"
                 value={formData.passwordConfirm || ''}
                 onChange={e => updateData({ passwordConfirm: e.target.value })}
+                variant="wizard"
             />
         </div>
     );

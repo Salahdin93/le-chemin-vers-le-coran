@@ -41,7 +41,20 @@
 
   /* --- DARK THEME (Deep Aurora) --- */
   html.dark,
-  html:not(.light) {
+  html:not(.light):not(.sepia):not(.midnight):not(.chalkboard):not(.wood):not(.nightblue):not(.sand):not(.emerald):not(.sunrise):not(.leafy):not(.pearl) {
+    --bg-main: #020617;
+    --bg-secondary: #0f172a;
+    --card-bg: #1e293b;
+    --text-main: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-main: rgba(255, 255, 255, 0.08);
+
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --shadow-premium: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  html.dark {
     --bg-main: #020617;
     --bg-secondary: #0f172a;
     --card-bg: #1e293b;
@@ -70,6 +83,29 @@
     --card-bg: #111111;
     --text-main: #ffffff;
     --border-main: #222222;
+  }
+
+  html.emerald {
+    --bg-main: #064e3b;
+    --bg-secondary: #065f46;
+    --card-bg: #064e3b;
+    --text-main: #ecfdf5;
+    --text-secondary: #a7f3d0;
+    --border-main: rgba(16, 185, 129, 0.2);
+    --accent-color: #fbbf24;
+    --accent-glow: rgba(251, 191, 36, 0.3);
+    --glass-bg: rgba(6, 78, 59, 0.7);
+    --glass-border: rgba(16, 185, 129, 0.2);
+  }
+
+  html.nightblue {
+    --bg-main: #020617;
+    --bg-secondary: #0f172a;
+    --card-bg: #1e293b;
+    --text-main: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-main: rgba(255, 255, 255, 0.08);
+    --accent-color: #38bdf8;
   }
 
   /* ── Global Styles ── */
@@ -134,9 +170,9 @@
   .dynamic-bg {
     background-color: var(--bg-main);
     background-image:
-      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0, transparent 50%),
-      radial-gradient(at 50% 0%, rgba(59, 130, 246, 0.05) 0, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.05) 0, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0, transparent 50%),
+      radial-gradient(at 50% 0%, rgba(5, 150, 105, 0.08) 0, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.08) 0, transparent 50%);
     background-attachment: fixed;
   }
 

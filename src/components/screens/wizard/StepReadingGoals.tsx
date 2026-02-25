@@ -17,8 +17,9 @@ const StepReadingGoals: React.FC<StepProps> = ({ formData, updateData, t }) => {
                 label={t('duration')}
                 value={formData.duration || 30}
                 onChange={(e) => updateData({ duration: parseInt(e.target.value) })}
+                variant="wizard"
             >
-                {[7, 10, 15, 20, 30, 40, 60, 90, 120].map(d => <option key={d} value={d}>{d} jours</option>)}
+                {[7, 10, 15, 20, 30, 40, 60, 90, 120].map(d => <option key={d} value={d}>{d} {t('days')}</option>)}
             </Select>
             <Input
                 label={t('khatmas')}
@@ -26,11 +27,13 @@ const StepReadingGoals: React.FC<StepProps> = ({ formData, updateData, t }) => {
                 min="1"
                 value={formData.khatmas || 1}
                 onChange={(e) => updateData({ khatmas: parseInt(e.target.value) || 1 })}
+                variant="wizard"
             />
             <SimpleCheckbox
                 label={t('kahfOption')}
                 checked={!!formData.kahfOption}
                 onChange={(e) => updateData({ kahfOption: e.target.checked })}
+                variant="wizard"
             />
             {formData.kahfOption && (
                 <Input
@@ -39,6 +42,7 @@ const StepReadingGoals: React.FC<StepProps> = ({ formData, updateData, t }) => {
                     min="0"
                     value={formData.kahfPages || 0}
                     onChange={(e) => updateData({ kahfPages: parseInt(e.target.value) || 0 })}
+                    variant="wizard"
                 />
             )}
         </div>

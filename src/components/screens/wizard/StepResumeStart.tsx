@@ -17,6 +17,7 @@ const StepResumeStart: React.FC<StepProps> = ({ formData, updateData, t }) => {
                 min="1"
                 value={formData.resumeDay || 1}
                 onChange={e => updateData({ resumeDay: parseInt(e.target.value) || 1 })}
+                variant="wizard"
             />
         </div>
     );
