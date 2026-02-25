@@ -7,7 +7,6 @@ import Wizard from './components/screens/Wizard';
 import MainAppView from './components/layout/MainAppView';
 import InitialChoiceScreen from './components/screens/InitialChoiceScreen';
 import ProfileSelectionScreen from './components/screens/ProfileSelectionScreen';
-import { Profile } from './types/types';
 import LoadingOverlay from './components/ui/LoadingOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 import SplashScreen from './components/screens/SplashScreen';
@@ -16,7 +15,7 @@ import { AnimatePresence } from 'framer-motion';
 import AuthScreen from './components/screens/AuthScreen';
 
 function AppContent() {
-  const { state, dispatch } = useStore();
+  const { state } = useStore();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -28,31 +27,13 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    // Let AppContext handle the initial state loading and screen routing.
+    // We only react to the state.appScreen which is initialized in AppContext's loadState.
     if (!showSplash && state.appScreen === 'splash') {
-      const savedState = localStorage.getItem('quranCompanionState_v7');
-      if (!savedState) {
-        dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
-        return;
-      }
-
-      const parsedState = JSON.parse(savedState);
-
-      if (parsedState.profiles && parsedState.profiles.length > 0) {
-        if (parsedState.activeProfileId) {
-          const lastActiveProfile = parsedState.profiles.find((p: Profile) => p.id === parsedState.activeProfileId);
-          if (lastActiveProfile?.password) {
-            dispatch({ type: 'SET_APP_SCREEN', payload: 'profile-selection' });
-          } else {
-            dispatch({ type: 'SET_APP_SCREEN', payload: 'main' });
-          }
-        } else {
-          dispatch({ type: 'SET_APP_SCREEN', payload: 'profile-selection' });
-        }
-      } else {
-        dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' });
-      }
+      // If still on splash after the timer, normally AppContext should have updated it.
+      // We can stay on splash or fallback to language if nothing happens.
     }
-  }, [showSplash, state.appScreen, dispatch]);
+  }, [showSplash, state.appScreen]);
 
   const renderScreen = () => {
     if (showSplash || state.appScreen === 'splash') {

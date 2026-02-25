@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useStore } from '@/context/AppContext';
 import { Profile } from '@/types';
 import Button from '@/components/ui/Button';
-import { LOGO_URL } from '@/constants/ui';
+import { LOGO_URL_DARK } from '@/constants/ui';
 import Card from '@/components/ui/Card';
 import ProfileEditorModal from '@/components/modals/ProfileEditorModal';
 import { Edit, Trash2, Plus } from 'lucide-react'; // Icônes pour un look plus propre
@@ -53,7 +53,7 @@ const ProfileSelectionScreen: React.FC = () => {
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [profileToEdit, setProfileToEdit] = useState<Profile | null>(null);
 
-    const logoSrc = LOGO_URL; // Default to light logo on selection screen
+    const logoSrc = LOGO_URL_DARK; // Use dark logo for better visibility on dark green
 
     const handleProfileSelect = (profile: Profile) => {
         if (profile.password) {
@@ -122,12 +122,25 @@ const ProfileSelectionScreen: React.FC = () => {
 
                 <header className="relative text-center mb-12 z-10">
                     <motion.div
-                        initial={{ y: -20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        className="relative inline-block mb-6"
+                        initial={{ y: -20, opacity: 0, scale: 0.9 }}
+                        animate={{ y: 0, opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+                        className="relative mb-8"
                     >
-                        <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full" />
-                        <img src={logoSrc} alt="Logo" className="w-40 h-40 mx-auto object-contain relative drop-shadow-2xl" />
+                        {/* Premium logo container similar to AuthScreen */}
+                        <div
+                            className="w-24 h-24 mx-auto rounded-3xl flex items-center justify-center relative overflow-hidden group"
+                            style={{
+                                background: 'rgba(255,255,255,0.08)',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                backdropFilter: 'blur(20px)',
+                                boxShadow: '0 12px 48px rgba(0,0,0,0.3), 0 0 40px rgba(52,211,153,0.3)',
+                            }}
+                        >
+                            <img src={logoSrc} alt="Logo" className="w-16 h-16 object-contain relative z-10 drop-shadow-2xl" />
+                            {/* Animated reflection */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                        </div>
                     </motion.div>
 
                     <h1 className="text-4xl font-black mb-2 text-white tracking-tight">

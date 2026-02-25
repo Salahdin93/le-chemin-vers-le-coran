@@ -1,4 +1,4 @@
-import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useSyncExternalStore } from 'react';
+import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useRef, useSyncExternalStore } from 'react';
 import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan } from '../types/types';
 import { generateReadingPlan, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
@@ -109,7 +109,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
         plans: targetProfile?.plans || defaultState.plans
       };
     }
-    case 'ADD_PROFILE': return { ...state, profiles: [...state.profiles, action.payload] };
+    case 'ADD_PROFILE': {
+      const t = (key: string) => (TRANSLATIONS[state.settings.lang] as Record<string, string>)[key] || key;
+      return { ...state, profiles: [...state.profiles, action.payload], toast: { message: t('profileCreated') || 'Profil créé avec succès', visible: true } };
+    }
     case 'REMOVE_PROFILE': {
       const newProfiles = state.profiles.filter(p => p.id !== action.payload);
       const newActiveProfileId = state.activeProfileId === action.payload ? (newProfiles[0]?.id || null) : state.activeProfileId;
@@ -164,11 +167,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
         profiles: [...state.profiles, newProfile],
         activeProfileId: newProfile.id,
         progress: newProgress,
-        plans: { ...state.plans, reading: readingPlan, originalReading: readingPlan, revision: revisionPlan },
+        plans: { reading: readingPlan, originalReading: readingPlan, revision: revisionPlan, hadithRevision: null },
         appScreen: 'main',
         activeView: 'dashboard-view',
         wizard: { ...state.wizard, isOpen: false },
-        isLoading: false
+        isLoading: false,
+        toast: { message: tFn('profileCreated') || 'Profil créé avec succès', visible: true }
       };
     }
     case 'UPDATE_HADITH_STATUS': {
@@ -343,6 +347,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, defaultState);
   const activeProfile = useMemo(() => getActiveProfile(state.profiles, state.activeProfileId), [state.profiles, state.activeProfileId]);
 
+  const prevProfilesCount = useRef(state.profiles.length);
   const t = useCallback((key: string, replacements: Record<string, string | number> = {}): string => {
     let translation = (TRANSLATIONS[state.settings.lang]?.[key]) || key;
     Object.keys(replacements).forEach(rKey => {
@@ -402,9 +407,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Sauvegarde automatique optimisée (Supabase + localStorage)
   useEffect(() => {
-    if (state.appScreen === 'splash' || state.isLoading) return;
+    if (state.appScreen === 'splash') return;
 
-    // 1. Sauvegarde LocalStorage immédiate (c'est local, donc gratuit)
+    // 1. Sauvegarde LocalStorage immédiate
     try {
       const stateToSave = { ...state, notificationHistory: [] };
       localStorage.setItem('quranCompanionState_v7', JSON.stringify(stateToSave));
@@ -412,18 +417,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error("Failed to save state to localStorage", error);
     }
 
-    // 2. Sauvegarde Supabase DEBOUNCED (pour économiser l'Egress/API)
-    const timeoutId = setTimeout(async () => {
+    // 2. Gestion de la synchronisation Supabase
+    const handleSync = async (isImmediate = false) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        console.log('☁️ Syncing to Supabase (optimized)...');
-        await dbService.syncFullState(state);
+        if (isImmediate) {
+          console.log('🚀 Immediate Sync (Profile Change)...');
+          await dbService.syncFullState(state);
+        } else {
+          // Debounced sync handled by setTimeout below
+        }
       }
-    }, 3000); // On attend 3 secondes d'inactivité avant de synchroniser
+    };
 
-    return () => clearTimeout(timeoutId);
-
-    // On ne surveille QUE les données persistantes pour éviter de sync lors d'un toast ou d'un changement de vue
+    // Si le nombre de profils a changé, on synchronise immédiatement
+    if (state.profiles.length > prevProfilesCount.current) {
+      handleSync(true);
+      prevProfilesCount.current = state.profiles.length;
+    } else {
+      // Sinon, on utilise le debounce de 3 secondes pour les autres changements
+      const timeoutId = setTimeout(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          console.log('☁️ Syncing to Supabase (optimized)...');
+          await dbService.syncFullState(state);
+        }
+      }, 3000);
+      return () => clearTimeout(timeoutId);
+    }
   }, [state.profiles, state.settings, state.progress, state.plans, state.activeProfileId]);
 
   useEffect(() => {

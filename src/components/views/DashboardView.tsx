@@ -278,10 +278,10 @@ const DashboardView: React.FC = () => {
 
                 {/* Mission Hadith */}
                 <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants} className="relative group h-full">
-                    <Card className="h-full relative border-none shadow-2xl rounded-[3rem] overflow-hidden bg-slate-900 text-white">
+                    <Card className="h-full relative border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-slate-900 text-white">
                         <div className="absolute inset-0 bg-gradient-to-tr from-warning/5 to-transparent pointer-events-none" />
 
-                        <div className="p-8 md:p-12 flex flex-col h-full space-y-10 relative z-10">
+                        <div className="p-6 md:p-10 flex flex-col h-full space-y-8 relative z-10">
                             <div className="flex items-center justify-between">
                                 <div className="px-5 py-2 bg-warning text-slate-900 text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg shadow-warning/20">
                                     {t('missionHadith') || 'Sagesse prophétique'}
@@ -291,12 +291,12 @@ const DashboardView: React.FC = () => {
 
                             {hadithDuJour ? (
                                 <>
-                                    <div className="flex-grow flex flex-col justify-center items-center py-8 group/h text-center cursor-pointer" onClick={() => setHadithModalContent(hadithDuJour)}>
-                                        <motion.p layoutId={`hadith-${hadithDuJour.id}`} className="font-amiri text-3xl md:text-5xl leading-[2.5] md:leading-[3] rtl text-right drop-shadow-xl text-white/95 group-hover/h:text-warning transition-colors duration-700">
+                                    <div className="flex-grow flex flex-col justify-center items-center py-6 group/h text-center cursor-pointer" onClick={() => setHadithModalContent(hadithDuJour)}>
+                                        <motion.p layoutId={`hadith-${hadithDuJour.id}`} className="font-amiri text-2xl md:text-4xl leading-[2.2] md:leading-[2.8] rtl text-right drop-shadow-xl text-white/95 group-hover/h:text-warning transition-colors duration-700">
                                             {hadithDuJour.arabic}
                                         </motion.p>
 
-                                        <div className="mt-12 flex flex-col items-center">
+                                        <div className="mt-8 flex flex-col items-center">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setShowHadithTranslation(!showHadithTranslation); }}
                                                 className="flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5"
@@ -311,7 +311,7 @@ const DashboardView: React.FC = () => {
                                                 {showHadithTranslation && (
                                                     <motion.div
                                                         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                                                        className="mt-8 p-8 bg-white/5 rounded-[2.5rem] border border-white/5 text-base md:text-lg text-white/70 max-w-lg italic leading-relaxed backdrop-blur-md"
+                                                        className="mt-6 p-6 bg-white/5 rounded-[2rem] border border-white/5 text-sm md:text-base text-white/70 max-w-lg italic leading-relaxed backdrop-blur-md"
                                                     >
                                                         "{state.settings.lang === 'ar' ? null : (hadithDuJour.translations as any)[state.settings.lang] || hadithDuJour.translations.en}"
                                                     </motion.div>
@@ -393,14 +393,14 @@ const DashboardView: React.FC = () => {
                                 <h3 className="text-4xl font-black text-gradient">Sagesse Divine</h3>
                             </div>
 
-                            <div className="p-10 md:p-16 rounded-[4rem] bg-slate-900 shadow-inner relative overflow-hidden">
+                            <div className="p-8 md:p-12 rounded-[3.5rem] bg-slate-900 shadow-inner relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-warning/10 to-transparent opacity-30" />
-                                <p className="relative z-10 font-amiri text-4xl md:text-6xl leading-[3] md:leading-[3.5] rtl text-right text-white drop-shadow-2xl">
+                                <p className="relative z-10 font-amiri text-3xl md:text-5xl leading-[2.5] md:leading-[3] rtl text-right text-white drop-shadow-2xl">
                                     {hadithModalContent.arabic}
                                 </p>
                             </div>
 
-                            <div className="p-10 md:p-12 glass-card border-none bg-accent-color/5 rounded-[3.5rem] italic text-xl md:text-2xl leading-relaxed text-text-main/80 font-medium">
+                            <div className="p-8 md:p-10 glass-card border-none bg-accent-color/5 rounded-[3rem] italic text-lg md:text-xl leading-relaxed text-text-main/80 font-medium">
                                 "{state.settings.lang === 'ar' ? null : (hadithModalContent.translations as any)[state.settings.lang] || hadithModalContent.translations.en}"
                             </div>
 

@@ -1,0 +1,6 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="128" fill="#064E3B"/>
+  <circle cx="256" cy="256" r="160" fill="white" fill-opacity="0.1"/>
+  <path d="M256 120L310 230L430 230L330 310L370 430L256 350L142 430L182 310L82 230L202 230L256 120Z" fill="#10B981"/>
+  <text x="256" y="480" font-family="Cairo, sans-serif" font-size="40" font-weight="900" text-anchor="middle" fill="white">CORAN PATH</text>
+</svg>

@@ -132,14 +132,17 @@ const StepHadithPlan: React.FC<StepProps> = ({ formData, updateData, t }) => {
                 <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-xl text-center"
+                    className="p-4 rounded-2xl text-center space-y-1"
                     style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.15)' }}
                 >
-                    <p className="text-xs font-bold text-white/80">
-                        {t('hadithGoalSummary')
-                            .replace('{count}', hadithPerDay.toString())
-                            .replace('{days}', hadithDuration.toString())
-                            .replace('{total}', (hadithPerDay * hadithDuration).toString())}
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400/70">
+                        {t('hadithGoalSummary').split(':')[0]}
+                    </p>
+                    <p className="text-sm font-bold text-white">
+                        {hadithPerDay} {t('hadithLabel').toLowerCase()}{hadithPerDay > 1 ? 's' : ''} / {t('day').toLowerCase()}
+                    </p>
+                    <p className="text-xs font-medium text-white/60">
+                        {hadithDuration} {t('days')} {(formData.hadithSelection?.length || 0) > 0 ? `(${formData.hadithSelection?.length} ${t('selected')})` : ''}
                     </p>
                 </motion.div>
             )}

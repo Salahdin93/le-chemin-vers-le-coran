@@ -76,7 +76,7 @@ export const ToggleSwitch: React.FC<CheckboxProps> = ({ label, description, id, 
             'block w-14 h-8 rounded-full transition-all duration-300',
             checked
               ? (isWizard ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-primary')
-              : 'bg-gray-400 dark:bg-gray-600 opacity-30'
+              : (isWizard ? 'bg-white/20' : 'bg-gray-400 dark:bg-gray-600 opacity-30')
           )}></div>
           <div className={clsx(
             'dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 shadow-md',
