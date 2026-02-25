@@ -49,30 +49,30 @@ const GlobalProgressCard: React.FC = () => {
     const percentage = totalPagesToRead > 0 ? Math.round((totalPagesRead / totalPagesToRead) * 100) : 0;
 
     return (
-        <Card className="overflow-visible !bg-slate-900 border-white/5 text-white">
-            <div className="absolute -top-3 left-8 px-4 py-1 bg-white text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl">
+        <Card className="overflow-visible !bg-slate-900 border-white/5 text-white shadow-2xl">
+            <div className="absolute -top-3 left-6 md:left-8 px-4 py-1 bg-white text-slate-900 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl z-10">
                 {t('overallProgress')}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 p-8">
-                <div className="relative flex flex-col items-center justify-center">
-                    <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 p-6 md:p-8">
+                <div className="relative flex flex-col items-center justify-center col-span-2 md:col-span-1 border-b md:border-b-0 md:border-r border-white/5 pb-4 md:pb-0">
+                    <svg className="w-20 h-20 md:w-24 md:h-24 -rotate-90" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="6" className="text-white/10" fill="transparent" />
                         <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="6" className="text-accent-color" fill="transparent" strokeDasharray="282.7" strokeDashoffset={282.7 - (percentage / 100) * 282.7} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
                     </svg>
-                    <span className="absolute text-xl font-black">{percentage}%</span>
+                    <span className="absolute text-lg md:text-xl font-black">{percentage}%</span>
                 </div>
                 <div className="flex flex-col justify-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('pagesRead')}</span>
-                    <span className="text-2xl font-black leading-none">{totalPagesRead} <span className="text-sm opacity-40">/ {totalPagesToRead}</span></span>
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('pagesRead')}</span>
+                    <span className="text-xl md:text-2xl font-black leading-none">{totalPagesRead} <span className="text-xs md:text-sm opacity-40">/ {totalPagesToRead}</span></span>
                 </div>
                 <div className="flex flex-col justify-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('pagesPerDay')}</span>
-                    <span className="text-2xl font-black leading-none">~{Math.round(totalPagesRead / Math.max(1, state.progress.currentReadingDay - 1))}</span>
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('pagesPerDay')}</span>
+                    <span className="text-xl md:text-2xl font-black leading-none">~{Math.round(totalPagesRead / Math.max(1, state.progress.currentReadingDay - 1))}</span>
                 </div>
-                <div className="flex flex-col justify-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('status')}</span>
-                    <span className="text-lg font-bold text-accent-color flex items-center gap-2">
-                        <Star size={16} fill="currentColor" /> {percentage >= 100 ? 'Terminé !' : 'En chemin...'}
+                <div className="flex flex-col justify-center border-l border-white/5 pl-4 md:pl-0">
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('status')}</span>
+                    <span className="text-base md:text-lg font-bold text-accent-color flex items-center gap-2">
+                        <Star size={14} fill="currentColor" /> {percentage >= 100 ? 'Terminé !' : 'En chemin...'}
                     </span>
                 </div>
             </div>
@@ -138,14 +138,16 @@ const ReadingPlanView: React.FC = () => {
     };
 
     return (
-        <div className="space-y-12 pb-24">
+        <div className="space-y-8 md:space-y-12 pb-24 px-2 md:px-0">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border-main pb-8">
+                <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-border-main pb-8">
                     <div>
-                        <h2 className="text-4xl font-black tracking-tight text-gradient">{t('readingPlan')}</h2>
-                        <p className="text-text-secondary font-medium mt-1">{t('readingPlanSubtitle') || 'Suivez votre progression quotidienne vers la Khatma'}</p>
+                        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-gradient">{t('readingPlan')}</h2>
+                        <p className="text-text-secondary font-medium mt-1 text-sm md:text-base">{t('readingPlanSubtitle') || 'Suivez votre progression quotidienne vers la Khatma'}</p>
                     </div>
-                    <GlobalProgressCard />
+                    <div className="w-full lg:w-auto">
+                        <GlobalProgressCard />
+                    </div>
                 </header>
             </motion.div>
 

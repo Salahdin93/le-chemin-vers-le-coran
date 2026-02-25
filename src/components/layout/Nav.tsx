@@ -55,31 +55,38 @@ const Nav: React.FC = () => {
                 </ul>
             </nav>
 
-            {/* Mobile Bottom Navigation - Minimal Floating Dock */}
-            <nav className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md">
-                <ul className="flex items-center justify-around p-2.5 glass-card border-none bg-slate-950/90 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-[2.5rem]">
-                    {navItems.slice(0, 5).map(item => {
+            {/* Mobile Bottom Navigation - Scrollable Dock */}
+            <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg">
+                <ul className="flex items-center gap-1 p-2 glass-card border-none bg-slate-950/90 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-[2.5rem] overflow-x-auto no-scrollbar snap-x">
+                    {navItems.map(item => {
                         const isActive = state.activeView === item.view;
                         return (
-                            <li key={item.view} className="relative">
+                            <li key={item.view} className="relative flex-shrink-0 snap-center">
                                 <button
                                     onClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: item.view as ActiveView })}
                                     className={clsx(
-                                        'flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-500',
-                                        isActive ? 'scale-110' : 'opacity-40 hover:opacity-100'
+                                        'flex flex-col items-center justify-center min-w-[64px] h-14 rounded-2xl transition-all duration-500',
+                                        isActive ? 'scale-110' : 'opacity-40'
                                     )}
                                 >
                                     <div className={clsx(
                                         "transition-all duration-500",
                                         isActive ? "text-accent-color drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "text-white"
                                     )}>
-                                        {React.cloneElement(item.icon as React.ReactElement, { size: 24 })}
+                                        {React.cloneElement(item.icon as React.ReactElement, { size: 22 })}
                                     </div>
+
+                                    <span className={clsx(
+                                        "text-[8px] font-black uppercase tracking-tighter mt-1 transition-all duration-500",
+                                        isActive ? "text-accent-color opacity-100" : "text-white opacity-0 scale-50"
+                                    )}>
+                                        {t(item.labelKey)}
+                                    </span>
 
                                     {isActive && (
                                         <motion.div
                                             layoutId="mobile-nav-dot"
-                                            className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-accent-color shadow-[0_0_10px_rgba(16,185,129,0.8)]"
+                                            className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-accent-color shadow-[0_0_10px_rgba(16,185,129,0.8)]"
                                         />
                                     )}
                                 </button>

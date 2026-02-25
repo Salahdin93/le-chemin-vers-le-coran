@@ -143,142 +143,228 @@ const MemorizationView: React.FC = () => {
         else if (formType === 'juzz') options = JUZ_DATA.map(j => ({ value: j.id.toString(), label: `${t('juzz')} ${j.id}` }));
 
         return (
-            <div className="mt-4 p-4 border-t border-dashed border-border-main space-y-3">
-                <Select onChange={e => setSelectedItemId(e.target.value)} defaultValue={selectedItemId}><option value="" disabled>{t('select')}</option>{options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</Select>
-                <Select onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)} defaultValue={selectedLevel}><option value="bon">{levels.bon}</option><option value="excellent">{levels.excellent}</option><option value="moyen">{levels.moyen}</option></Select>
-                <div className="flex gap-2"><Button onClick={handleAddItem} className="flex-1" disabled={!selectedItemId}>{t('add')}</Button><Button variant="ghost" className="flex-1" onClick={() => setFormType(null)}>Annuler</Button></div>
-            </div>
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-8 p-6 glass-card border-none bg-accent-color/5 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-accent-color">Ajouter {t(formType)}</h3>
+                    <button onClick={() => setFormType(null)} className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Ignorer</button>
+                </div>
+                <Select className="h-12 text-sm font-bold" onChange={e => setSelectedItemId(e.target.value)} defaultValue={selectedItemId}>
+                    <option value="" disabled>{t('select')}</option>
+                    {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </Select>
+                <div className="grid grid-cols-2 gap-3">
+                    <Select className="h-12 text-sm font-bold" onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)} defaultValue={selectedLevel}>
+                        <option value="bon">{levels.bon}</option>
+                        <option value="excellent">{levels.excellent}</option>
+                        <option value="moyen">{levels.moyen}</option>
+                    </Select>
+                    <Button variant="accent" onClick={handleAddItem} className="h-12" disabled={!selectedItemId}>{t('add')}</Button>
+                </div>
+            </motion.div>
         );
     };
 
     return (
-        <Card>
-            <CardHeader>{t('memorizedTitle')}</CardHeader>
-            <Tabs defaultValue="juzz" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="juzz">{t('memorizedJuzz')}</TabsTrigger>
-                    <TabsTrigger value="hizb">{t('memorizedHizbs')}</TabsTrigger>
-                    <TabsTrigger value="surah">{t('memorizedSurahs')}</TabsTrigger>
-                    <TabsTrigger value="hadith">{t('hadith')}</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="juzz" className="p-6 space-y-2">
-                    {memorizations.juzz.length > 0 ? memorizations.juzz.map(j => (
-                        <div key={j.number} className='group flex justify-between items-center p-2 rounded-md border border-border-main'>
-                            <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => showJuzzDetails(j)}>
-                                <StatusIndicator status={j.status || 'bon'} />
-                                <span>{t('juzz')} {j.number}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 text-xs font-bold rounded-full ${levelClasses[j.level]}`}>{levels[j.level]}</span>
-                                <button onClick={() => handleRemoveItem('juzz', j)} className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all" aria-label={`Supprimer Juzz ${j.number}`}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
-                                </button>
-                            </div>
-                        </div>
-                    )) : <p className='text-sm opacity-70 p-2 text-center'>{t('noMemorizedJuzz')}</p>}
-                </TabsContent>
-
-                <TabsContent value="hizb" className="p-6 space-y-2">
-                    {memorizations.hizbs.length > 0 ? memorizations.hizbs.map(h => (
-                        <div key={h.number} className='group flex justify-between items-center p-2 rounded-md border border-border-main'>
-                            <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => showHizbDetails(h)}>
-                                <StatusIndicator status={h.status || 'bon'} />
-                                <span>{t('hizb')} {h.number} - {h.details}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 text-xs font-bold rounded-full ${levelClasses[h.level]}`}>{levels[h.level]}</span>
-                                <button onClick={() => handleRemoveItem('hizb', h)} className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all" aria-label={`Supprimer Hizb ${h.number}`}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
-                                </button>
-                            </div>
-                        </div>
-                    )) : <p className='text-sm opacity-70 p-2 text-center'>{t('noMemorizedHizbs')}</p>}
-                </TabsContent>
-
-                <TabsContent value="surah" className="p-6 space-y-2">
-                    {memorizations.surahParts.length > 0 ? memorizations.surahParts.map(s => (
-                        <div key={s.id} className='group flex justify-between items-center p-2 rounded-md border border-border-main hover:bg-bg-main'>
-                            <div className="flex items-center gap-3">
-                                <StatusIndicator status={s.status || 'bon'} />
-                                <span>{s.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 text-xs font-bold rounded-full ${levelClasses[s.level]}`}>{levels[s.level]}</span>
-                                <button onClick={() => handleRemoveItem('surahPart', s)} className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all" aria-label={`Supprimer ${s.name}`}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
-                                </button>
-                            </div>
-                        </div>
-                    )) : <p className='text-sm opacity-70 p-2 text-center'>{t('noMemorizedSurahs')}</p>}
-                </TabsContent>
-
-                <TabsContent value="hadith" className="p-6 space-y-2">
-                    {memorizedHadiths.length > 0 ? memorizedHadiths.map(h => {
-                        const status = activeProfile.hadithProgress?.[h.id] || 'non_lu';
-                        return (
-                            <div key={h.id} className='flex justify-between items-center p-2 rounded-md border border-border-main hover:bg-bg-main cursor-pointer' onClick={() => setSelectedHadith(h)}>
-                                <div className="flex items-center gap-3">
-                                    <StatusIndicator status={status} />
-                                    <span>{t('hadithNumber', { number: h.id })}: <span className='font-amiri rtl inline-block ml-2'>{h.arabic.substring(0, 40)}...</span></span>
-                                </div>
-                                <span className={`px-2 py-1 text-xs font-bold rounded-full bg-primary/10 text-primary`}>{hadithStatusText[status]}</span>
-                            </div>
-                        )
-                    }) : <p className='text-sm opacity-70 p-2 text-center'>{t('noMemorizedHadiths')}</p>}
-                </TabsContent>
-            </Tabs>
-
-            <div className="p-6 mt-6 border-t border-border-main">
-                {formType ? renderForm() : (
-                    <div className="flex flex-col md:flex-row gap-2">
-                        <Button variant="secondary" className="flex-1" onClick={() => setFormType('surahPart')}>➕ {t('addMemorizedSurah')}</Button>
-                        <Button variant="secondary" className="flex-1" onClick={() => setFormType('hizb')}>➕ {t('addMemorizedHizb')}</Button>
-                        <Button variant="secondary" className="flex-1" onClick={() => setFormType('juzz')}>➕ {t('addMemorizedJuzz')}</Button>
+        <div className="space-y-8 md:space-y-12 pb-32 px-2 md:px-0">
+            <header className="pb-8 border-b border-border-main flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h1 className="text-3xl md:text-4xl font-black text-gradient mb-2">{t('memorizedTitle')}</h1>
+                    <p className="text-text-secondary font-medium text-sm md:text-base">{t('memorizedSubtitle') || 'Consacrez vos progrès et gardez une trace de vos accomplissements sacrés.'}</p>
+                </div>
+                {!formType && (
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                        <Button variant="secondary" size="sm" className="flex-1 md:flex-none h-11 px-6 rounded-full text-xs font-black uppercase tracking-widest" onClick={() => setFormType('surahPart')}>+ {t('surah')}</Button>
+                        <Button variant="secondary" size="sm" className="flex-1 md:flex-none h-11 px-6 rounded-full text-xs font-black uppercase tracking-widest" onClick={() => setFormType('hizb')}>+ {t('hizb')}</Button>
+                        <Button variant="secondary" size="sm" className="flex-1 md:flex-none h-11 px-6 rounded-full text-xs font-black uppercase tracking-widest" onClick={() => setFormType('juzz')}>+ {t('juzz')}</Button>
                     </div>
                 )}
-            </div>
+            </header>
 
-            <Modal isOpen={!!modalContent} onClose={() => setModalContent(null)}>
-                {modalContent && <>
-                    <h3 className="text-xl font-bold mb-4">{modalContent.title}</h3>
-                    <div className="space-y-2 text-left max-h-60 overflow-y-auto">
-                        {modalContent.items.map((item, index) => (
-                            <div key={item.name + index} className='flex justify-between items-center p-2 rounded bg-bg-main'>
-                                <div className="flex items-center gap-3">
-                                    <StatusIndicator status={item.status || 'bon'} />
-                                    <span>{item.name}</span>
-                                </div>
-                                <span className={`px-2 py-1 text-xs font-bold rounded-full ${levelClasses[item.level]}`}>{levels[item.level]}</span>
+            {renderForm()}
+
+            <Tabs defaultValue="juzz" className="w-full">
+                <TabsList className="flex items-center gap-1 p-1 bg-bg-secondary/50 backdrop-blur-md rounded-2xl border border-border-main/50 mb-8 overflow-x-auto no-scrollbar">
+                    <TabsTrigger value="juzz" className="flex-1 min-w-[100px] h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('memorizedJuzz')}</TabsTrigger>
+                    <TabsTrigger value="hizb" className="flex-1 min-w-[100px] h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('memorizedHizbs')}</TabsTrigger>
+                    <TabsTrigger value="surah" className="flex-1 min-w-[100px] h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('memorizedSurahs')}</TabsTrigger>
+                    <TabsTrigger value="hadith" className="flex-1 min-w-[100px] h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('hadith')}</TabsTrigger>
+                </TabsList>
+
+                <AnimatePresence mode="wait">
+                    <TabsContent value="juzz" className="space-y-4 outline-none">
+                        {memorizations.juzz.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {memorizations.juzz.map(j => (
+                                    <motion.div key={j.number} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="premium-card p-5 group flex justify-between items-center transition-all hover-glow">
+                                        <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => showJuzzDetails(j)}>
+                                            <div className="w-12 h-12 rounded-xl bg-accent-color/10 flex items-center justify-center text-accent-color shadow-inner">
+                                                <span className="text-lg font-black">{j.number}</span>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black uppercase tracking-tight">{t('juzz')} {j.number}</h4>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <StatusIndicator status={j.status || 'bon'} />
+                                                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{levels[j.level]}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => handleRemoveItem('juzz', j)} className="p-2 rounded-lg hover:bg-danger/10 text-text-main/10 hover:text-danger transition-all opacity-0 group-hover:opacity-100">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
+                                        </button>
+                                    </motion.div>
+                                ))}
                             </div>
-                        ))}
+                        ) : (
+                            <div className="p-12 text-center glass-card border-none bg-bg-main/30">
+                                <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noMemorizedJuzz')}</p>
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="hizb" className="space-y-4 outline-none">
+                        {memorizations.hizbs.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {memorizations.hizbs.map(h => (
+                                    <motion.div key={h.number} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="premium-card p-5 group flex justify-between items-center transition-all hover-glow">
+                                        <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => showHizbDetails(h)}>
+                                            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shadow-inner">
+                                                <span className="text-lg font-black">{h.number}</span>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black uppercase tracking-tight line-clamp-1">{t('hizb')} {h.number} — {h.details}</h4>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <StatusIndicator status={h.status || 'bon'} />
+                                                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{levels[h.level]}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => handleRemoveItem('hizb', h)} className="p-2 rounded-lg hover:bg-danger/10 text-text-main/10 hover:text-danger transition-all opacity-0 group-hover:opacity-100">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center glass-card border-none bg-bg-main/30">
+                                <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noMemorizedHizbs')}</p>
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="surah" className="space-y-4 outline-none">
+                        {memorizations.surahParts.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {memorizations.surahParts.map(s => (
+                                    <motion.div key={s.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="premium-card p-5 group flex justify-between items-center transition-all hover-glow">
+                                        <div className="flex items-center gap-4 flex-1">
+                                            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 shadow-inner">
+                                                <span className="text-sm font-black italic">S</span>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black uppercase tracking-tight">{s.name}</h4>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <StatusIndicator status={s.status || 'bon'} />
+                                                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{levels[s.level]}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => handleRemoveItem('surahPart', s)} className="p-2 rounded-lg hover:bg-danger/10 text-text-main/10 hover:text-danger transition-all opacity-0 group-hover:opacity-100">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center glass-card border-none bg-bg-main/30">
+                                <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noMemorizedSurahs')}</p>
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="hadith" className="space-y-4 outline-none">
+                        {memorizedHadiths.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {memorizedHadiths.map(h => {
+                                    const status = activeProfile.hadithProgress?.[h.id] || 'non_lu';
+                                    return (
+                                        <motion.div key={h.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="premium-card p-5 group flex justify-between items-center transition-all hover-glow cursor-pointer" onClick={() => setSelectedHadith(h)}>
+                                            <div className="flex items-center gap-4 flex-1">
+                                                <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600 shadow-inner">
+                                                    <span className="text-sm font-black">{h.id}</span>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-xs font-bold font-amiri rtl text-right truncate opacity-60 mb-1">{h.arabic}</h4>
+                                                    <div className="flex items-center gap-2">
+                                                        <StatusIndicator status={status} />
+                                                        <span className="text-[10px] font-bold text-accent-color uppercase tracking-widest">{hadithStatusText[status]}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center glass-card border-none bg-bg-main/30">
+                                <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noMemorizedHadiths')}</p>
+                            </div>
+                        )}
+                    </TabsContent>
+                </AnimatePresence>
+            </Tabs>
+
+            {/* Modals with Premium Styling */}
+            <Modal isOpen={!!modalContent} onClose={() => setModalContent(null)}>
+                {modalContent && (
+                    <div className="space-y-6">
+                        <header className="border-b border-border-main pb-4">
+                            <h3 className="text-2xl font-black text-gradient">{modalContent.title}</h3>
+                        </header>
+                        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 no-scrollbar">
+                            {modalContent.items.map((item, index) => (
+                                <div key={item.name + index} className='flex justify-between items-center p-4 rounded-2xl bg-bg-secondary border border-border-main/50'>
+                                    <div className="flex items-center gap-3">
+                                        <StatusIndicator status={item.status || 'bon'} />
+                                        <span className="text-sm font-bold">{item.name}</span>
+                                    </div>
+                                    <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${levelClasses[item.level]}`}>{levels[item.level]}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant="accent" onClick={() => setModalContent(null)} className="w-full h-12">Fermer</Button>
                     </div>
-                    <Button onClick={() => setModalContent(null)} className="mt-6 w-full">Fermer</Button>
-                </>}
+                )}
             </Modal>
 
             <Modal isOpen={!!selectedHadith} onClose={() => setSelectedHadith(null)}>
-                {selectedHadith && <>
-                    <h3 className="text-xl font-bold mb-4">{t('hadithNumber', { number: selectedHadith.id })}</h3>
-                    <div className="space-y-4 text-left max-h-[60vh] overflow-y-auto p-1">
-                        <p className='font-amiri text-lg rtl leading-relaxed'>{selectedHadith.arabic}</p>
-                        <div className="p-3 bg-bg-main rounded-lg border border-border-main text-sm italic">
-                            <p>"{selectedHadith.translations[state.settings.lang as keyof typeof selectedHadith.translations] || selectedHadith.translations.en}"</p>
-                        </div>
-                        <div className='pt-4 border-t border-dashed'>
-                            <h4 className='font-semibold mb-2'>{t('updateStatus')}</h4>
-                            <div className='grid grid-cols-2 gap-2'>
-                                <Button variant='primary' onClick={() => handleHadithStatusChange(selectedHadith.id, 'lu')}>{t('statusLu')}</Button>
-                                <Button variant='secondary' onClick={() => handleHadithStatusChange(selectedHadith.id, 'en_memorisation')}>{t('statusEnMemorisation')}</Button>
-                                <Button variant='warning' onClick={() => handleHadithStatusChange(selectedHadith.id, 'a_reprendre')}>{t('statusARependre')}</Button>
-                                <Button variant='success' onClick={() => handleHadithStatusChange(selectedHadith.id, 'acquis')}>{t('statusAcquis')}</Button>
+                {selectedHadith && (
+                    <div className="space-y-8">
+                        <header className="flex items-center justify-between border-b border-border-main pb-4">
+                            <h3 className="text-2xl font-black text-gradient">{t('hadithNumber', { number: selectedHadith.id })}</h3>
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Collection Arba'in</span>
+                        </header>
+                        <div className="space-y-6 text-left max-h-[60vh] overflow-y-auto pr-2 no-scrollbar">
+                            <div className="p-8 glass-card border-none bg-accent-color/5 shadow-inner">
+                                <p className='font-amiri text-2xl rtl text-right leading-loose text-text-main/90'>{selectedHadith.arabic}</p>
+                            </div>
+                            <div className="p-6 rounded-2xl border border-dashed border-border-main text-sm md:text-base italic leading-relaxed text-text-secondary">
+                                "{selectedHadith.translations[state.settings.lang as keyof typeof selectedHadith.translations] || selectedHadith.translations.en}"
+                            </div>
+                            <div className='pt-8 border-t border-border-main'>
+                                <h4 className='text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-6 text-center'>{t('updateStatus')}</h4>
+                                <div className='grid grid-cols-2 gap-3'>
+                                    <Button variant='secondary' className="h-12 text-xs font-black uppercase" onClick={() => handleHadithStatusChange(selectedHadith.id, 'lu')}>{t('statusLu')}</Button>
+                                    <Button variant='secondary' className="h-12 text-xs font-black uppercase border-blue-500/30 text-blue-600" onClick={() => handleHadithStatusChange(selectedHadith.id, 'en_memorisation')}>{t('statusEnMemorisation')}</Button>
+                                    <Button variant='secondary' className="h-12 text-xs font-black uppercase border-orange-500/30 text-orange-600" onClick={() => handleHadithStatusChange(selectedHadith.id, 'a_reprendre')}>{t('statusARependre')}</Button>
+                                    <Button variant='accent' className="h-12 text-xs font-black uppercase" onClick={() => handleHadithStatusChange(selectedHadith.id, 'acquis')}>{t('statusAcquis')}</Button>
+                                </div>
                             </div>
                         </div>
+                        <Button variant="ghost" onClick={() => setSelectedHadith(null)} className="w-full">Fermer</Button>
                     </div>
-                    <Button onClick={() => setSelectedHadith(null)} className="mt-6 w-full">Fermer</Button>
-                </>}
+                )}
             </Modal>
-        </Card>
+        </div>
     );
 };
 

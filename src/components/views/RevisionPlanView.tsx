@@ -69,29 +69,29 @@ const RevisionPlanView: React.FC = () => {
     const filteredPlan = revisionPlan.filter(day => filter === 'all' || day.status === filter);
 
     return (
-        <div className="space-y-10 pb-24">
+        <div className="space-y-8 md:space-y-12 pb-24 px-2 md:px-0">
             {/* Header Stats */}
             <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-b border-border-main pb-10">
                 <div className="max-w-xl">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="p-3 accent-gradient rounded-2xl text-white shadow-lg shadow-accent-color/20">
-                            <Brain size={28} />
+                        <div className="p-2.5 md:p-3 accent-gradient rounded-2xl text-white shadow-lg shadow-accent-color/20 transition-transform hover:scale-105">
+                            <Brain size={24} className="md:w-7 md:h-7" />
                         </div>
-                        <h2 className="text-4xl font-black tracking-tight text-gradient">{t('revisionTitle')}</h2>
+                        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-gradient">{t('revisionTitle')}</h2>
                     </div>
-                    <p className="text-text-secondary font-medium leading-relaxed">
+                    <p className="text-text-secondary font-medium leading-relaxed text-sm md:text-base">
                         {t('revisionSubtitle') || 'Entretenez vos acquis et fortifiez votre mémoire grâce à une révision structurée et régulière.'}
                     </p>
                 </div>
 
-                <div className="flex gap-4">
-                    <div className="p-6 premium-card border-none bg-slate-900 text-white min-w-[160px] text-center">
-                        <span className="text-4xl font-black block text-accent-color mb-1">{progressPercent}%</span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t('totalProgress')}</span>
+                <div className="grid grid-cols-2 lg:flex gap-3 md:gap-4 w-full lg:w-auto">
+                    <div className="p-4 md:p-6 premium-card border-none bg-slate-900 text-white flex-1 lg:min-w-[160px] text-center shadow-2xl">
+                        <span className="text-3xl md:text-4xl font-black block text-accent-color mb-1">{progressPercent}%</span>
+                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t('totalProgress')}</span>
                     </div>
-                    <div className="p-6 premium-card border-none bg-accent-color/5 min-w-[160px] text-center border-accent-color/10 ring-1 ring-accent-color/5">
-                        <span className="text-4xl font-black block text-text-main mb-1">{pastRevisionsCount} <span className="text-lg opacity-30">/ {totalDays}</span></span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary">{t('daysCompleted')}</span>
+                    <div className="p-4 md:p-6 premium-card border-none bg-accent-color/5 flex-1 lg:min-w-[160px] text-center border-accent-color/10 ring-1 ring-accent-color/5">
+                        <span className="text-3xl md:text-4xl font-black block text-text-main mb-1">{pastRevisionsCount} <span className="text-base md:text-lg opacity-30">/ {totalDays}</span></span>
+                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary">{t('daysCompleted')}</span>
                     </div>
                 </div>
             </header>

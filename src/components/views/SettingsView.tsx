@@ -207,10 +207,10 @@ const SettingsView: React.FC = () => {
     ];
 
     return (
-        <div className="space-y-12 pb-32">
+        <div className="space-y-8 md:space-y-12 pb-32 px-2 md:px-0">
             <header className="pb-8 border-b border-border-main">
-                <h1 className="text-4xl font-black text-gradient mb-2">{t('settings')}</h1>
-                <p className="text-text-secondary font-medium">{t('settingsSubtitle') || 'Personnalisez votre expérience et gérez votre sanctuaire numérique.'}</p>
+                <h1 className="text-3xl md:text-4xl font-black text-gradient mb-2">{t('settings')}</h1>
+                <p className="text-text-secondary font-medium text-sm md:text-base">{t('settingsSubtitle') || 'Personnalisez votre expérience et gérez votre sanctuaire numérique.'}</p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

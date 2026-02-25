@@ -127,89 +127,94 @@ const DashboardView: React.FC = () => {
     const currentRevision = isRevisionActive ? revisionPlan?.[state.progress.currentRevisionIndex] : null;
 
     return (
-        <div className="space-y-12 pb-32 pt-4">
+        <div className="space-y-12 md:space-y-16 pb-32 pt-2 px-2 md:px-0">
             {/* Header Dashboard */}
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-b border-border-main pb-10">
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex-1">
-                    <h1 className="text-5xl font-black tracking-tight text-gradient mb-3">{t('dashboard')}</h1>
-                    <div className="flex items-center gap-4">
-                        <div className="px-3 py-1 bg-accent-color/10 border border-accent-color/20 rounded-full text-[10px] font-black uppercase tracking-widest text-accent-color">
-                            Spirituel • Premium
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-border-main pb-10">
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="flex-1">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 rounded-lg accent-gradient flex items-center justify-center text-white shadow-lg shadow-accent-color/20 rotate-3">
+                            <Sparkles size={16} />
                         </div>
-                        <p className="text-text-main/50 font-medium">{activeProfile.name}, {t('supportMsg2')}</p>
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Lumière du jour</span>
                     </div>
+                    <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gradient mb-4">
+                        {t('dashboard') || 'Tableau de Bord'}
+                    </h1>
+                    <p className="text-text-secondary font-medium text-lg md:text-xl max-w-2xl leading-relaxed">
+                        Bienvenue, <span className="text-text-main font-black underline decoration-accent-color/30 underline-offset-4">{activeProfile.name}</span>. {t('supportMsg2') || 'Votre voyage spirituel continue ici.'}
+                    </p>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex gap-4">
-                    <div className="p-4 glass-card border-none bg-orange-500/5 min-w-[140px] text-center group cursor-default">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                            <Flame size={18} className="text-orange-500 group-hover:animate-bounce" />
-                            <span className="text-2xl font-black">{state.progress.consecutiveDays}</span>
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.8 }} className="flex flex-col items-center">
+                    <div className="relative group p-6 rounded-[2.5rem] bg-slate-900 shadow-2xl border border-white/5 overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Flame size={24} className="text-orange-500 animate-pulse" />
+                                <span className="text-4xl md:text-5xl font-black text-white">{state.progress.consecutiveDays}</span>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-white/60 transition-colors">{t('streak') || 'Jours consécutifs'}</span>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500/60">{t('streak')}</span>
                     </div>
                 </motion.div>
             </header>
 
             {/* Global Rings Stats */}
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {isReadingActive && (
                     <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
-                        <Card className="!bg-accent-color/5 border-accent-color/10 shadow-none ring-1 ring-accent-color/5 overflow-visible">
-                            <CardContent className="pt-8 flex flex-col items-center">
+                        <Card className="!bg-slate-900 border-white/5 shadow-2xl overflow-visible text-white p-8 group transition-all hover-glow">
+                            <div className="flex justify-between items-start mb-8">
                                 <ProgressRing percent={overallPercent} color="text-accent-color" icon={<BookOpen size={24} />} label={t('readingGoal')} />
-                                <div className="w-full flex justify-around mt-8 border-t border-accent-color/10 pt-6">
-                                    <div className="text-center">
-                                        <span className="block text-xl font-black">{totalPagesRead}</span>
-                                        <span className="text-[10px] font-bold opacity-40 uppercase">{t('pagesReadShort') || 'Pages'}</span>
-                                    </div>
-                                    <div className="w-[1px] bg-accent-color/10" />
-                                    <div className="text-center">
-                                        <span className="block text-xl font-black">{readingGoal!.duration - state.progress.currentReadingDay + 1}</span>
-                                        <span className="text-[10px] font-bold opacity-40 uppercase">{t('daysLeft') || 'Jours'}</span>
-                                    </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-4 py-6 border-t border-white/5">
+                                <div>
+                                    <span className="block text-2xl font-black text-accent-color">{totalPagesRead}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('pagesReadShort') || 'Pages lues'}</span>
                                 </div>
-                            </CardContent>
+                                <div className="text-right">
+                                    <span className="block text-2xl font-black text-white">{readingGoal!.duration - state.progress.currentReadingDay + 1}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysLeft') || 'Jours restants'}</span>
+                                </div>
+                            </div>
                         </Card>
                     </motion.div>
                 )}
 
                 <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
-                    <Card className="!bg-yellow-500/5 border-yellow-500/10 shadow-none ring-1 ring-yellow-500/5 overflow-visible">
-                        <CardContent className="pt-8 flex flex-col items-center">
-                            <ProgressRing percent={hadithPercent} color="text-yellow-500" icon={<Sparkles size={24} />} label={t('hadithGoal')} />
-                            <div className="w-full flex justify-around mt-8 border-t border-yellow-500/10 pt-6">
-                                <div className="text-center">
-                                    <span className="block text-xl font-black">{masteredHadiths}</span>
-                                    <span className="text-[10px] font-bold opacity-40 uppercase">{t('mastered') || 'Acquis'}</span>
-                                </div>
-                                <div className="w-[1px] bg-yellow-500/10" />
-                                <div className="text-center">
-                                    <span className="block text-xl font-black">{HADITH_COLLECTION.length - masteredHadiths}</span>
-                                    <span className="text-[10px] font-bold opacity-40 uppercase">{t('remaining') || 'Reste'}</span>
-                                </div>
+                    <Card className="!bg-slate-900 border-white/5 shadow-2xl overflow-visible text-white p-8 group transition-all hover-glow">
+                        <div className="flex justify-between items-start mb-8">
+                            <ProgressRing percent={hadithPercent} color="text-warning" icon={<Sparkles size={24} />} label={t('hadithGoal')} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-4 py-6 border-t border-white/5">
+                            <div>
+                                <span className="block text-2xl font-black text-warning">{masteredHadiths}</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('mastered') || 'Hadiths acquis'}</span>
                             </div>
-                        </CardContent>
+                            <div className="text-right">
+                                <span className="block text-2xl font-black text-white">{HADITH_COLLECTION.length - masteredHadiths}</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('remaining') || 'Reste à apprendre'}</span>
+                            </div>
+                        </div>
                     </Card>
                 </motion.div>
 
                 {isRevisionActive && (
                     <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
-                        <Card className="!bg-blue-500/5 border-blue-500/10 shadow-none ring-1 ring-blue-500/5 overflow-visible">
-                            <CardContent className="pt-8 flex flex-col items-center">
+                        <Card className="!bg-slate-900 border-white/5 shadow-2xl overflow-visible text-white p-8 group transition-all hover-glow">
+                            <div className="flex justify-between items-start mb-8">
                                 <ProgressRing percent={revisionPercent} color="text-blue-500" icon={<Brain size={24} />} label={t('revisionGoal')} />
-                                <div className="w-full flex justify-around mt-8 border-t border-blue-500/10 pt-6">
-                                    <div className="text-center">
-                                        <span className="block text-xl font-black">{state.progress.currentRevisionIndex}</span>
-                                        <span className="text-[10px] font-bold opacity-40 uppercase">{t('completed') || 'Fait'}</span>
-                                    </div>
-                                    <div className="w-[1px] bg-blue-500/10" />
-                                    <div className="text-center">
-                                        <span className="block text-xl font-black">{revisionPlan!.length - state.progress.currentRevisionIndex}</span>
-                                        <span className="text-[10px] font-bold opacity-40 uppercase">{t('daysLeft') || 'Jours'}</span>
-                                    </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-4 py-6 border-t border-white/5">
+                                <div>
+                                    <span className="block text-2xl font-black text-blue-400">{state.progress.currentRevisionIndex}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('completed') || 'Étapes faites'}</span>
                                 </div>
-                            </CardContent>
+                                <div className="text-right">
+                                    <span className="block text-2xl font-black text-white">{revisionPlan!.length - state.progress.currentRevisionIndex}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysLeft') || 'Jours restants'}</span>
+                                </div>
+                            </div>
                         </Card>
                     </motion.div>
                 )}
@@ -220,116 +225,152 @@ const DashboardView: React.FC = () => {
                 {/* Mission Reading */}
                 <AnimatePresence>
                     {isReadingActive && currentReading && (
-                        <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants} className="relative group">
-                            <div className="absolute -inset-1 accent-gradient opacity-20 group-hover:opacity-30 blur-xl transition-opacity duration-500 pointer-events-none" />
-                            <Card className="h-full relative border-none shadow-2xl overflow-visible">
-                                <div className="absolute -top-4 left-8 px-6 py-1.5 bg-accent-color text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg z-20 ring-4 ring-bg-main">
-                                    {t('missionReading')} • {t('day')} {currentReading.day}
-                                </div>
-                                <CardContent className="pt-12 p-8 space-y-8">
-                                    <div className="p-8 bg-accent-color/5 rounded-[2.5rem] border border-accent-color/10 text-center relative overflow-hidden group/target">
-                                        <div className="absolute inset-0 animate-shimmer opacity-0 group-hover/target:opacity-100 pointer-events-none" />
-                                        <h4 className="text-3xl font-black mb-2 drop-shadow-sm">{getHizbDetailsFromPage(currentReading.startPage).surahName}</h4>
-                                        <div className="flex items-center justify-center gap-4 text-accent-color font-black opacity-60">
-                                            <span className="text-xs uppercase tracking-widest">{t('fromPage')} {currentReading.startPage}</span>
-                                            <ChevronRight size={16} className="opacity-30" />
-                                            <span className="text-xs uppercase tracking-widest">{t('toPage')} {currentReading.endPage}</span>
+                        <motion.div
+                            custom={3} initial="hidden" animate="visible" variants={cardVariants}
+                            className="relative group h-full"
+                        >
+                            <Card className="h-full relative border-none shadow-2xl overflow-hidden rounded-[3rem] group transition-all hover:scale-[1.01] duration-500">
+                                <div className="absolute inset-0 bg-gradient-to-br from-accent-color/5 to-transparent pointer-events-none" />
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent-color/5 blur-3xl rounded-full" />
+
+                                <div className="p-8 md:p-12 space-y-10 relative z-10">
+                                    <div className="flex items-center justify-between">
+                                        <div className="px-5 py-2 bg-accent-color text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg shadow-accent-color/20">
+                                            {t('missionReading') || 'Mission Lectures'}
+                                        </div>
+                                        <div className="text-[10px] font-black uppercase tracking-widest opacity-30">Jour {currentReading.day}</div>
+                                    </div>
+
+                                    <div className="p-10 md:p-14 bg-slate-900 rounded-[3.5rem] border border-white/5 text-center shadow-inner group/target hover:bg-slate-800 transition-colors duration-500">
+                                        <h4 className="text-4xl md:text-5xl font-black mb-6 text-white tracking-tight drop-shadow-md">{getHizbDetailsFromPage(currentReading.startPage).surahName}</h4>
+                                        <div className="flex items-center justify-center gap-6">
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black uppercase tracking-widest opacity-40 mb-1">{t('fromPage') || 'DEPUIS'}</span>
+                                                <span className="text-2xl font-black text-accent-color">{currentReading.startPage}</span>
+                                            </div>
+                                            <div className="h-8 w-px bg-white/10" />
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black uppercase tracking-widest opacity-40 mb-1">{t('toPage') || 'JUSQU\'À'}</span>
+                                                <span className="text-2xl font-black text-accent-color">{currentReading.endPage}</span>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <div className="space-y-6">
                                         <Timer onStop={(s) => handleStatusChange(currentReading, 'done', false, s)} />
                                         <div className="grid grid-cols-2 gap-4">
-                                            <Button variant="success" size="lg" className="h-16 rounded-[2rem]" onClick={() => handleStatusChange(currentReading, 'done')}>
-                                                <CheckCircle2 size={20} className="mr-2" /> {t('goalAchieved')}
+                                            <Button variant="accent" size="lg" className="h-20 rounded-3xl text-sm font-black uppercase tracking-widest shadow-xl shadow-accent-color/20" onClick={() => handleStatusChange(currentReading, 'done')}>
+                                                <CheckCircle2 size={24} className="mr-3" /> {t('goalAchieved') || 'Accompli'}
                                             </Button>
-                                            <Button variant="secondary" size="lg" className="h-16 rounded-[2rem]" onClick={() => handleStatusChange(currentReading, 'partial')}>
-                                                <AlertCircle size={20} className="mr-2" /> {t('partial')}
+                                            <Button variant="secondary" size="lg" className="h-20 rounded-3xl text-sm font-black uppercase tracking-widest border-border-main/50" onClick={() => handleStatusChange(currentReading, 'partial')}>
+                                                <AlertCircle size={24} className="mr-3" /> {t('partial') || 'Partiel'}
                                             </Button>
                                         </div>
-                                        <Button variant="accent" size="lg" className="w-full h-16 rounded-[2rem]" onClick={handleAdvance}>
-                                            {t('nextDay')} <ChevronRight size={20} className="ml-2" />
+                                        <Button variant="ghost" size="lg" className="w-full h-16 rounded-2xl text-[10px] font-black uppercase tracking-widest opacity-50 hover:opacity-100 hover:bg-bg-secondary" onClick={handleAdvance}>
+                                            {t('nextDay') || 'Passer au jour suivant'} <ChevronRight size={18} className="ml-2" />
                                         </Button>
                                     </div>
-                                </CardContent>
+                                </div>
                             </Card>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
                 {/* Mission Hadith */}
-                <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants} className="relative group">
-                    <div className="absolute -inset-1 bg-yellow-500 opacity-10 group-hover:opacity-20 blur-xl transition-opacity duration-500 pointer-events-none" />
-                    <Card className="h-full relative border-none shadow-2xl">
-                        <div className="absolute -top-4 left-8 px-6 py-1.5 bg-yellow-500 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg z-20 ring-4 ring-bg-main">
-                            {t('missionHadith')}
-                        </div>
-                        <CardContent className="pt-12 p-8 flex flex-col h-full space-y-10">
+                <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants} className="relative group h-full">
+                    <Card className="h-full relative border-none shadow-2xl rounded-[3rem] overflow-hidden bg-slate-900 text-white">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-warning/5 to-transparent pointer-events-none" />
+
+                        <div className="p-8 md:p-12 flex flex-col h-full space-y-10 relative z-10">
+                            <div className="flex items-center justify-between">
+                                <div className="px-5 py-2 bg-warning text-slate-900 text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg shadow-warning/20">
+                                    {t('missionHadith') || 'Sagesse prophétique'}
+                                </div>
+                                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">Hadith du jour</div>
+                            </div>
+
                             {hadithDuJour ? (
                                 <>
-                                    <div className="flex-grow flex flex-col justify-center items-center py-6 group/h text-center cursor-pointer" onClick={() => setHadithModalContent(hadithDuJour)}>
-                                        <p className="font-amiri text-4xl leading-loose rtl text-right text-text-main/90 group-hover/h:text-yellow-500 transition-colors duration-500 drop-shadow-sm px-4">
+                                    <div className="flex-grow flex flex-col justify-center items-center py-8 group/h text-center cursor-pointer" onClick={() => setHadithModalContent(hadithDuJour)}>
+                                        <motion.p layoutId={`hadith-${hadithDuJour.id}`} className="font-amiri text-3xl md:text-5xl leading-[2.5] md:leading-[3] rtl text-right drop-shadow-xl text-white/95 group-hover/h:text-warning transition-colors duration-700">
                                             {hadithDuJour.arabic}
-                                        </p>
-                                        <div className="mt-10">
-                                            <Button variant="ghost" className="rounded-full border-none px-6 bg-yellow-500/5 group-hover/h:bg-yellow-500/10 transition-all" onClick={(e) => { e.stopPropagation(); setShowHadithTranslation(!showHadithTranslation); }}>
-                                                {showHadithTranslation ? <EyeOff size={16} className="mr-2 text-yellow-500" /> : <Eye size={16} className="mr-2 text-yellow-500" />}
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-text-main/40 group-hover/h:text-text-main/70">
-                                                    {t(showHadithTranslation ? 'hideTranslation' : 'showTranslation')}
+                                        </motion.p>
+
+                                        <div className="mt-12 flex flex-col items-center">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setShowHadithTranslation(!showHadithTranslation); }}
+                                                className="flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5"
+                                            >
+                                                {showHadithTranslation ? <EyeOff size={18} className="text-warning" /> : <Eye size={18} className="text-warning" />}
+                                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-white/70">
+                                                    {t(showHadithTranslation ? 'hideTranslation' : 'showTranslation') || 'Traduction'}
                                                 </span>
-                                            </Button>
+                                            </button>
+
+                                            <AnimatePresence>
+                                                {showHadithTranslation && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                                                        className="mt-8 p-8 bg-white/5 rounded-[2.5rem] border border-white/5 text-base md:text-lg text-white/70 max-w-lg italic leading-relaxed backdrop-blur-md"
+                                                    >
+                                                        "{state.settings.lang === 'ar' ? null : (hadithDuJour.translations as any)[state.settings.lang] || hadithDuJour.translations.en}"
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
                                         </div>
-                                        <AnimatePresence>
-                                            {showHadithTranslation && (
-                                                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-8 p-6 glass-card border-dashed bg-yellow-500/[0.02] rounded-[2rem] text-sm text-text-main/70 max-w-sm italic">
-                                                    "{state.settings.lang === 'ar' ? null : (hadithDuJour.translations as any)[state.settings.lang] || hadithDuJour.translations.en}"
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <Button variant="secondary" size="md" className="rounded-2xl h-12" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'lu')}>{t('read') || 'Lu'}</Button>
-                                        <Button variant="secondary" size="md" className="rounded-2xl h-12" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'a_reprendre')}>{t('review') || 'À revoir'}</Button>
-                                        <Button variant="success" size="md" className="rounded-2xl h-12 font-black" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'acquis')}>{t('mastered') || 'Acquis'}</Button>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 border-t border-white/5">
+                                        <Button variant="secondary" className="h-14 rounded-2xl bg-white/5 border-none hover:bg-white/10 text-[10px] font-black uppercase tracking-widest" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'lu')}>{t('read') || 'Lu'}</Button>
+                                        <Button variant="secondary" className="h-14 rounded-2xl bg-white/5 border-none hover:bg-white/10 text-[10px] font-black uppercase tracking-widest" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'en_memorisation')}>{t('statusEn_memorisation') || 'En mémorisation'}</Button>
+                                        <Button variant="secondary" className="h-14 rounded-2xl bg-white/5 border-none hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-warning/80" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'a_reprendre')}>{t('review') || 'À revoir'}</Button>
+                                        <Button variant="accent" className="h-14 rounded-2xl bg-warning text-slate-900 border-none hover:scale-105 transition-transform text-[10px] font-black uppercase tracking-widest" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'acquis')}>{t('mastered') || 'Acquis'}</Button>
                                     </div>
                                 </>
                             ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6">
-                                    <div className="w-24 h-24 accent-gradient rounded-[2rem] flex items-center justify-center text-white shadow-premium animate-bounce-subtle">
-                                        <Trophy size={48} />
+                                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8">
+                                    <div className="w-32 h-32 accent-gradient rounded-[3rem] flex items-center justify-center text-white shadow-premium animate-bounce-subtle">
+                                        <Trophy size={64} />
                                     </div>
-                                    <h3 className="text-3xl font-black">{t('allDone')}</h3>
-                                    <p className="text-text-secondary">{t('allHadithsCompleted')}</p>
+                                    <h3 className="text-4xl font-black italic tracking-tight">{t('allDone') || 'Macha\'Allah !'}</h3>
+                                    <p className="text-white/60 text-lg max-w-sm">{t('allHadithsCompleted') || 'Vous avez exploré toute la collection pour aujourd\'hui.'}</p>
                                 </div>
                             )}
-                        </CardContent>
+                        </div>
                     </Card>
                 </motion.div>
             </section>
 
             {/* Quick Evaluation CTA */}
             <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants}>
-                <div className="relative overflow-hidden p-10 md:p-14 rounded-[3rem] bg-slate-950 text-white shadow-premium group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-accent-color/20 to-transparent opacity-30 group-hover:opacity-50 transition-opacity" />
-                    <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[120%] bg-accent-color/10 blur-[100px] pointer-events-none rotate-12" />
-                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500/10 blur-3xl pointer-events-none" />
+                <div className="relative overflow-hidden p-12 md:p-20 rounded-[4rem] bg-slate-950 text-white shadow-2xl group transition-all duration-700">
+                    <div className="absolute inset-0 bg-gradient-to-br from-accent-color/30 to-blue-600/10 opacity-40 group-hover:opacity-60 transition-opacity" />
+                    <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[120%] bg-accent-color/20 blur-[130px] pointer-events-none rotate-12" />
+                    <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-500/20 blur-[100px] pointer-events-none" />
 
-                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
-                        <div className="text-center lg:text-left">
-                            <h2 className="text-4xl md:text-5xl font-black mb-4 flex items-center justify-center lg:justify-start gap-4">
-                                {t('evalPromptTitle') || 'Testez-vous !'} <Sparkles className="text-warning animate-pulse" />
+                    <div className="absolute top-8 right-12 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Sparkles size={120} className="animate-pulse" />
+                    </div>
+
+                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
+                        <div className="text-center lg:text-left space-y-6">
+                            <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md">
+                                <Play size={12} className="fill-current" /> Auto-évaluation
+                            </div>
+                            <h2 className="text-4xl md:text-7xl font-black mb-4 tracking-tighter leading-tight">
+                                {t('evalPromptTitle') || 'Défiez votre mémoire'}
                             </h2>
-                            <p className="text-slate-400 text-lg md:text-xl font-medium max-w-xl">
-                                {t('evalPromptSubtitle') || 'Prenez 5 minutes pour évaluer votre mémorisation avec notre outil intelligent.'}
+                            <p className="text-slate-400 text-xl md:text-2xl font-medium max-w-2xl leading-relaxed">
+                                {t('evalPromptSubtitle') || 'Utilisez nos outils d\'évaluation pour ancrer vos acquis durablement.'}
                             </p>
                         </div>
                         <Button
                             variant="accent"
                             size="lg"
-                            className="w-full lg:w-auto px-12 py-6 text-xl rounded-2xl shadow-premium group/btn"
+                            className="w-full lg:w-auto px-16 h-24 text-xl font-black uppercase tracking-widest rounded-3xl shadow-2xl shadow-accent-color/30 group/btn transition-all active:scale-95"
                             onClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-view' })}
                         >
-                            <Play size={24} className="mr-3 fill-current group-hover/btn:scale-110 transition-transform" /> {t('startEvaluationShort') || 'Démarrer'}
+                            <Sparkles size={28} className="mr-4 group-hover/btn:rotate-12 transition-transform" /> {t('startEvaluationShort') || 'S\'évaluer maintenant'}
                         </Button>
                     </div>
                 </div>
@@ -341,21 +382,33 @@ const DashboardView: React.FC = () => {
             {isReadjustmentModalOpen && currentRevision && (
                 <ReadjustmentModal isOpen={isReadjustmentModalOpen} onClose={() => setIsReadjustmentModalOpen(false)} onConfirm={() => setIsReadjustmentModalOpen(false)} title={t('toReview')} items={currentRevision.units.map(u => u.surahs).join(', ').split(', ')} />
             )}
-            {hadithModalContent && (
-                <Modal isOpen={!!hadithModalContent} onClose={() => setHadithModalContent(null)}>
-                    <div className="p-8 text-center space-y-10">
-                        <div className="space-y-2">
-                            <div className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30">{t('hadith')} {hadithModalContent.id}</div>
-                            <h3 className="text-2xl font-black text-gradient">{t('source') || '40 Hadiths'}</h3>
+
+            <AnimatePresence>
+                {hadithModalContent && (
+                    <Modal isOpen={!!hadithModalContent} onClose={() => setHadithModalContent(null)}>
+                        <div className="p-4 md:p-12 text-center space-y-12">
+                            <div className="space-y-4">
+                                <div className="w-16 h-1 w-20 bg-accent-color/20 mx-auto rounded-full mb-8" />
+                                <div className="text-[10px] font-black uppercase tracking-[0.5em] opacity-30">{t('hadith')} {hadithModalContent.id}</div>
+                                <h3 className="text-4xl font-black text-gradient">Sagesse Divine</h3>
+                            </div>
+
+                            <div className="p-10 md:p-16 rounded-[4rem] bg-slate-900 shadow-inner relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-warning/10 to-transparent opacity-30" />
+                                <p className="relative z-10 font-amiri text-4xl md:text-6xl leading-[3] md:leading-[3.5] rtl text-right text-white drop-shadow-2xl">
+                                    {hadithModalContent.arabic}
+                                </p>
+                            </div>
+
+                            <div className="p-10 md:p-12 glass-card border-none bg-accent-color/5 rounded-[3.5rem] italic text-xl md:text-2xl leading-relaxed text-text-main/80 font-medium">
+                                "{state.settings.lang === 'ar' ? null : (hadithModalContent.translations as any)[state.settings.lang] || hadithModalContent.translations.en}"
+                            </div>
+
+                            <Button variant="accent" size="lg" className="w-full h-20 rounded-3xl text-sm font-black uppercase tracking-widest" onClick={() => setHadithModalContent(null)}>{t('close') || 'Quitter la lecture'}</Button>
                         </div>
-                        <p className="font-amiri text-4xl leading-[3] rtl text-right text-text-main drop-shadow-sm">{hadithModalContent.arabic}</p>
-                        <div className="p-8 glass-card border-none bg-accent-color/5 rounded-[2.5rem] italic text-base leading-relaxed text-text-main/70">
-                            "{state.settings.lang === 'ar' ? null : (hadithModalContent.translations as any)[state.settings.lang] || hadithModalContent.translations.en}"
-                        </div>
-                        <Button variant="accent" size="lg" className="w-full rounded-2xl" onClick={() => setHadithModalContent(null)}>{t('close')}</Button>
-                    </div>
-                </Modal>
-            )}
+                    </Modal>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

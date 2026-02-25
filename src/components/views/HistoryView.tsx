@@ -64,100 +64,221 @@ const HistoryView: React.FC = () => {
     }, [hadithHistory, searchQuery, sortCriteria]);
 
     return (
-        <div className='space-y-6'>
-            <div className="flex flex-col sm:flex-row gap-4 p-4 bg-bg-main rounded-lg border border-border-main">
-                <Input
-                    type="text"
-                    placeholder={t('searchHistoryPlaceholder')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-grow"
-                />
-                <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button size="sm" variant={sortCriteria === 'date_desc' ? 'primary' : 'secondary'} onClick={() => setSortCriteria('date_desc')}>{t('sortMostRecent')}</Button>
-                    <Button size="sm" variant={sortCriteria === 'date_asc' ? 'primary' : 'secondary'} onClick={() => setSortCriteria('date_asc')}>{t('sortOldest')}</Button>
+        <div className="space-y-8 md:space-y-12 pb-32 px-2 md:px-0">
+            <header className="pb-8 border-b border-border-main flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div className="flex-1">
+                    <h1 className="text-3xl md:text-4xl font-black text-gradient mb-2">{t('historyTitle') || 'Archives'}</h1>
+                    <p className="text-text-secondary font-medium text-sm md:text-base">{t('historySubtitle') || 'Contemplez le chemin parcouru et les efforts consacrés à votre quête spirituelle.'}</p>
                 </div>
-            </div>
+                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <div className="relative flex-1 sm:w-64">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-main/20" />
+                        <Input
+                            type="text"
+                            placeholder={t('searchHistoryPlaceholder')}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="h-11 pl-11 rounded-full bg-bg-secondary/50 border-border-main/50 focus:ring-accent-color/20 text-xs font-bold"
+                        />
+                    </div>
+                    <div className="flex items-center gap-1 p-1 bg-bg-secondary/50 rounded-full border border-border-main/50">
+                        <button
+                            onClick={() => setSortCriteria('date_desc')}
+                            className={clsx(
+                                "h-9 px-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                                sortCriteria === 'date_desc' ? "bg-accent-color text-white shadow-lg shadow-accent-color/20" : "text-text-main/40 hover:text-text-main"
+                            )}
+                        >
+                            {t('recent') || 'Récents'}
+                        </button>
+                        <button
+                            onClick={() => setSortCriteria('date_asc')}
+                            className={clsx(
+                                "h-9 px-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                                sortCriteria === 'date_asc' ? "bg-accent-color text-white shadow-lg shadow-accent-color/20" : "text-text-main/40 hover:text-text-main"
+                            )}
+                        >
+                            {t('older') || 'Anciens'}
+                        </button>
+                    </div>
+                </div>
+            </header>
 
             <Tabs defaultValue="quran" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="quran">{t('quran')}</TabsTrigger>
-                    <TabsTrigger value="hadith">{t('hadith')}</TabsTrigger>
+                <TabsList className="flex items-center gap-1 p-1 bg-bg-secondary/50 backdrop-blur-md rounded-2xl border border-border-main/50 mb-8 w-fit mx-auto lg:mx-0">
+                    <TabsTrigger value="quran" className="px-8 h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('quran')}</TabsTrigger>
+                    <TabsTrigger value="hadith" className="px-8 h-11 rounded-xl data-[state=active]:bg-accent-color data-[state=active]:text-white data-[state=active]:shadow-lg text-xs font-black uppercase tracking-widest transition-all">{t('hadith')}</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="quran" className="space-y-6 mt-6">
-                    <Card>
-                        <CardHeader icon="📂">{t('readingHistoryTitle')}</CardHeader>
-                        {history.reading.length === 0 ? <EmptyState icon="📚" title={t('noReadingHistoryTitle')} message={t('noReadingHistoryMessage')} />
-                            : filteredAndSortedReadingHistory.length === 0 ? <div className="p-4 text-center text-text-secondary">{t('noResultsFound')}</div>
-                                : <ul className="space-y-2 p-4">{filteredAndSortedReadingHistory.map((goal, index) => (
-                                    <li key={index} onClick={() => setSelectedGoal({ type: 'reading', data: goal })} className="p-3 bg-bg-main rounded-lg border-l-4 border-primary cursor-pointer hover:bg-border-main transition-colors">
-                                        {t('readingGoalHistory', { index: index + 1, khatmas: goal.khatmas, duration: goal.duration })}
-                                        <span className="block text-xs opacity-70">{t('completedOn', { date: goal.completedAt })}</span>
-                                    </li>))}
-                                </ul>}
-                    </Card>
-                    <Card>
-                        <CardHeader icon="📂">{t('revisionHistoryTitle')}</CardHeader>
-                        {history.revision.length === 0 ? <EmptyState icon="🧠" title={t('noRevisionHistoryTitle')} message={t('noRevisionHistoryMessage')} />
-                            : filteredAndSortedRevisionHistory.length === 0 ? <div className="p-4 text-center text-text-secondary">{t('noResultsFound')}</div>
-                                : <ul className="space-y-2 p-4">{filteredAndSortedRevisionHistory.map((goal, index) => (
-                                    <li key={index} onClick={() => setSelectedGoal({ type: 'revision', data: goal })} className="p-3 bg-bg-main rounded-lg border-l-4 border-primary cursor-pointer hover:bg-border-main transition-colors">
-                                        {t('revisionGoalHistory', { index: index + 1, count: goal.count, duration: goal.duration })}
-                                        <span className="block text-xs opacity-70">{t('completedOn', { date: goal.completedAt })}</span>
-                                    </li>))}
-                                </ul>}
-                    </Card>
-                </TabsContent>
+                <AnimatePresence mode="wait">
+                    <TabsContent value="quran" className="space-y-12 outline-none">
+                        {/* Reading History */}
+                        <section>
+                            <div className="flex items-center gap-3 mb-6">
+                                <span className="p-2 bg-accent-color/10 rounded-lg text-accent-color">📚</span>
+                                <h3 className="text-sm font-black uppercase tracking-[0.2em] opacity-40">{t('readingHistoryTitle')}</h3>
+                            </div>
+                            {history.reading.length === 0 ? (
+                                <div className="p-12 text-center glass-card border-none bg-bg-main/30 rounded-3xl">
+                                    <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noReadingHistoryTitle')}</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {filteredAndSortedReadingHistory.map((goal, index) => (
+                                        <motion.div
+                                            key={index}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            onClick={() => setSelectedGoal({ type: 'reading', data: goal })}
+                                            className="premium-card p-6 flex flex-col justify-between cursor-pointer hover-glow group transition-all"
+                                        >
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="w-10 h-10 rounded-xl bg-accent-color/10 flex items-center justify-center text-accent-color">
+                                                    <span className="text-xs font-black">R</span>
+                                                </div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-30 group-hover:opacity-100 transition-opacity">#{history.reading.length - index}</span>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-black tracking-tight mb-1">{goal.khatmas} Khatmas</h4>
+                                                <p className="text-text-secondary text-xs font-medium">{t('duration')}: {goal.duration} {t('days')}</p>
+                                            </div>
+                                            <div className="mt-6 pt-4 border-t border-border-main/50 flex justify-between items-center">
+                                                <span className="text-[10px] font-bold text-accent-color uppercase tracking-widest">{t('completedOn', { date: goal.completedAt })}</span>
+                                                <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-accent-color" />
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
 
-                <TabsContent value="hadith" className="space-y-6 mt-6">
-                    <Card>
-                        <CardHeader icon="✍️">{t('hadithHistory')}</CardHeader>
-                        {hadithHistory.length === 0 ? <EmptyState icon="📜" title={t('noHadithHistoryTitle')} message={t('noHadithHistoryMessage')} />
-                            : filteredAndSortedHadithHistory.length === 0 ? <div className="p-4 text-center text-text-secondary">{t('noResultsFound')}</div>
-                                : <ul className="space-y-2 p-4">{filteredAndSortedHadithHistory.map((entry, index) => (
-                                    <li key={index} className="p-3 bg-bg-main rounded-lg flex justify-between items-center">
-                                        <div>
-                                            <p className="font-semibold">{t('hadithNumber', { number: entry.hadithId })}: <span className="font-normal">{t('statusChangedTo', { status: hadithStatusText[entry.action] })}</span></p>
-                                            <span className="text-xs opacity-70">{new Date(entry.date).toLocaleString(state.settings.lang)}</span>
+                        {/* Revision History */}
+                        <section>
+                            <div className="flex items-center gap-3 mb-6">
+                                <span className="p-2 bg-blue-500/10 rounded-lg text-blue-600">🧠</span>
+                                <h3 className="text-sm font-black uppercase tracking-[0.2em] opacity-40">{t('revisionHistoryTitle')}</h3>
+                            </div>
+                            {history.revision.length === 0 ? (
+                                <div className="p-12 text-center glass-card border-none bg-bg-main/30 rounded-3xl">
+                                    <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noRevisionHistoryTitle')}</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {filteredAndSortedRevisionHistory.map((goal, index) => (
+                                        <motion.div
+                                            key={index}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            onClick={() => setSelectedGoal({ type: 'revision', data: goal })}
+                                            className="premium-card p-6 flex flex-col justify-between cursor-pointer hover-glow group transition-all"
+                                        >
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                                    <span className="text-xs font-black">V</span>
+                                                </div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-30 group-hover:opacity-100 transition-opacity">#{history.revision.length - index}</span>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-black tracking-tight mb-1">{goal.count} Juzz/Hizbs</h4>
+                                                <p className="text-text-secondary text-xs font-medium">{t('duration')}: {goal.duration} {t('days')}</p>
+                                            </div>
+                                            <div className="mt-6 pt-4 border-t border-border-main/50 flex justify-between items-center">
+                                                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{t('completedOn', { date: goal.completedAt })}</span>
+                                                <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-blue-600" />
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    </TabsContent>
+
+                    <TabsContent value="hadith" className="space-y-6 outline-none">
+                        <div className="max-w-3xl mx-auto space-y-3">
+                            {hadithHistory.length === 0 ? (
+                                <div className="p-12 text-center glass-card border-none bg-bg-main/30 rounded-3xl">
+                                    <p className="text-xs font-black uppercase tracking-[0.3em] opacity-20">{t('noHadithHistoryTitle')}</p>
+                                </div>
+                            ) : (
+                                filteredAndSortedHadithHistory.map((entry, index) => (
+                                    <motion.div
+                                        key={index}
+                                        initial={{ opacity: 0, scale: 0.98 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="premium-card p-4 flex items-center justify-between"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-600">
+                                                <span className="text-xs font-black">{entry.hadithId}</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-text-main line-clamp-1">{t('hadithNumber', { number: entry.hadithId })}: {t('statusChangedTo', { status: hadithStatusText[entry.action] })}</p>
+                                                <span className="text-[10px] font-bold opacity-30 uppercase tracking-widest">{new Date(entry.date).toLocaleString(state.settings.lang)}</span>
+                                            </div>
                                         </div>
-                                    </li>))}
-                                </ul>}
-                    </Card>
-                </TabsContent>
+                                        <StatusIndicator status={entry.action} />
+                                    </motion.div>
+                                ))
+                            )}
+                        </div>
+                    </TabsContent>
+                </AnimatePresence>
             </Tabs>
 
+            {/* Premium Details Modal */}
             <Modal isOpen={!!selectedGoal} onClose={() => setSelectedGoal(null)}>
-                {selectedGoal?.type === 'reading' && (
-                    <>
-                        <h3 className="text-xl font-bold mb-4">{t('readingGoalHistory', { index: '', khatmas: selectedGoal.data.khatmas, duration: selectedGoal.data.duration })}</h3>
-                        <div className="max-h-[60vh] overflow-y-auto space-y-1 pr-2">
-                            {Object.entries(selectedGoal.data.dailyHistory).map(([dayKey, entry]) => (
-                                <div key={dayKey} className="text-sm p-2 bg-bg-main rounded flex justify-between items-center">
-                                    <span>{t('day')} {dayKey.split('_')[1]}</span>
-                                    <span>{readingStatusText[entry.status]} ({entry.realPages} pages)</span>
-                                </div>
-                            ))}
-                        </div>
-                    </>
-                )}
-                {selectedGoal?.type === 'revision' && (
-                    <>
-                        <h3 className="text-xl font-bold mb-4">{t('revisionGoalHistory', { index: '', count: selectedGoal.data.count, duration: selectedGoal.data.duration })}</h3>
-                        <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-2">
-                            {selectedGoal.data.dailyPlan.map(day => (
-                                <div key={day.day} className="text-sm p-2 bg-bg-main rounded">
-                                    <div className="flex justify-between items-center">
-                                        <strong>{t('day')} {day.day}: {day.units.map(u => u.text).join(' + ')}</strong>
-                                        <span className={clsx("w-3 h-3 rounded-full", revisionStatusClasses[day.status])}></span>
+                {selectedGoal && (
+                    <div className="space-y-8">
+                        <header className="border-b border-border-main pb-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="px-2 py-0.5 bg-accent-color/10 text-accent-color text-[8px] font-black uppercase tracking-[0.2em] rounded-full">Archive</span>
+                                <span className="text-[8px] font-black uppercase tracking-[0.2em] opacity-30">{selectedGoal.data.completedAt}</span>
+                            </div>
+                            <h3 className="text-2xl font-black text-gradient">
+                                {selectedGoal.type === 'reading'
+                                    ? t('readingGoalHistory', { index: '', khatmas: selectedGoal.data.khatmas, duration: selectedGoal.data.duration })
+                                    : t('revisionGoalHistory', { index: '', count: selectedGoal.data.count, duration: selectedGoal.data.duration })
+                                }
+                            </h3>
+                        </header>
+
+                        <div className="max-h-[50vh] overflow-y-auto pr-2 no-scrollbar space-y-3">
+                            {selectedGoal.type === 'reading' ? (
+                                Object.entries(selectedGoal.data.dailyHistory).map(([dayKey, entry]) => (
+                                    <div key={dayKey} className="p-4 rounded-2xl bg-bg-secondary border border-border-main/50 flex justify-between items-center">
+                                        <div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('day')}</span>
+                                            <p className="text-sm font-black text-accent-color">{dayKey.split('_')[1]}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold">{readingStatusText[entry.status]}</p>
+                                            <span className="text-[10px] font-bold opacity-30 uppercase tracking-widest">{entry.realPages} pages</span>
+                                        </div>
                                     </div>
-                                    {day.status === 'to-review' && day.difficulties.length > 0 && <p className="text-xs mt-1 p-1 bg-yellow-100 rounded text-black">{t('difficultiesLabel')}: {day.difficulties.join(', ')}</p>}
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                selectedGoal.data.dailyPlan.map(day => (
+                                    <div key={day.day} className="p-4 rounded-2xl bg-bg-secondary border border-border-main/50 space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('day')}</span>
+                                                <p className="text-sm font-black text-blue-600">{day.day}</p>
+                                            </div>
+                                            <div className={clsx("w-2 h-2 rounded-full", revisionStatusClasses[day.status])}></div>
+                                        </div>
+                                        <p className="text-sm font-bold opacity-80">{day.units.map(u => u.text).join(' + ')}</p>
+                                        {day.status === 'to-review' && day.difficulties.length > 0 && (
+                                            <div className="p-3 bg-warning/5 border border-warning/10 rounded-xl text-[10px] font-medium text-warning italic">
+                                                {t('difficultiesLabel')}: {day.difficulties.join(', ')}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
                         </div>
-                    </>
+                        <Button variant="accent" onClick={() => setSelectedGoal(null)} className="w-full h-12">Fermer</Button>
+                    </div>
                 )}
-                <Button onClick={() => setSelectedGoal(null)} className="mt-6 w-full">{t('close')}</Button>
             </Modal>
         </div>
     );
