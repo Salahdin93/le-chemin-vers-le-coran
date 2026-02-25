@@ -1,11 +1,13 @@
 import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useSyncExternalStore } from 'react';
-import { AppState, AppAction, Profile, Memorizations, WizardData, WizardMode, EvaluationRecord, EvaluationStatus, EvaluationItem, Juzz, Hizb, SurahPart, MemorizationStatus, MemorizedJuzz, MemorizedHizb, MemorizedSurahPart, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan } from '../types/types';
+import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan } from '../types/types';
 import { generateReadingPlan, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
-import { getInitialBadges, checkPageMilestone, checkRevisionMilestone, checkPerfectEvaluation, checkFirstMemorization, checkConsecutiveDays, checkKhatmaMilestones, checkHadithMilestones } from '../services/achievementLogic';
+import { getInitialBadges, checkRevisionMilestone, checkPerfectEvaluation, checkFirstMemorization, checkKhatmaMilestones, checkHadithMilestones } from '../services/achievementLogic';
 import { TRANSLATIONS } from '../translations';
 import { appStateSchema } from '../schemas/appStateSchema';
+import { dbService } from '../lib/dbService';
+import { supabase } from '../lib/supabase';
 
 const defaultState: AppState = {
   isLoading: false,
@@ -75,11 +77,38 @@ function appReducer(state: AppState, action: AppAction): AppState {
           if (!profile.hadithHistory) profile.hadithHistory = [];
         });
       }
-      return { ...defaultState, ...initialState, notificationHistory: [], kahfNotificationShownThisSession: false };
+
+      const activeProf = getActiveProfile(initialState.profiles || [], initialState.activeProfileId);
+      const mergedProgress = activeProf?.progress || initialState.progress || defaultState.progress;
+      const mergedPlans = activeProf?.plans || initialState.plans || defaultState.plans;
+
+      return {
+        ...defaultState,
+        ...initialState,
+        progress: mergedProgress,
+        plans: mergedPlans,
+        notificationHistory: [],
+        kahfNotificationShownThisSession: false
+      };
     }
     case 'UPDATE_SETTINGS': { return { ...state, settings: { ...state.settings, ...action.payload } }; }
     case 'SET_APP_SCREEN': return { ...state, appScreen: action.payload };
-    case 'SET_ACTIVE_PROFILE': return { ...state, activeProfileId: action.payload, appScreen: 'main' };
+    case 'SET_ACTIVE_PROFILE': {
+      // Sauvegarder l'état actuel (progrès/plans) dans le profil qui va devenir inactif
+      const updatedProfiles = state.profiles.map(p =>
+        p.id === state.activeProfileId ? { ...p, progress: state.progress, plans: state.plans } : p
+      );
+
+      const targetProfile = updatedProfiles.find(p => p.id === action.payload);
+      return {
+        ...state,
+        profiles: updatedProfiles,
+        activeProfileId: action.payload,
+        appScreen: 'main',
+        progress: targetProfile?.progress || defaultState.progress,
+        plans: targetProfile?.plans || defaultState.plans
+      };
+    }
     case 'ADD_PROFILE': return { ...state, profiles: [...state.profiles, action.payload] };
     case 'REMOVE_PROFILE': {
       const newProfiles = state.profiles.filter(p => p.id !== action.payload);
@@ -103,8 +132,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'START_WIZARD': return { ...state, appScreen: 'wizard', wizard: { isOpen: true, type: action.payload.type, mode: action.payload.mode } };
     case 'FINISH_WIZARD': {
       const { wizardData, profileId, startDate } = action.payload as { wizardData: Partial<WizardData>; mode: WizardMode; profileId: string; startDate: string };
-      const readingGoal = (wizardData as Record<string, unknown>).wantsReading ? { duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! } : undefined;
-      const revisionGoal = (wizardData as Record<string, unknown>).wantsRevision ? { selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined } : undefined;
+      const tFn = (key: string) => (TRANSLATIONS[state.settings.lang] as Record<string, string>)[key] || key;
+      const newProgress = { ...defaultState.progress, startDate };
+      const readingPlan = wizardData.wantsReading ? generateReadingPlan({ duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! }, startDate) : null;
+      const revisionPlan = wizardData.wantsRevision ? generateRevisionPlan({ selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined }, startDate, 1, tFn, { surahParts: [], hizbs: [], juzz: [] }) : null;
+
       const newProfile: Profile = {
         id: profileId,
         name: wizardData.name || 'Utilisateur',
@@ -112,7 +144,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
         password: wizardData.password,
         theme: wizardData.theme || 'light',
         accentColor: wizardData.accentColor || '#2E7D32',
-        goals: { reading: readingGoal, revision: revisionGoal },
+        goals: {
+          reading: wizardData.wantsReading ? { duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! } : undefined,
+          revision: wizardData.wantsRevision ? { selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined } : undefined
+        },
         memorizations: { surahParts: [], hizbs: [], juzz: [] },
         hadithProgress: {},
         hadithHistory: [],
@@ -120,15 +155,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
         evaluationPlans: [],
         evaluationHistory: [],
         badges: getInitialBadges(),
+        progress: newProgress,
+        plans: { reading: readingPlan, originalReading: readingPlan, revision: revisionPlan, hadithRevision: null },
       };
-      const updatedProfiles = [...state.profiles, newProfile];
-      const tFn = (key: string) => (TRANSLATIONS[state.settings.lang] as Record<string, string>)[key] || key;
-      const newProgress = { ...defaultState.progress, startDate };
-      const readingPlan = newProfile.goals.reading ? generateReadingPlan(newProfile.goals.reading, startDate) : null;
-      const revisionPlan = newProfile.goals.revision ? generateRevisionPlan(newProfile.goals.revision, startDate, 1, tFn, newProfile.memorizations) : null;
+
       return {
         ...state,
-        profiles: updatedProfiles,
+        profiles: [...state.profiles, newProfile],
         activeProfileId: newProfile.id,
         progress: newProgress,
         plans: { ...state.plans, reading: readingPlan, originalReading: readingPlan, revision: revisionPlan },
@@ -172,7 +205,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const newHistory = [...state.progress.history.hadithRevisionHistory, action.payload.goal];
       return { ...state, progress: { ...state.progress, history: { ...state.progress.history, hadithRevisionHistory: newHistory, }, }, };
     }
-    case 'LOGOUT': return { ...state, activeProfileId: null, appScreen: 'profile-selection' };
+    case 'LOGOUT': {
+      const updatedProfiles = state.profiles.map(p =>
+        p.id === state.activeProfileId ? { ...p, progress: state.progress, plans: state.plans } : p
+      );
+      return { ...state, profiles: updatedProfiles, activeProfileId: null, appScreen: 'profile-selection' };
+    }
     case 'RESET_APP': {
       localStorage.removeItem('quranCompanionState_v7');
       return { ...defaultState, appScreen: 'language' };
@@ -198,154 +236,95 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const newOriginalPlan = generateReadingPlan(newGoal, state.progress.startDate);
       const newRecalculatedPlan = recalculateFuturePlan(newOriginalPlan, state.progress.readingHistory, state.progress.currentReadingDay);
       const updatedProfile = { ...activeProfile, goals: { ...activeProfile.goals, reading: newGoal } };
-      return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p), plans: { ...state.plans, reading: newRecalculatedPlan, originalReading: newOriginalPlan } };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p), plans: { ...state.plans, reading: newRecalculatedPlan, originalReading: newOriginalPlan } };
     }
-    case 'ADVANCE_DAY': {
-      if (!activeProfile?.goals.reading) return state;
-      const newReadingDay = state.progress.currentReadingDay + 1;
-      const newState = { ...state, progress: { ...state.progress, currentReadingDay: newReadingDay, readingHistory: action.payload.newHistory, consecutiveDays: action.payload.newConsecutiveDays }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
-      const badge = checkConsecutiveDays(newState);
-      return unlockBadge(newState, badge);
-    }
-    case 'UPDATE_READING_HISTORY': {
-      const newState = { ...state, progress: { ...state.progress, readingHistory: action.payload.newHistory }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
-      const badge = checkPageMilestone(newState);
-      return unlockBadge(newState, badge);
-    }
+    case 'ADVANCE_DAY': return { ...state, progress: { ...state.progress, readingHistory: action.payload.newHistory, consecutiveDays: action.payload.newConsecutiveDays, currentReadingDay: state.progress.currentReadingDay + 1 }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
+    case 'UPDATE_READING_HISTORY': return { ...state, progress: { ...state.progress, readingHistory: action.payload.newHistory }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
     case 'UPDATE_REVISION_STATUS': {
-      if (!activeProfile) return state;
-      const { revisionIndex, status, difficulties, hizbNum, timeSpent } = action.payload;
-      const newRevisionPlan = state.plans.revision ? [...state.plans.revision] : [];
-      if (newRevisionPlan[revisionIndex]) {
-        newRevisionPlan[revisionIndex].status = status;
-        newRevisionPlan[revisionIndex].difficulties = difficulties || [];
-        if (timeSpent !== undefined) {
-          newRevisionPlan[revisionIndex].timeSpent = (newRevisionPlan[revisionIndex].timeSpent || 0) + timeSpent;
-        }
+      if (!state.plans.revision) return state;
+      const newRevisionPlan = [...state.plans.revision];
+      newRevisionPlan[action.payload.revisionIndex] = { ...newRevisionPlan[action.payload.revisionIndex], status: action.payload.status, difficulties: action.payload.difficulties || [], timeSpent: action.payload.timeSpent };
+      let newDifficulties = [...(activeProfile?.difficulties || [])];
+      if (action.payload.difficulties && action.payload.difficulties.length > 0) {
+        action.payload.difficulties.forEach(diff => {
+          if (!newDifficulties.find(d => d.surahName === diff && d.hizbNum === action.payload.hizbNum)) {
+            newDifficulties.push({ surahName: diff, hizbNum: action.payload.hizbNum || null });
+          }
+        });
       }
-      const newToReviewHistory = [...state.progress.history.toReview];
-      const existingHistoryIndex = newToReviewHistory.findIndex(item => item.day === newRevisionPlan[revisionIndex]?.day);
-      if (existingHistoryIndex > -1) {
-        newToReviewHistory[existingHistoryIndex].status = status; newToReviewHistory[existingHistoryIndex].difficulties = difficulties || [];
-      } else if (status !== 'pending') { const day = newRevisionPlan[revisionIndex]; newToReviewHistory.push({ day: day.day, units: day.units, date: new Date().toISOString(), status: status, difficulties: difficulties || [] }); }
-      let newDifficulties = [...(activeProfile.difficulties || [])];
-      if (status === 'revised' && hizbNum) { newDifficulties = newDifficulties.filter(d => d.hizbNum !== hizbNum); }
-      if (status === 'to-review' && hizbNum && difficulties) {
-        newDifficulties = newDifficulties.filter(d => d.hizbNum !== hizbNum);
-        difficulties.forEach(surahName => { newDifficulties.push({ surahName, hizbNum }); });
-      }
-      const updatedProfile = { ...activeProfile, difficulties: newDifficulties };
-      const newState = { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p), progress: { ...state.progress, currentRevisionIndex: revisionIndex === state.progress.currentRevisionIndex ? state.progress.currentRevisionIndex + 1 : state.progress.currentRevisionIndex, history: { ...state.progress.history, toReview: newToReviewHistory } }, plans: { ...state.plans, revision: newRevisionPlan } };
+      const updatedProfile = activeProfile ? { ...activeProfile, difficulties: newDifficulties } : null;
+      const newState = {
+        ...state,
+        plans: { ...state.plans, revision: newRevisionPlan },
+        profiles: updatedProfile ? state.profiles.map(p => p.id === activeProfile?.id ? updatedProfile : p) : state.profiles,
+        progress: { ...state.progress, currentRevisionIndex: action.payload.status === 'revised' ? state.progress.currentRevisionIndex + 1 : state.progress.currentRevisionIndex }
+      };
       const badge = checkRevisionMilestone(newState);
       return unlockBadge(newState, badge);
     }
     case 'COMPLETE_GOAL': {
-      const { type, goal } = action.payload;
-      const history = { ...state.progress.history };
-      if (type === 'reading') { history.reading = [...history.reading, goal]; }
-      if (type === 'revision') { history.revision = [...history.revision, goal]; }
-      const newState = { ...state, progress: { ...state.progress, history } };
-      const badge = type === 'reading' ? checkKhatmaMilestones(newState) : null;
-      return unlockBadge(newState, badge);
+      const historyType = action.payload.type;
+      const newHistory = { ...state.progress.history, [historyType]: [...state.progress.history[historyType], action.payload.goal] };
+      const newState = { ...state, progress: { ...state.progress, history: newHistory } };
+      if (historyType === 'reading') {
+        const badge = checkKhatmaMilestones(newState);
+        return unlockBadge(newState, badge);
+      }
+      return newState;
     }
     case 'ADD_MEMORIZATION': {
       if (!activeProfile) return state;
       const { type, item } = action.payload;
-      const newMemorizations: Memorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
-      if (type === 'surahPart' && !newMemorizations.surahParts.find(s => s.id === item.id)) {
-        newMemorizations.surahParts.push(item);
-      } else if (type === 'hizb' && !newMemorizations.hizbs.find(h => h.number === item.number)) {
-        newMemorizations.hizbs.push(item);
-      } else if (type === 'juzz' && !newMemorizations.juzz.find(j => j.number === item.number)) { newMemorizations.juzz.push(item); }
-      const updatedProfile = { ...activeProfile, memorizations: newMemorizations };
-      const newState = { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
+      const newMemorizations = { ...activeProfile.memorizations, [type + 's']: [...(activeProfile.memorizations as any)[type + 's'], item] };
+      const newState = { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: newMemorizations } : p) };
       const badge = checkFirstMemorization(newState);
       return unlockBadge(newState, badge);
     }
     case 'REMOVE_MEMORIZATION': {
       if (!activeProfile) return state;
       const { type, item } = action.payload;
-      const newMemorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
-      if (type === 'surahPart') {
-        newMemorizations.surahParts = newMemorizations.surahParts.filter((s: SurahPart) => s.id !== item.id);
-      } else if (type === 'hizb') {
-        newMemorizations.hizbs = newMemorizations.hizbs.filter((h: Hizb) => h.number !== item.number);
-      } else if (type === 'juzz') { newMemorizations.juzz = newMemorizations.juzz.filter((j: Juzz) => j.number !== item.number); }
-      const updatedProfile = { ...activeProfile, memorizations: newMemorizations };
-      return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
+      const newMemorizations = { ...activeProfile.memorizations, [type + 's']: (activeProfile.memorizations as any)[type + 's'].filter((i: any) => i.id !== item.id && i.number !== item.number) };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: newMemorizations } : p) };
     }
     case 'UPDATE_MEMORIZATIONS': {
       if (!activeProfile) return state;
-      const updatedProfile = { ...activeProfile, memorizations: action.payload };
-      return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: action.payload } : p) };
+    }
+    case 'UPDATE_MEMORIZATION_STATUS': {
+      if (!activeProfile) return state;
+      const { type, ids, status } = action.payload;
+      const listKey = type === 'surahPart' ? 'surahParts' : type + 's';
+      const newList = (activeProfile.memorizations as any)[listKey].map((item: any) => ids.includes(item.id || item.number) ? { ...item, status } : item);
+      const newMemorizations = { ...activeProfile.memorizations, [listKey]: newList };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: newMemorizations } : p) };
     }
     case 'SAVE_EVALUATION_RESULTS': {
       if (!activeProfile) return state;
-      const results = action.payload as (EvaluationItem & { result: EvaluationStatus })[];
-      const evalDate = new Date().toISOString();
-      const newRecord: EvaluationRecord = { id: evalDate, date: evalDate, items: results };
-      const newHistory = [newRecord, ...activeProfile.evaluationHistory];
-      const newMemorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
-      results.forEach((item: EvaluationItem & { result: EvaluationStatus }) => {
-        if (item.type === 'hadith') return;
-        const status = item.result as MemorizationStatus;
-        const level = status === 'a_revoir' ? 'moyen' : status;
-        if (item.type === 'juzz') newMemorizations.juzz = newMemorizations.juzz.map((j: MemorizedJuzz) => item.itemId == j.number.toString() ? { ...j, status, level } : j);
-        else if (item.type === 'hizb') newMemorizations.hizbs = newMemorizations.hizbs.map((h: MemorizedHizb) => item.itemId == h.number ? { ...h, status, level } : h);
-        else if (item.type === 'surahPart') newMemorizations.surahParts = newMemorizations.surahParts.map((s: MemorizedSurahPart) => item.itemId === s.id ? { ...s, status, level } : s);
-      });
-      const updatedProfile = { ...activeProfile, evaluationHistory: newHistory, memorizations: newMemorizations };
-      const newState = { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
-      const badge = checkPerfectEvaluation(results as (EvaluationItem & { result: EvaluationStatus })[], newState);
+      const record: EvaluationRecord = { id: `eval_${Date.now()}`, date: new Date().toISOString(), items: action.payload };
+      const newState = { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, evaluationHistory: [record, ...p.evaluationHistory] } : p) };
+      const badge = checkPerfectEvaluation(action.payload, newState);
       return unlockBadge(newState, badge);
     }
     case 'ADD_EVALUATION_PLAN': {
       if (!activeProfile) return state;
-      const newEvaluationPlans = [...(activeProfile.evaluationPlans || []), action.payload];
-      const updatedProfile = { ...activeProfile, evaluationPlans: newEvaluationPlans };
-      return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, evaluationPlans: [...(p.evaluationPlans || []), action.payload] } : p) };
     }
     case 'UPDATE_EVALUATION_PLAN': {
       if (!activeProfile) return state;
-      const updatedPlan = action.payload;
-      const newEvaluationPlans = (activeProfile.evaluationPlans || []).map(plan => plan.id === updatedPlan.id ? { ...plan, ...updatedPlan } : plan);
-      const updatedProfile = { ...activeProfile, evaluationPlans: newEvaluationPlans };
-      return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, evaluationPlans: (p.evaluationPlans || []).map(plan => plan.id === action.payload.id ? { ...plan, ...action.payload } : plan) } : p) };
     }
     case 'REMOVE_EVALUATION_PLAN': {
       if (!activeProfile) return state;
-      const { id } = action.payload;
-      const newEvaluationPlans = (activeProfile.evaluationPlans || []).filter(plan => plan.id !== id);
-      const updatedProfile = { ...activeProfile, evaluationPlans: newEvaluationPlans };
-      return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, evaluationPlans: (p.evaluationPlans || []).filter(plan => plan.id !== action.payload.id) } : p) };
     }
     case 'SET_ACTIVE_EVALUATION_PLAN': return { ...state, activeEvaluationPlan: action.payload };
     case 'SET_EDITING_EVALUATION_PLAN_ID': return { ...state, editingEvaluationPlanId: action.payload };
-    case 'UPDATE_MEMORIZATION_STATUS': {
-      if (!activeProfile) return state;
-      const { type, ids, status } = action.payload;
-      const newMemorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
-      const level = status === 'a_revoir' ? 'moyen' : status;
-      if (type === 'juzz') {
-        newMemorizations.juzz = newMemorizations.juzz.map((j: MemorizedJuzz) => ids.includes(j.number) ? { ...j, status, level } : j);
-      } else if (type === 'hizb') {
-        newMemorizations.hizbs = newMemorizations.hizbs.map((h: MemorizedHizb) => ids.includes(Number(h.number)) ? { ...h, status, level } : h);
-      } else if (type === 'surahPart') { newMemorizations.surahParts = newMemorizations.surahParts.map((s: MemorizedSurahPart) => ids.some(id => s.id === id) ? { ...s, status, level } : s); }
-      const updatedProfile = { ...activeProfile, memorizations: newMemorizations };
-      return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
-    }
-    case 'UNLOCK_BADGE': {
-      if (!activeProfile) return state;
-      const badgeId = action.payload;
-      const alreadyUnlocked = activeProfile.badges.find(b => b.id === badgeId)?.unlockedOn;
-      if (alreadyUnlocked) return state;
-      const newBadges = activeProfile.badges.map(badge => badge.id === badgeId ? { ...badge, unlockedOn: new Date().toISOString() } : badge);
-      const updatedProfile = { ...activeProfile, badges: newBadges };
-      return { ...state, profiles: state.profiles.map(p => p.id === state.activeProfileId ? updatedProfile : p) };
-    }
+    case 'ADD_NOTIFICATION_TO_HISTORY': return { ...state, notificationHistory: [action.payload, ...state.notificationHistory] };
+    case 'REMOVE_NOTIFICATION_FROM_HISTORY': return { ...state, notificationHistory: state.notificationHistory.filter(n => n.id !== action.payload) };
+    case 'CLEAR_NOTIFICATION_HISTORY': return { ...state, notificationHistory: [] };
     case 'SET_KAHF_NOTIFICATION_SHOWN': return { ...state, kahfNotificationShownThisSession: true };
-    default:
-      return state;
+    case 'SET_APP_LANGUAGE': return { ...state, settings: { ...state.settings, lang: action.payload } };
+    default: return state;
   }
 }
 
@@ -372,30 +351,80 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return translation;
   }, [state.settings.lang]);
 
+  // Chargement initial
   useEffect(() => {
-    try {
-      const savedStateJSON = localStorage.getItem('quranCompanionState_v7');
-      if (savedStateJSON) {
-        const parsedState = JSON.parse(savedStateJSON);
-        const validationResult = appStateSchema.safeParse(parsedState);
-        if (validationResult.success) {
-          dispatch({ type: 'INITIALIZE_STATE', payload: { ...defaultState, ...validationResult.data } });
+    const loadState = async () => {
+      try {
+        // 1. Tenter de charger depuis Supabase (prioritaire si connecté)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const remoteSettings = await dbService.getSettings();
+          const remoteProfiles = await dbService.getProfiles();
+
+          if (remoteProfiles.length > 0 || remoteSettings) {
+            const newState = {
+              ...defaultState,
+              profiles: remoteProfiles,
+              settings: remoteSettings?.settings ? { ...state.settings, ...remoteSettings.settings } : state.settings,
+              activeProfileId: remoteSettings?.activeProfileId || (remoteProfiles[0]?.id || null)
+            };
+            dispatch({ type: 'INITIALIZE_STATE', payload: newState });
+            return;
+          }
+        }
+
+        // 2. Fallback sur localStorage (legacy ou non connecté)
+        const savedStateJSON = localStorage.getItem('quranCompanionState_v7');
+        if (savedStateJSON) {
+          const parsedState = JSON.parse(savedStateJSON);
+          const validationResult = appStateSchema.safeParse(parsedState);
+          if (validationResult.success) {
+            dispatch({ type: 'INITIALIZE_STATE', payload: { ...defaultState, ...validationResult.data } });
+          } else {
+            console.warn("Invalid data found in localStorage. Resetting state.", validationResult.error);
+            localStorage.removeItem('quranCompanionState_v7');
+            dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
+          }
         } else {
-          console.warn("Invalid data found in localStorage. Resetting state.", validationResult.error);
-          localStorage.removeItem('quranCompanionState_v7');
+          const browserLang = navigator.language.split('-')[0];
+          const initialLang = ['fr', 'en', 'ar'].includes(browserLang) ? browserLang as 'fr' : 'fr';
+          dispatch({ type: 'UPDATE_SETTINGS', payload: { lang: initialLang as any } });
           dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
         }
-      } else {
-        const browserLang = navigator.language.split('-')[0];
-        const initialLang = ['fr', 'en', 'ar'].includes(browserLang) ? browserLang as 'fr' : 'fr';
-        dispatch({ type: 'UPDATE_SETTINGS', payload: { lang: initialLang as any } });
+      } catch (error) {
+        console.error("Failed to load or parse state", error);
         dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
       }
-    } catch (error) {
-      console.error("Failed to load or parse state from localStorage", error);
-      dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
-    }
+    };
+
+    loadState();
   }, []);
+
+  // Sauvegarde automatique optimisée (Supabase + localStorage)
+  useEffect(() => {
+    if (state.appScreen === 'splash' || state.isLoading) return;
+
+    // 1. Sauvegarde LocalStorage immédiate (c'est local, donc gratuit)
+    try {
+      const stateToSave = { ...state, notificationHistory: [] };
+      localStorage.setItem('quranCompanionState_v7', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error("Failed to save state to localStorage", error);
+    }
+
+    // 2. Sauvegarde Supabase DEBOUNCED (pour économiser l'Egress/API)
+    const timeoutId = setTimeout(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        console.log('☁️ Syncing to Supabase (optimized)...');
+        await dbService.syncFullState(state);
+      }
+    }, 3000); // On attend 3 secondes d'inactivité avant de synchroniser
+
+    return () => clearTimeout(timeoutId);
+
+    // On ne surveille QUE les données persistantes pour éviter de sync lors d'un toast ou d'un changement de vue
+  }, [state.profiles, state.settings, state.progress, state.plans, state.activeProfileId]);
 
   useEffect(() => {
     if (state.appScreen === 'main' && activeProfile && !state.kahfNotificationShownThisSession) {
@@ -431,17 +460,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const clearNotification = scheduleNotification();
     return clearNotification;
   }, [state.settings.enableNotifications, state.settings.notificationTime, t]);
-
-  useEffect(() => {
-    if (state.appScreen !== 'splash') {
-      try {
-        const stateToSave = { ...state, notificationHistory: [] };
-        localStorage.setItem('quranCompanionState_v7', JSON.stringify(stateToSave));
-      } catch (error) {
-        console.error("Failed to save state to localStorage", error);
-      }
-    }
-  }, [state]);
 
   useEffect(() => {
     const theme: Theme = activeProfile?.theme || 'light';

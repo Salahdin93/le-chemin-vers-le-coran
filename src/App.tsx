@@ -7,11 +7,13 @@ import Wizard from './components/screens/Wizard';
 import MainAppView from './components/layout/MainAppView';
 import InitialChoiceScreen from './components/screens/InitialChoiceScreen';
 import ProfileSelectionScreen from './components/screens/ProfileSelectionScreen';
-import { Profile } from './types';
+import { Profile } from './types/types';
 import LoadingOverlay from './components/ui/LoadingOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 import SplashScreen from './components/screens/SplashScreen';
 import { AnimatePresence } from 'framer-motion';
+
+import AuthScreen from './components/screens/AuthScreen';
 
 function AppContent() {
   const { state, dispatch } = useStore();
@@ -63,6 +65,7 @@ function AppContent() {
       case 'initial-choice': return <InitialChoiceScreen />;
       case 'profile-selection': return <ProfileSelectionScreen />;
       case 'login': return <LoginScreen />;
+      case 'auth': return <AuthScreen />;
       case 'wizard': return <Wizard />;
       case 'main': return <MainAppView />;
       default: return <SplashScreen />;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Card, { CardHeader } from '@/components/ui/Card';
+import Card from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
-import { ReadingStatus, PlanDay, ReadingHistoryEntry, ReadingHistory } from '@/types';
+import { ReadingStatus, PlanDay } from '@/types';
 import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import Modal from '@/components/ui/Modal';
@@ -9,37 +9,32 @@ import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLo
 import { TOTAL_PAGES } from '@/constants/quranData';
 import InputModal from '@/components/ui/InputModal';
 import { motion } from 'framer-motion';
-import { Clock } from 'lucide-react';
+import { Clock, CheckCircle2, Circle, ArrowRight, Star } from 'lucide-react';
 
 const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30 },
     visible: (i: number) => ({
         opacity: 1,
         y: 0,
         transition: {
             delay: i * 0.1,
-            duration: 0.5,
-            ease: "easeOut" as const
+            duration: 0.7,
+            ease: [0.23, 1, 0.32, 1] as any
         }
     })
 };
 
-const formatTime = (totalSeconds: number): string => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    if (minutes > 0) {
-        return `${minutes} min ${seconds} s`;
-    }
-    return `${seconds} s`;
-};
-
 const HadithAlKahf: React.FC = () => (
-    <div className="text-sm text-left max-h-[60vh] overflow-y-auto">
-        <p className="font-semibold text-lg mb-2">Rappel sur les mérites de la lecture de Sourate Al-Kahf</p>
-        <div className="p-3 bg-bg-main rounded-lg border border-border-main">
-            <p className="font-amiri text-base rtl text-right">عن أبي سعيد الخдري رضي الله عنه قال النبي صلى الله عليه و سلم : من قرأ سورةَ الكهفِ في يومِ الجمعةِ أضاء له من النورِ ما بين الجمُعتَينِ</p>
-            <p className="text-xs italic mt-2">D'après Abou Said Al Khoudri (qu'Allah l'agrée), le Prophète (ﷺ) a dit: « Celui qui lit la sourate Al Kahf le jour du vendredi, il est éclairé par une lumière entre les deux vendredis (_) ».</p>
-            <p className="text-xs opacity-70 mt-1">(Rapporté par Al Bayhaqi et authentifié par Cheikh Albani dans Sahih Al Jami n°6470)</p>
+    <div className="text-sm text-left space-y-4">
+        <p className="font-black text-2xl text-gradient">Sourate Al-Kahf</p>
+        <div className="p-6 glass-card border-none shadow-inner bg-accent-color/5">
+            <p className="font-amiri text-2xl rtl text-right leading-loose text-text-main/90 mb-4">
+                عن أبي سعيد الخدري رضي الله عنه قال النبي صلى الله عليه و سلم : من قرأ سورةَ الكهفِ في يومِ الجمعةِ أضاء له من النورِ ما بين الجمُعتَينِ
+            </p>
+            <p className="text-sm italic opacity-80 border-t border-border-main pt-4">
+                "Celui qui lit la sourate Al Kahf le jour du vendredi, il est éclairé par une lumière entre les deux vendredis."
+            </p>
+            <p className="text-[10px] opacity-50 mt-2 font-bold uppercase tracking-widest">(Rapporté par Al Bayhaqi)</p>
         </div>
     </div>
 );
@@ -53,39 +48,32 @@ const GlobalProgressCard: React.FC = () => {
     const totalPagesToRead = readingGoal.khatmas * TOTAL_PAGES;
     const percentage = totalPagesToRead > 0 ? Math.round((totalPagesRead / totalPagesToRead) * 100) : 0;
 
-    const daysElapsed = state.progress.currentReadingDay - 1;
-    const averagePace = daysElapsed > 0 ? Math.round(totalPagesRead / daysElapsed) : 0;
-
-    let estimatedFinishDateStr = "N/A";
-    if (averagePace > 0 && totalPagesRead < totalPagesToRead) {
-        const remainingPages = totalPagesToRead - totalPagesRead;
-        const remainingDays = Math.ceil(remainingPages / averagePace);
-        const finishDate = new Date();
-        finishDate.setDate(new Date().getDate() + remainingDays);
-        estimatedFinishDateStr = finishDate.toLocaleDateString(state.settings.lang, { year: 'numeric', month: 'long', day: 'numeric' });
-    } else if (totalPagesRead >= totalPagesToRead) {
-        estimatedFinishDateStr = "Terminé !";
-    }
-
     return (
-        <Card>
-            <CardHeader icon="📊">Progression Globale</CardHeader>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className="p-3 bg-bg-main rounded-lg">
-                    <span className="text-3xl font-bold block">{percentage}%</span>
-                    <span className="text-sm opacity-70">{t('overallProgress')}</span>
+        <Card className="overflow-visible !bg-slate-900 border-white/5 text-white">
+            <div className="absolute -top-3 left-8 px-4 py-1 bg-white text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl">
+                {t('overallProgress')}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 p-8">
+                <div className="relative flex flex-col items-center justify-center">
+                    <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="6" className="text-white/10" fill="transparent" />
+                        <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="6" className="text-accent-color" fill="transparent" strokeDasharray="282.7" strokeDashoffset={282.7 - (percentage / 100) * 282.7} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
+                    </svg>
+                    <span className="absolute text-xl font-black">{percentage}%</span>
                 </div>
-                <div className="p-3 bg-bg-main rounded-lg">
-                    <span className="text-3xl font-bold block">{totalPagesRead} / {totalPagesToRead}</span>
-                    <span className="text-sm opacity-70">{t('pagesRead')}</span>
+                <div className="flex flex-col justify-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('pagesRead')}</span>
+                    <span className="text-2xl font-black leading-none">{totalPagesRead} <span className="text-sm opacity-40">/ {totalPagesToRead}</span></span>
                 </div>
-                <div className="p-3 bg-bg-main rounded-lg">
-                    <span className="text-3xl font-bold block">~{averagePace}</span>
-                    <span className="text-sm opacity-70">{t('pagesPerDay')}</span>
+                <div className="flex flex-col justify-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('pagesPerDay')}</span>
+                    <span className="text-2xl font-black leading-none">~{Math.round(totalPagesRead / Math.max(1, state.progress.currentReadingDay - 1))}</span>
                 </div>
-                <div className="p-3 bg-bg-main rounded-lg">
-                    <span className="text-xl font-bold block">{estimatedFinishDateStr}</span>
-                    <span className="text-sm opacity-70">{t('estimatedFinishDate')}</span>
+                <div className="flex flex-col justify-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{t('status')}</span>
+                    <span className="text-lg font-bold text-accent-color flex items-center gap-2">
+                        <Star size={16} fill="currentColor" /> {percentage >= 100 ? 'Terminé !' : 'En chemin...'}
+                    </span>
                 </div>
             </div>
         </Card>
@@ -95,225 +83,127 @@ const GlobalProgressCard: React.FC = () => {
 const ReadingPlanView: React.FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
     const [kahfModalOpen, setKahfModalOpen] = useState(false);
-    const [editingDay, setEditingDay] = useState<PlanDay | null>(null);
+    const [editingDay, setEditingDay] = useState<number | null>(null);
     const [inputModalState, setInputModalState] = useState<{
         isOpen: boolean;
         title: string;
         label: string;
         onSubmit: (value: string) => void;
-    }>({
-        isOpen: false,
-        title: '',
-        label: '',
-        onSubmit: () => { },
-    });
+    }>({ isOpen: false, title: '', label: '', onSubmit: () => { } });
 
     const readingGoal = activeProfile?.goals.reading;
     const readingPlan = state.plans.reading;
-    const originalReadingPlan = state.plans.originalReading;
-
-    const isPlanFinished = readingGoal && state.progress.currentReadingDay > readingGoal.duration;
-
-    if (!readingGoal || !readingPlan) {
-        return (
-            <Card className="text-center py-8">
-                <p className="mb-4 text-lg">{t('noGoalsYet')}</p>
-                <Button onClick={() => dispatch({ type: 'START_WIZARD', payload: { type: 'reading', mode: 'new' } })}>{t('newReadingGoal')}</Button>
-            </Card>
-        );
-    }
+    if (!readingGoal || !readingPlan) return null;
 
     const handleStatusChange = (day: PlanDay, status: ReadingStatus, isKahfUpdate: boolean = false) => {
         const executeUpdate = (adjustment: number) => {
             const dayKey = `day_${day.day}`;
-            const existingHistory = state.progress.readingHistory[dayKey] || { status: 'not_read', realPages: 0, adjustment: 0 };
-
-            let newHistoryForDay: ReadingHistoryEntry;
-
-            if (isKahfUpdate) {
-                newHistoryForDay = {
-                    ...existingHistory,
-                    kahfStatus: status,
-                };
-            } else {
-                const realPages = status === 'not_read' ? 0 : day.recalculatedPages + adjustment;
-                newHistoryForDay = {
-                    ...existingHistory,
-                    status: status,
-                    realPages: realPages,
-                    adjustment: adjustment,
-                };
-            }
-
-            const updatedHistory: ReadingHistory = { ...state.progress.readingHistory, [dayKey]: newHistoryForDay };
-            const recalculatedPlan = originalReadingPlan ? recalculateFuturePlan(originalReadingPlan, updatedHistory, state.progress.currentReadingDay) : null;
-
-            dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory: updatedHistory, recalculatedPlan: recalculatedPlan! } });
+            const existing = state.progress.readingHistory[dayKey] || { status: 'not_read', realPages: 0, adjustment: 0 };
+            const updatedHistory = {
+                ...state.progress.readingHistory,
+                [dayKey]: isKahfUpdate ? { ...existing, kahfStatus: status } : { ...existing, status, realPages: status === 'not_read' ? 0 : day.recalculatedPages + adjustment, adjustment }
+            };
+            const recPlan = state.plans.originalReading ? recalculateFuturePlan(state.plans.originalReading, updatedHistory, state.progress.currentReadingDay) : null;
+            dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory: updatedHistory, recalculatedPlan: recPlan! } });
             dispatch({ type: 'SET_TOAST', payload: t('saved') });
             setEditingDay(null);
         };
 
         if (!isKahfUpdate && (status === 'partial' || status === 'catchup')) {
             setInputModalState({
-                isOpen: true,
-                title: status === 'partial' ? t('partialReadingTitle') : t('catchUpReadingTitle'),
+                isOpen: true, title: status === 'partial' ? t('partialReadingTitle') : t('catchUpReadingTitle'),
                 label: status === 'partial' ? t('partialLabel') : t('catchUpLabel'),
-                onSubmit: (value: string) => {
-                    const numValue = parseInt(value) || 0;
-                    if (numValue < 0) return;
-                    const adjustment = status === 'partial' ? -numValue : numValue;
-                    executeUpdate(adjustment);
-                }
+                onSubmit: (v) => { const n = parseInt(v) || 0; if (n >= 0) executeUpdate(status === 'partial' ? -n : n); }
             });
-        } else {
-            executeUpdate(0);
-        }
+        } else executeUpdate(0);
     };
 
-    const handleKahfStatus = (day: PlanDay, status: 'done' | 'partial' | 'not_read') => {
-        if (status === 'partial' || status === 'not_read') {
-            setKahfModalOpen(true);
+    const handleAdvance = () => {
+        const d = state.progress.currentReadingDay;
+        const dayK = `day_${d}`;
+        let h = { ...state.progress.readingHistory };
+        if (!h[dayK] && readingPlan) {
+            const pD = readingPlan.find(dp => dp.day === d);
+            if (pD) h[dayK] = { status: 'done', adjustment: 0, realPages: pD.recalculatedPages, kahf: pD.isKahfDay, kahfStatus: pD.isKahfDay ? 'done' : undefined };
         }
-        handleStatusChange(day, status, true);
-    };
+        const s = h[dayK]?.status;
+        const cDays = (s === 'done' || s === 'catchup') ? state.progress.consecutiveDays + 1 : 0;
+        const rPlan = state.plans.originalReading ? recalculateFuturePlan(state.plans.originalReading, h, d + 1) : null;
+        dispatch({ type: 'ADVANCE_DAY', payload: { newHistory: h, newConsecutiveDays: cDays, recalculatedPlan: rPlan! } });
 
-    if (isPlanFinished) {
-        return (
-            <Card className="text-center py-12">
-                <h3 className="text-3xl font-amiri mb-4">{t('congratulations')}</h3>
-                <p className="mb-6">Vous avez terminé votre objectif de lecture. Qu'Allah accepte.</p>
-                <Button onClick={() => dispatch({ type: 'START_WIZARD', payload: { type: 'reading', mode: 'new' } })}>{t('newReadingGoal')}</Button>
-            </Card>
-        );
-    }
+        if (readingGoal && d === readingGoal.duration) {
+            // Optionnel: peut-être naviguer ou montrer un modal spécial
+        }
+        dispatch({ type: 'SET_TOAST', payload: t('saved') });
+    };
 
     return (
-        <div className="space-y-8">
-            <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants as any}>
-                <Card>
-                    <CardHeader icon="🌟">La récompense de la lecture du Coran</CardHeader>
-                    <div className="rtl text-right font-amiri text-xl">
-                        <p>عَنْ عَبْدَ اللَّهِ بْنَ مَسْعُودٍ، يَقُولُ: قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: " مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ، وَالحَسَنَةُ بِعَشْرِ أَمْثَالِهَا، لَا أَقُولُ الم حَرْفٌ، وَلَكِنْ أَلِفٌ حَرْفٌ وَلَامٌ حَرْفٌ وَمِيمٌ حَرْفٌ "</p>
-                        <p className="ltr text-left text-base italic mt-2 opacity-80">D'après Abdallah ibn Mas'ud (qu'Allah l'agrée), le Prophète (ﷺ) a dit: « Celui qui lit une seule lettre du Coran obtient une bonne action et la bonne action est décuplée. Je ne dis pas que 'Alif Lam Mim' est une lettre mais Alif est une lettre, Lam est une lettre et Mim est une lettre ».</p>
-                        <p className="text-xs opacity-70 mt-1 ltr text-left">(Rapporté par Tirmidhi n°2910, authentifié par Cheikh Albani)</p>
+        <div className="space-y-12 pb-24">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border-main pb-8">
+                    <div>
+                        <h2 className="text-4xl font-black tracking-tight text-gradient">{t('readingPlan')}</h2>
+                        <p className="text-text-secondary font-medium mt-1">{t('readingPlanSubtitle') || 'Suivez votre progression quotidienne vers la Khatma'}</p>
                     </div>
-                </Card>
+                    <GlobalProgressCard />
+                </header>
             </motion.div>
 
-            <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants as any}>
-                <Card>
-                    <CardHeader>{t('readingPlan')}</CardHeader>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {readingPlan.map((day) => {
-                            const dayKey = `day_${day.day}`;
-                            const history = state.progress.readingHistory[dayKey];
-                            const isCurrent = day.day === state.progress.currentReadingDay;
-                            const isPast = day.day < state.progress.currentReadingDay;
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {readingPlan.map((day, i) => {
+                    const status = state.progress.readingHistory[`day_${day.day}`]?.status || 'not_read';
+                    const isCurrent = day.day === state.progress.currentReadingDay;
+                    const isEditing = editingDay === day.day;
 
-                            const statusBorderColorClass = {
-                                'done': 'border-green-500',
-                                'catchup': 'border-green-500',
-                                'partial': 'border-yellow-500',
-                                'not_read': 'border-red-500',
-                            };
-
-                            const hizbStart = getHizbDetailsFromPage(day.startPage);
-                            const hizbEnd = getHizbDetailsFromPage(day.endPage);
-                            const hizbText = hizbStart.hizbNum === hizbEnd.hizbNum ? `Hizb ${hizbStart.hizbNum}` : `Hizb ${hizbStart.hizbNum} → Hizb ${hizbEnd.hizbNum}`;
-                            const surahText = hizbStart && hizbEnd
-                                ? (hizbStart.surahName === hizbEnd.surahName
-                                    ? `Sourate ${hizbStart.surahName}`
-                                    : `De Sourate ${hizbStart.surahName} à ${hizbEnd.surahName}`)
-                                : '';
-                            const date = new Date(state.progress.startDate!);
-                            date.setDate(date.getDate() + day.day - 1);
-                            const dateString = date.toLocaleDateString(state.settings.lang, { weekday: 'long', day: 'numeric', month: 'long' });
-
-                            const isEditing = editingDay?.day === day.day;
-
-                            let kahfDisplayText = '';
-                            if (history?.kahfStatus && activeProfile?.goals.reading?.kahfOption) {
-                                if (history.kahfStatus === 'done') {
-                                    kahfDisplayText = ' + Sourate Al-Kahf : Lu';
-                                } else if (history.kahfStatus === 'partial') {
-                                    kahfDisplayText = ' + Sourate Al-Kahf : Partiel';
-                                } else if (history.kahfStatus === 'not_read') {
-                                    kahfDisplayText = ' + Sourate Al-Kahf : Non lu';
-                                }
-                            }
-
-                            return (
-                                <div
-                                    key={day.day}
-                                    onClick={() => !isEditing && setEditingDay(day)}
-                                    className={clsx(
-                                        'p-5 border-2 rounded-2xl flex flex-col cursor-pointer transition-all duration-200 ease-in-out',
-                                        'bg-bg-secondary text-text-main shadow-lg shadow-primary/10 hover:shadow-primary/20 hover:-translate-y-1',
-                                        isCurrent
-                                            ? 'border-primary'
-                                            : (isPast && history)
-                                                ? statusBorderColorClass[history.status as ReadingStatus]
-                                                : 'border-border-main'
-                                    )}
-                                >
-                                    <div className="pb-3 mb-3 border-b border-border-main">
-                                        <h4 className="font-bold text-primary text-xl">Jour {day.day}</h4>
-                                        <p className="text-xs opacity-70">{dateString}</p>
+                    return (
+                        <motion.div key={day.day} custom={i} initial="hidden" animate="visible" variants={cardVariants}>
+                            <div
+                                className={clsx(
+                                    "premium-card h-full p-6 flex flex-col gap-5 border-2 transition-all group hover-glow",
+                                    isCurrent ? "border-accent-color ring-4 ring-accent-color/5" : "border-border-main/50"
+                                )}
+                                onClick={() => !isCurrent && setEditingDay(isEditing ? null : day.day)}
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color mb-1">Jour {day.day}</span>
+                                        <h4 className="text-xl font-black">{getHizbDetailsFromPage(day.startPage).surahName}</h4>
                                     </div>
-                                    <div className="flex-grow space-y-1 mb-4">
-                                        <p className="text-sm font-semibold">
-                                            {hizbText} | Lire de la page {day.startPage} à {day.endPage} ({day.recalculatedPages} pages)
-                                        </p>
-                                        <p className="text-xs opacity-80">{surahText}</p>
-                                        <p className="text-sm font-bold pt-2">
-                                            {history ? `${history.realPages || 0} pages lues${kahfDisplayText}` : "⏳ En attente..."}
-                                        </p>
-                                        {history?.timeSpent && history.timeSpent > 0 && (
-                                            <div className="flex items-center gap-2 text-xs text-text-main/80 pt-1">
-                                                <Clock size={14} />
-                                                <span>{`Temps de session : ${formatTime(history.timeSpent)}`}</span>
-                                            </div>
-                                        )}
+                                    <div className={clsx(
+                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                                        status === 'done' ? "bg-success/10 text-success" : "bg-bg-main text-text-secondary"
+                                    )}>
+                                        {status === 'done' ? <CheckCircle2 size={24} /> : isCurrent ? <Circle size={24} className="animate-pulse" /> : <Clock size={24} className="opacity-40" />}
                                     </div>
-                                    {(isCurrent || isEditing) && (
-                                        <div className="mt-auto space-y-3">
-                                            <h5 className="text-sm font-bold text-left">{t('status')}:</h5>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <Button size="sm" variant="success" onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'done') }}>{t('goalAchieved')}</Button>
-                                                <Button size="sm" variant="warning" onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'partial') }}>{t('partial')}</Button>
-                                                <Button size="sm" variant="primary" className="!bg-green-700" onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'catchup') }}>{t('catchUp')}</Button>
-                                                <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'not_read') }}>{t('notRead')}</Button>
-                                            </div>
-
-                                            {/* CORRECTION: Ajout de la vérification de l'option dans les objectifs */}
-                                            {day.isKahfDay && activeProfile?.goals.reading?.kahfOption && (
-                                                <div className="mt-4 pt-4 border-t border-dashed border-border-main/50">
-                                                    <h5 className="text-sm font-bold text-center mb-3">Rappel : Lecture de Sourate Al-Kahf</h5>
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                                        <Button size="sm" variant="success" onClick={(e) => { e.stopPropagation(); handleKahfStatus(day, 'done') }}>✅ Lu</Button>
-                                                        <Button size="sm" variant="warning" onClick={(e) => { e.stopPropagation(); handleKahfStatus(day, 'partial') }}>📉 Partiel</Button>
-                                                        <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); handleKahfStatus(day, 'not_read') }}>❌ Non Lu</Button>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {isEditing && <Button size="sm" variant="ghost" className="mt-2" onClick={(e) => { e.stopPropagation(); setEditingDay(null) }}>Fermer</Button>}
-                                        </div>
-                                    )}
                                 </div>
-                            )
-                        })}
-                    </div>
-                </Card>
-            </motion.div>
 
-            <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants as any}>
-                <GlobalProgressCard />
-            </motion.div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-bold flex items-center gap-2">
+                                        <span className="opacity-40">p. {day.startPage}</span>
+                                        <ArrowRight size={14} className="opacity-20" />
+                                        <span className="opacity-40">p. {day.endPage}</span>
+                                    </p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest bg-bg-main self-start px-2 py-0.5 rounded-md opacity-60">
+                                        Hizb {getHizbDetailsFromPage(day.startPage).hizbNum} → {getHizbDetailsFromPage(day.endPage).hizbNum}
+                                    </p>
+                                </div>
+
+                                {(isCurrent || isEditing) && (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="grid grid-cols-2 gap-2 mt-2 pt-4 border-t border-dashed border-border-main">
+                                        <Button size="sm" variant="success" onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'done'); }}>{t('goalAchieved')}</Button>
+                                        <Button size="sm" variant="warning" onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'partial'); }}>{t('partial')}</Button>
+                                        <Button size="sm" variant="accent" onClick={(e) => { e.stopPropagation(); handleAdvance(); }}>Suivant →</Button>
+                                    </motion.div>
+                                )}
+                            </div>
+                        </motion.div>
+                    );
+                })}
+            </div>
 
             <Modal isOpen={kahfModalOpen} onClose={() => setKahfModalOpen(false)}>
                 <HadithAlKahf />
-                <Button onClick={() => setKahfModalOpen(false)} className="mt-6 w-full">Compris</Button>
+                <Button variant="accent" onClick={() => setKahfModalOpen(false)} className="mt-8 w-full">Compris</Button>
             </Modal>
 
             <InputModal

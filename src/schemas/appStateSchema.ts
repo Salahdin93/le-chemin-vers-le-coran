@@ -2,9 +2,8 @@ import { z } from 'zod';
 
 const settingsSchema = z.object({
   lang: z.enum(['fr', 'en', 'ar']),
-  theme: z.string(),
-  accentColor: z.string().startsWith('#'),
   enableNotifications: z.boolean(),
+  notificationTime: z.string().optional(),
 });
 
 const readingHistoryEntrySchema = z.object({
@@ -13,6 +12,7 @@ const readingHistoryEntrySchema = z.object({
   realPages: z.number(),
   kahf: z.boolean().optional(),
   kahfStatus: z.enum(['done', 'partial', 'not_read']).optional(),
+  timeSpent: z.number().optional(),
 });
 
 const progressSchema = z.object({
@@ -22,10 +22,12 @@ const progressSchema = z.object({
   totalPagesRead: z.number().int().nonnegative(),
   readingHistory: z.record(z.string(), readingHistoryEntrySchema),
   currentRevisionIndex: z.number().int().nonnegative(),
+  currentHadithRevisionIndex: z.number().int().nonnegative().optional(),
   history: z.object({
-    reading: z.array(z.any()), // Simplifié pour la validation
+    reading: z.array(z.any()),
     revision: z.array(z.any()),
     toReview: z.array(z.any()),
+    hadithRevisionHistory: z.array(z.any()).optional(),
   }),
 });
 
@@ -44,7 +46,7 @@ const revisionGoalSchema = z.object({
   revisionDuration: z.number(),
   frequency: z.object({
     type: z.enum(['daily', 'weekly', 'custom']),
-    value: z.number(),
+    value: z.union([z.number(), z.array(z.number())]).optional(),
   }),
   boosterSurahs: z.array(z.string()),
   boosterSurahFreq: z.number(),
@@ -57,15 +59,21 @@ const profileSchema = z.object({
   gender: z.enum(['male', 'female']),
   password: z.string().optional(),
   theme: z.string().optional(),
-  accentColor: z.string().startsWith('#').optional(),
+  accentColor: z.string().optional(),
   goals: z.object({
     reading: readingGoalSchema.optional(),
     revision: revisionGoalSchema.optional(),
+    hadithRevision: z.any().optional(),
   }),
-  memorizations: z.any(), // Simplifié pour la validation
-  difficulties: z.array(z.any()),
-  evaluationHistory: z.array(z.any()),
-  badges: z.array(z.any()),
+  memorizations: z.any(),
+  difficulties: z.array(z.any()).optional(),
+  evaluationHistory: z.array(z.any()).optional(),
+  badges: z.array(z.any()).optional(),
+  progress: z.any().optional(), // Allow any for progress inside profile to avoid circularity or complexity
+  plans: z.any().optional(),
+  hadithProgress: z.any().optional(),
+  hadithHistory: z.array(z.any()).optional(),
+  evaluationPlans: z.array(z.any()).optional(),
 });
 
 export const appStateSchema = z.object({
@@ -73,5 +81,7 @@ export const appStateSchema = z.object({
   activeProfileId: z.string().nullable().optional(),
   settings: settingsSchema.optional(),
   progress: progressSchema.optional(),
-  // Nous ne validons pas les autres états qui ne sont pas persistants
+  plans: z.any().optional(),
+  appScreen: z.string().optional(),
+  activeView: z.string().optional(),
 });

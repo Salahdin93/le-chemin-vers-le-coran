@@ -1,7 +1,8 @@
 import React from 'react';
 import { clsx } from 'clsx';
+import { motion } from 'framer-motion';
 
-type ButtonVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'ghost' | 'link';
+type ButtonVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'ghost' | 'link' | 'accent';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,33 +21,35 @@ const Button: React.FC<ButtonProps> = ({
   children,
   ...props
 }) => {
-  const baseStyles = 'font-cairo font-semibold rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center';
+  const baseStyles = 'btn-premium relative font-cairo font-bold rounded-2xl transition-all duration-300 ease-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center overflow-hidden';
 
   const sizeStyles: Record<ButtonSize, string> = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-4 py-2 text-xs uppercase tracking-widest',
+    md: 'px-6 py-3 text-sm font-bold',
+    lg: 'px-8 py-4 text-base font-black uppercase tracking-tight',
   };
 
   const variantStyles: Record<ButtonVariant, string> = {
-    primary: 'bg-primary text-white hover:opacity-90 focus:ring-primary shadow-sm shadow-primary/30',
-    secondary: 'bg-white/10 text-text-main border border-white/10 hover:bg-white/15 focus:ring-primary',
-    success: 'bg-success text-white hover:opacity-90 focus:ring-success shadow-sm shadow-success/30',
-    warning: 'bg-warning text-black hover:opacity-90 focus:ring-warning',
-    danger: 'bg-danger text-white hover:opacity-90 focus:ring-danger',
-    ghost: 'bg-transparent border border-border-main text-text-main hover:bg-white/5',
-    link: 'bg-transparent text-primary underline-offset-2 hover:underline focus:ring-primary p-0',
+    primary: 'bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0',
+    accent: 'accent-gradient text-white shadow-xl shadow-accent-color/25 hover:shadow-accent-color/40 hover:-translate-y-0.5 active:translate-y-0',
+    secondary: 'bg-bg-secondary text-text-main border border-border-main hover:bg-bg-main shadow-sm hover:border-accent-color/30',
+    success: 'bg-success text-white shadow-lg shadow-success/25 hover:shadow-success/40 hover:-translate-y-0.5',
+    warning: 'bg-warning text-black shadow-lg shadow-warning/20 hover:-translate-y-0.5',
+    danger: 'bg-danger text-white shadow-lg shadow-danger/20 hover:-translate-y-0.5',
+    ghost: 'bg-transparent border border-border-main/50 text-text-main hover:bg-accent-color/5 hover:border-accent-color/30',
+    link: 'bg-transparent text-accent-color underline-offset-4 hover:underline p-0 decoration-2 transition-all',
   };
 
-  const Component = as as React.ElementType;
-
   return (
-    <Component
+    <motion.button
+      whileTap={{ scale: 0.96 }}
+      whileHover={{ scale: 1.02 }}
       className={clsx(baseStyles, sizeStyles[size], variantStyles[variant], className)}
-      {...props}
+      {...props as any}
     >
-      {children}
-    </Component>
+      <span className="relative z-10">{children}</span>
+      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+    </motion.button>
   );
 };
 
