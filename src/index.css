@@ -69,12 +69,33 @@
 
   /* --- CUSTOM THEMES (Refined) --- */
   html.sepia {
-    --bg-main: #fbf6e9;
-    --bg-secondary: #fefcf5;
-    --text-main: #433422;
-    --text-secondary: #8b7355;
-    --border-main: #e6dec9;
-    --accent-color: #8b7355;
+    --bg-main: #fdf6e3;
+    --bg-secondary: #eee8d5;
+    --text-main: #657b83;
+    --text-secondary: #93a1a1;
+    --border-main: #dcd7c0;
+    --accent-color: #268bd2;
+    --warning: #b58900;
+  }
+
+  .crepuscule {
+    --bg-main: #1a1a2e;
+    --bg-secondary: #0f3460;
+    --text-main: #e94560;
+    --text-secondary: #cfd8dc;
+    --border-main: #533483;
+    --accent-color: #e94560;
+    --warning: #fbc02d;
+  }
+
+  .oasis {
+    --bg-main: #fffdf0;
+    --bg-secondary: #fdf6ca;
+    --text-main: #3e2723;
+    --text-secondary: #795548;
+    --border-main: #efebe9;
+    --accent-color: #d4a373;
+    --warning: #fbc02d;
   }
 
   html.midnight {

@@ -1,6 +1,6 @@
 import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useRef, useSyncExternalStore } from 'react';
 import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan } from '../types/types';
-import { generateReadingPlan, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan } from '../services/planLogic';
+import { generateReadingPlan, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan, generateHadithReadingPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
 import { getInitialBadges, checkRevisionMilestone, checkPerfectEvaluation, checkFirstMemorization, checkKhatmaMilestones, checkHadithMilestones } from '../services/achievementLogic';
@@ -140,6 +140,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const readingPlan = wizardData.wantsReading ? generateReadingPlan({ duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! }, startDate) : null;
       const revisionPlan = wizardData.wantsRevision ? generateRevisionPlan({ selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined }, startDate, 1, tFn, { surahParts: [], hizbs: [], juzz: [] }) : null;
 
+      let hadithPlan = null;
+      if (wizardData.wantsHadith) {
+        if (wizardData.hadithType === 'lecture') {
+          hadithPlan = generateHadithReadingPlan({
+            selectedHadiths: wizardData.hadithSelection || [],
+            hadithsPerDay: wizardData.hadithPerDay || 1,
+            duration: wizardData.hadithDuration || 30,
+            frequency: wizardData.hadithFrequency || { type: 'daily', value: 1 }
+          }, startDate);
+        } else {
+          hadithPlan = generateHadithRevisionPlan({
+            selectedHadiths: wizardData.hadithSelection || [],
+            hadithsPerSession: wizardData.hadithPerDay || 1,
+            frequency: wizardData.hadithFrequency || { type: 'daily', value: 1 }
+          }, startDate);
+        }
+      }
+
       const newProfile: Profile = {
         id: profileId,
         name: wizardData.name || 'Utilisateur',
@@ -149,7 +167,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
         accentColor: wizardData.accentColor || '#2E7D32',
         goals: {
           reading: wizardData.wantsReading ? { duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! } : undefined,
-          revision: wizardData.wantsRevision ? { selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined } : undefined
+          revision: wizardData.wantsRevision ? { selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined } : undefined,
+          hadithRevision: (wizardData.wantsHadith && wizardData.hadithType === 'revision') ? {
+            selectedHadiths: wizardData.hadithSelection || [],
+            hadithsPerSession: wizardData.hadithPerDay || 1,
+            frequency: wizardData.hadithFrequency || { type: 'daily', value: 1 }
+          } : undefined
         },
         memorizations: { surahParts: [], hizbs: [], juzz: [] },
         hadithProgress: {},
@@ -159,7 +182,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         evaluationHistory: [],
         badges: getInitialBadges(),
         progress: newProgress,
-        plans: { reading: readingPlan, originalReading: readingPlan, revision: revisionPlan, hadithRevision: null },
+        plans: { reading: readingPlan, originalReading: readingPlan, revision: revisionPlan, hadithRevision: hadithPlan },
       };
 
       return {

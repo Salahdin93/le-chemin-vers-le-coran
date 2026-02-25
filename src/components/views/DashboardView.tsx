@@ -7,7 +7,7 @@ import { checkReadingProgress } from '@/services/progressLogic';
 import EndOfGoalModal from '@/components/ui/EndOfGoalModal';
 import Modal from '@/components/ui/Modal';
 import Timer from '@/components/ui/Timer';
-import { ReadingStatus, PlanDay, Hadith, HadithMemorizationStatus } from '@/types';
+import { ReadingStatus, Hadith, HadithMemorizationStatus, PlanDay } from '@/types';
 import { notificationService } from '@/components/ui/NotificationContainer';
 import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -61,12 +61,36 @@ const DashboardView: React.FC = () => {
     const [hadithModalContent, setHadithModalContent] = useState<Hadith | null>(null);
     const [inputModalState, setInputModalState] = useState<{ isOpen: boolean; title: string; label: string; onSubmit: (value: string) => void; }>({ isOpen: false, title: '', label: '', onSubmit: () => { } });
 
+    const [hadithMissionTitle, setHadithMissionTitle] = useState<string>('');
+
     const hadithProgress = activeProfile?.hadithProgress || {};
+    const hadithPlan = state.plans.hadithRevision; // Currently used for both types
 
     useEffect(() => {
-        const inProgress = HADITH_COLLECTION.find(h => hadithProgress[h.id] === 'en_memorisation');
-        setHadithDuJour(inProgress || HADITH_COLLECTION.find(h => (hadithProgress[h.id] || 'non_lu') === 'non_lu'));
-    }, [hadithProgress]);
+        // If we have a structured plan (Lecture or Revision)
+        if (hadithPlan && hadithPlan.length > 0) {
+            const currentDayIndex = state.progress.currentHadithRevisionIndex; // Shared index for now
+            const todayPlan = hadithPlan[currentDayIndex];
+
+            if (todayPlan) {
+                const firstId = todayPlan.hadithIds[0];
+                const hadith = HADITH_COLLECTION.find(h => h.id === firstId);
+                setHadithDuJour(hadith);
+
+                // Set title based on type (reading/revision)
+                // We'll infer it from the data structure for now or activeProfile goals
+                const isRevision = !!activeProfile.goals.hadithRevision;
+                setHadithMissionTitle(isRevision ? t('myRevision') : t('myReading'));
+            } else {
+                setHadithDuJour(undefined);
+            }
+        } else {
+            // Fallback: simple individual hadith display (legacy/non-plan)
+            const inProgress = HADITH_COLLECTION.find(h => hadithProgress[h.id] === 'en_memorisation');
+            setHadithDuJour(inProgress || HADITH_COLLECTION.find(h => (hadithProgress[h.id] || 'non_lu') === 'non_lu'));
+            setHadithMissionTitle(t('hadithOfTheDay'));
+        }
+    }, [hadithProgress, hadithPlan, state.progress.currentHadithRevisionIndex, activeProfile.goals]);
 
     useEffect(() => {
         if (checkReadingProgress(state) === 'behind') {
@@ -79,17 +103,18 @@ const DashboardView: React.FC = () => {
     const { reading: readingGoal, revision: revisionGoal } = activeProfile.goals;
     const { reading: readingPlan, revision: revisionPlan, originalReading: originalReadingPlan } = state.plans;
 
-    const isReadingActive = !!(readingGoal && readingPlan && state.progress.currentReadingDay <= readingGoal.duration);
-    const isRevisionActive = !!(revisionGoal && revisionPlan && state.progress.currentRevisionIndex < revisionPlan.length);
+    const isReadingActive = !!(activeProfile && readingGoal && readingPlan && state.progress.currentReadingDay <= readingGoal.duration);
+    const isRevisionActive = !!(activeProfile && revisionGoal && revisionPlan && state.progress.currentRevisionIndex < (revisionPlan?.length || 0));
 
-    const overallPercent = readingGoal ? Math.floor(((state.progress.currentReadingDay - 1) / readingGoal.duration) * 100) : 0;
+    const overallPercent = (activeProfile && readingGoal) ? Math.floor(((state.progress.currentReadingDay - 1) / readingGoal.duration) * 100) : 0;
     const revisionPercent = revisionPlan ? Math.floor((state.progress.currentRevisionIndex / revisionPlan.length) * 100) : 0;
-    const totalPagesRead = Object.values(state.progress.readingHistory).reduce((acc, h) => acc + (h.realPages || 0), 0);
+    const totalPagesRead = Object.values(state.progress.readingHistory).reduce((acc, h: any) => acc + (h.realPages || 0), 0);
     const masteredHadiths = Object.values(hadithProgress).filter(s => s === 'acquis').length;
     const hadithPercent = Math.floor((masteredHadiths / HADITH_COLLECTION.length) * 100);
 
     const handleStatusChange = (day: PlanDay, status: ReadingStatus, isKahf: boolean = false, time?: number) => {
         const execute = (adj: number) => {
+            if (!activeProfile) return;
             const dayKey = `day_${day.day}`;
             const existing = state.progress.readingHistory[dayKey] || { status: 'not_read', realPages: 0, adjustment: 0 };
             const newHistory = { ...state.progress.readingHistory, [dayKey]: isKahf ? { ...existing, kahfStatus: status } : { ...existing, status, realPages: status === 'not_read' ? 0 : day.recalculatedPages + adj, adjustment: adj, timeSpent: time !== undefined ? (existing.timeSpent || 0) + time : existing.timeSpent } };
@@ -286,7 +311,7 @@ const DashboardView: React.FC = () => {
                                 <div className="px-5 py-2 bg-warning text-slate-900 text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg shadow-warning/20">
                                     {t('missionHadith')}
                                 </div>
-                                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">Hadith du jour</div>
+                                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">{hadithMissionTitle}</div>
                             </div>
 
                             {hadithDuJour ? (

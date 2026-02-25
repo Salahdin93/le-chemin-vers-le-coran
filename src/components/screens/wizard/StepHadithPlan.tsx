@@ -133,7 +133,7 @@ const StepHadithPlan: React.FC<StepProps> = ({ formData, updateData, t }) => {
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="p-4 rounded-2xl text-center space-y-1"
-                    style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.15)' }}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
                 >
                     <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400/70">
                         {t('hadithGoalSummary').split(':')[0]}
@@ -141,8 +141,8 @@ const StepHadithPlan: React.FC<StepProps> = ({ formData, updateData, t }) => {
                     <p className="text-sm font-bold text-white">
                         {hadithPerDay} {t('hadithLabel').toLowerCase()}{hadithPerDay > 1 ? 's' : ''} / {t('day').toLowerCase()}
                     </p>
-                    <p className="text-xs font-medium text-white/60">
-                        {hadithDuration} {t('days')} {(formData.hadithSelection?.length || 0) > 0 ? `(${formData.hadithSelection?.length} ${t('selected')})` : ''}
+                    <p className="text-[10px] font-medium text-white/40 uppercase tracking-tighter">
+                        {hadithDuration} {t('days')} {(formData.hadithSelection?.length || 0) > 0 ? `• ${formData.hadithSelection?.length} ${t('selected')}` : ''}
                     </p>
                 </motion.div>
             )}

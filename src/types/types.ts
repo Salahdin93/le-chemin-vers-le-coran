@@ -33,7 +33,7 @@ export interface HadithRevisionPlanDay {
   day: number;
   date: Date;
   hadithIds: number[];
-  status: RevisionStatus;
+  status: 'pending' | 'done' | RevisionStatus;
 }
 
 export interface HadithHistoryEntry {
@@ -369,7 +369,7 @@ export interface AppState {
   plans: {
     reading: PlanDay[] | null;
     revision: RevisionPlanDay[] | null;
-    hadithRevision: HadithRevisionPlanDay[] | null;
+    hadithRevision: HadithRevisionPlanDay[] | any[] | null;
     originalReading: PlanDay[] | null;
   };
   wizard: {

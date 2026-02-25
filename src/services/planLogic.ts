@@ -8,7 +8,7 @@ import {
     RevisionPlanDay,
     RevisionUnit,
     MemorizationStatus,
-    HadithRevisionGoal,
+    RevisionFrequency,
     HadithRevisionPlanDay
 } from "@/types";
 
@@ -230,6 +230,69 @@ export const generateRevisionPlan = (
 
             plan.push(dayPlan);
             revisionDayCounter++;
+        }
+        dayIterator++;
+    }
+    return plan;
+};
+
+export interface HadithReadingGoal {
+    selectedHadiths: number[];
+    hadithsPerDay: number;
+    duration: number;
+    frequency: RevisionFrequency;
+}
+
+export interface HadithReadingPlanDay {
+    day: number;
+    date: Date;
+    hadithIds: number[];
+    status: 'pending' | 'done';
+}
+
+export const generateHadithReadingPlan = (
+    goal: HadithReadingGoal,
+    startDateString: string
+): HadithReadingPlanDay[] => {
+    const { selectedHadiths, hadithsPerDay, frequency } = goal;
+
+    if (!selectedHadiths || selectedHadiths.length === 0 || hadithsPerDay <= 0) return [];
+
+    // Reading follows selection order (usually 1, 2, 3...)
+    const dailyChunks = chunkArray(selectedHadiths, hadithsPerDay);
+    const totalReadingDays = dailyChunks.length;
+
+    const plan: HadithReadingPlanDay[] = [];
+    let dayIterator = 0;
+    const baseStartDate = new Date(startDateString);
+
+    while (plan.length < totalReadingDays && dayIterator < 365 * 5) {
+        const tempDate = new Date(baseStartDate);
+        tempDate.setDate(baseStartDate.getDate() + dayIterator);
+
+        let isReadingDay = false;
+        switch (frequency.type) {
+            case 'daily':
+                isReadingDay = dayIterator % (frequency.value as number) === 0;
+                break;
+            case 'weekly':
+                if (Array.isArray(frequency.value)) {
+                    isReadingDay = frequency.value.includes(tempDate.getDay());
+                }
+                break;
+            case 'custom':
+                isReadingDay = dayIterator % (frequency.value as number) === 0;
+                break;
+        }
+
+        if (isReadingDay) {
+            const chunkIndex = plan.length;
+            plan.push({
+                day: plan.length + 1,
+                date: tempDate,
+                hadithIds: dailyChunks[chunkIndex],
+                status: 'pending'
+            });
         }
         dayIterator++;
     }

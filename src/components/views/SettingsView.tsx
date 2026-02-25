@@ -60,7 +60,7 @@ const SettingsView: React.FC = () => {
                 <div className="space-y-6">
                     {!user && !activeProfile.isLinked && (
                         <Button variant="accent" size="sm" className="w-full rounded-xl shadow-lg shadow-accent-color/20 mb-6 py-4" onClick={() => dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' })}>
-                            <Globe size={16} className="mr-2" /> {t('connectAccount') || 'Connecter mon compte'}
+                            <Globe size={16} className="mr-2" /> {t('connectAccount')}
                         </Button>
                     )}
 
@@ -71,7 +71,7 @@ const SettingsView: React.FC = () => {
                         onChange={e => setName(e.target.value)}
                         onBlur={e => handleNameChange(e.target.value)}
                         placeholder="Votre nom"
-                        className="bg-bg-secondary"
+                        className="bg-bg-secondary text-text-main border-border-main"
                     />
                     <div className="flex items-center justify-between p-4 bg-bg-main/50 rounded-2xl border border-border-main/50">
                         <div className="flex flex-col">

@@ -8,13 +8,13 @@ interface StepProps {
 }
 
 const StepHadithSelection: React.FC<StepProps> = ({ formData, updateData, t }) => {
-    const totalHadiths = 40; // Default set size
+    const totalHadiths = 100; // Increased to 100 per data collection
     const selection = formData.hadithSelection || [];
 
     const toggleHadith = (num: number) => {
         const newSelection = selection.includes(num)
             ? selection.filter(id => id !== num)
-            : [...selection, num];
+            : [...selection, num].sort((a, b) => a - b);
         updateData({ hadithSelection: newSelection });
     };
 
