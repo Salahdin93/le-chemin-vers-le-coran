@@ -49,11 +49,12 @@ const HadithRevisionPlanView: React.FC = () => {
 
     const pastRevisions = revisionPlan?.filter((_, index) => index < currentProgress) || [];
 
-    const statusConfig: Record<RevisionStatus, { color: string, icon: any, label: string }> = {
+    const statusConfig: Record<string, { color: string, icon: any, label: string }> = {
         'revised': { color: 'text-success bg-success/10 border-success/20', icon: CheckCircle2, label: t('revised') },
         'to-review': { color: 'text-warning bg-warning/10 border-warning/20', icon: Clock, label: t('toReview') },
         'not_revised': { color: 'text-danger bg-danger/10 border-danger/20', icon: AlertCircle, label: t('notAchieved') },
-        'pending': { color: 'text-text-main/20 bg-bg-secondary/50 border-border-main/20', icon: Calendar, label: t('pending') }
+        'pending': { color: 'text-text-main/20 bg-bg-secondary/50 border-border-main/20', icon: Calendar, label: t('pending') },
+        'done': { color: 'text-success bg-success/10 border-success/20', icon: CheckCircle2, label: t('revised') }
     };
 
     return (
@@ -154,7 +155,7 @@ const HadithRevisionPlanView: React.FC = () => {
                                                 <span className="text-xs font-black uppercase tracking-widest opacity-60">{t('reviseHadiths')}</span>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
-                                                {day.hadithIds.map(id => (
+                                                {day.hadithIds.map((id: number) => (
                                                     <div key={id} className="w-12 h-12 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center font-black text-sm text-accent-color shadow-lg">
                                                         {id}
                                                     </div>

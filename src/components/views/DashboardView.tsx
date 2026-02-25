@@ -79,7 +79,7 @@ const DashboardView: React.FC = () => {
 
                 // Set title based on type (reading/revision)
                 // We'll infer it from the data structure for now or activeProfile goals
-                const isRevision = !!activeProfile.goals.hadithRevision;
+                const isRevision = !!activeProfile?.goals?.hadithRevision;
                 setHadithMissionTitle(isRevision ? t('myRevision') : t('myReading'));
             } else {
                 setHadithDuJour(undefined);
@@ -90,7 +90,7 @@ const DashboardView: React.FC = () => {
             setHadithDuJour(inProgress || HADITH_COLLECTION.find(h => (hadithProgress[h.id] || 'non_lu') === 'non_lu'));
             setHadithMissionTitle(t('hadithOfTheDay'));
         }
-    }, [hadithProgress, hadithPlan, state.progress.currentHadithRevisionIndex, activeProfile.goals]);
+    }, [hadithProgress, hadithPlan, state.progress.currentHadithRevisionIndex, activeProfile?.goals]);
 
     useEffect(() => {
         if (checkReadingProgress(state) === 'behind') {

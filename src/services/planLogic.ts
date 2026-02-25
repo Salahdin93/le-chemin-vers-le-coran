@@ -9,7 +9,8 @@ import {
     RevisionUnit,
     MemorizationStatus,
     RevisionFrequency,
-    HadithRevisionPlanDay
+    HadithRevisionPlanDay,
+    HadithRevisionGoal
 } from "@/types";
 
 const chunkArray = <T>(arr: T[], size: number): T[][] =>
