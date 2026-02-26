@@ -23,7 +23,6 @@ export const COLORS = [
 export const THEMES = [
     { id: 'light', name: 'Clair', icon: '☀️' },
     { id: 'dark', name: 'Sombre', icon: '🌙' },
-    { id: 'sepia', name: 'Sépia', icon: '📜' },
     { id: 'rose', name: 'Rose', icon: '🌸' },
     { id: 'onboarding', name: 'Découverte', icon: '✨' },
     { id: 'wood', name: 'Bois', icon: '🪵' },

@@ -177,8 +177,8 @@ const SettingsView: React.FC = () => {
                 <div className="space-y-6">
                     <div>
                         <label className='text-[10px] font-black uppercase tracking-widest opacity-40 block mb-3'>{t('theme')}</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {THEMES.slice(0, 4).map(theme => (
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                            {THEMES.map(theme => (
                                 <button
                                     key={theme.id}
                                     onClick={() => dispatch({ type: 'UPDATE_PROFILE', payload: { theme: theme.id as Theme } })}
