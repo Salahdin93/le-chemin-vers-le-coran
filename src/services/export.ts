@@ -19,9 +19,9 @@ const generateShareText = (state: AppState, t: (key: string, replacements?: any)
 
                 let statusIcon = '✅';
                 let details = '';
-                
+
                 if (dayData.status === 'not_read') statusIcon = '🚫';
-                
+
                 if (dayData.adjustment > 0) {
                     details += ` + ${dayData.adjustment} pages`;
                 } else if (dayData.adjustment < 0) {
@@ -41,7 +41,7 @@ const generateShareText = (state: AppState, t: (key: string, replacements?: any)
     }
 
     if (options.shareRevision) {
-         message += `\n*${t('revisionHistoryTitle')}*\n`;
+        message += `\n*${t('revisionHistoryTitle')}*\n`;
         if (state.plans.revision && state.progress.currentRevisionIndex > 0) {
             for (let i = 0; i < state.progress.currentRevisionIndex; i++) {
                 const dayPlan = state.plans.revision[i];
@@ -52,7 +52,7 @@ const generateShareText = (state: AppState, t: (key: string, replacements?: any)
             message += `${t('noRevisionHistory')}\n`;
         }
     }
-    
+
     return message;
 };
 
@@ -63,7 +63,7 @@ export const shareViaWhatsApp = (state: AppState, t: (key: string, replacements?
 };
 
 export const generateProgressPDF = (
-    state: AppState, 
+    state: AppState,
     t: (key: string, replacements?: any) => string,
     startDate?: string,
     endDate?: string
@@ -72,21 +72,27 @@ export const generateProgressPDF = (
     if (!activeProfile) return;
 
     const doc = new jsPDF();
+    doc.setTextColor(15, 23, 42); // Deep Slate
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(`Suivi de ${activeProfile.name}`, 15, 20);
+    doc.setFontSize(22);
+    doc.text(`Suivi de ${activeProfile.name}`, 15, 25);
+
     doc.setFontSize(10);
-    doc.text(`Généré le: ${new Date().toLocaleDateString()}`, 15, 25);
-    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100); // Gray
+    doc.text(`Généré le: ${new Date().toLocaleDateString()}`, 15, 32);
+
     let y = 35;
-    
+
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+    doc.setFontSize(14);
+    doc.setTextColor(16, 185, 129); // Emerald
     doc.text(t('readingHistoryTitle'), 15, y);
-    y += 8;
+    y += 10;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    
+    doc.setTextColor(50);
+
     const startDateObj = startDate ? new Date(startDate) : null;
     const endDateObj = endDate ? new Date(endDate) : null;
     if (endDateObj) endDateObj.setHours(23, 59, 59, 999);
@@ -119,13 +125,15 @@ export const generateProgressPDF = (
     }
 
     y += 10;
-    if (y > 280) { doc.addPage(); y = 20; }
+    if (y > 270) { doc.addPage(); y = 20; }
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+    doc.setFontSize(14);
+    doc.setTextColor(16, 185, 129); // Emerald
     doc.text(t('revisionHistoryTitle'), 15, y);
-    y += 8;
+    y += 10;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
+    doc.setTextColor(50);
 
     const revisionHistory = state.plans.revision?.slice(0, state.progress.currentRevisionIndex) || [];
     let filteredRevisionHistory = revisionHistory;
@@ -141,7 +149,7 @@ export const generateProgressPDF = (
 
     if (filteredRevisionHistory.length > 0) {
         for (const dayPlan of filteredRevisionHistory) {
-             if (y > 280) { doc.addPage(); y = 20; }
+            if (y > 280) { doc.addPage(); y = 20; }
             const text = `${t('day')} ${dayPlan.day}: ${dayPlan.units.map(u => u.text).join(' + ')} - ${dayPlan.status}`;
             doc.text(text, 15, y);
             y += 7;
@@ -175,7 +183,7 @@ export const importUserData = (event: React.ChangeEvent<HTMLInputElement>, onSuc
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         try {
             const importedData = e.target?.result as string;
             JSON.parse(importedData);

@@ -463,5 +463,13 @@ export const fr = {
     "noDataYet": "Aucune donnée pour le moment",
     "statsAppearHere": "Vos statistiques apparaîtront ici au fur et à mesure de votre progression.",
     "readingActivity": "Activité de Lecture",
-    "revisionActivity": "Activité de Révision"
+    "revisionActivity": "Activité de Révision",
+    "exportJSON": "Sauvegarder (.JSON)",
+    "pdfDateFilter": "Filtrer le rapport PDF",
+    "dangerZone": "Zone Sensible",
+    "dangerZoneSubtitle": "Actions irréversibles sur vos données",
+    "resetEverything": "Réinitialisation Totale",
+    "startDateLabel": "Début",
+    "endDateLabel": "Fin",
+    "yourNamePlaceholder": "Votre nom"
 };

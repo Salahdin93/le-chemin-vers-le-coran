@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useStore, useActiveProfileSelector } from '@/context/AppContext';
 import { THEMES, COLORS } from '@/constants/ui';
 import { Theme, AccentColor } from '@/types';
@@ -6,22 +6,17 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { generateProgressPDF, exportUserData, importUserData } from '@/services/export';
 import { LOGO_URL } from '@/constants/ui';
-import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 import {
-    Globe, User, Lock, Brain, Target, Palette,
+    User, Lock, Brain, Target, Palette,
     FileJson, ScrollText, ShieldAlert, BookOpen, RefreshCcw, Settings, Info
 } from 'lucide-react';
 
 const SettingsView: React.FC = () => {
     const { state, dispatch, t } = useStore();
     const activeProfile = useActiveProfileSelector();
-    const [user, setUser] = useState<any>(null);
 
-    useEffect(() => {
-        supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
-    }, []);
 
     const [name, setName] = useState(activeProfile?.name || '');
     const [isPasswordFormVisible, setIsPasswordFormVisible] = useState(false);
@@ -58,11 +53,7 @@ const SettingsView: React.FC = () => {
             bg: 'bg-purple-500/10',
             content: (
                 <div className="space-y-6">
-                    {!user && !activeProfile.isLinked && (
-                        <Button variant="accent" size="sm" className="w-full rounded-xl shadow-lg shadow-accent-color/20 mb-6 py-4" onClick={() => dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' })}>
-                            <Globe size={16} className="mr-2" /> {t('connectAccount')}
-                        </Button>
-                    )}
+
 
                     <Input
                         label={t('nameKunya')}
@@ -70,8 +61,8 @@ const SettingsView: React.FC = () => {
                         value={name}
                         onChange={e => setName(e.target.value)}
                         onBlur={e => handleNameChange(e.target.value)}
-                        placeholder="Votre nom"
-                        className="bg-bg-secondary text-text-main border-border-main"
+                        placeholder={t('yourNamePlaceholder')}
+                        className="bg-bg-secondary !text-text-main border-border-main font-black text-lg py-6"
                     />
                     <div className="flex items-center justify-between p-4 bg-bg-main/50 rounded-2xl border border-border-main/50">
                         <div className="flex flex-col">
@@ -210,11 +201,11 @@ const SettingsView: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             <div className="flex flex-col gap-1">
-                                <span className="text-[8px] font-black uppercase tracking-widest opacity-30 ml-2">Début</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest opacity-30 ml-2">{t('startDateLabel')}</span>
                                 <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="h-9 w-full bg-bg-secondary/50 rounded-lg border border-border-main/50 px-3 text-[10px] font-bold" />
                             </div>
                             <div className="flex flex-col gap-1">
-                                <span className="text-[8px] font-black uppercase tracking-widest opacity-30 ml-2">Fin</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest opacity-30 ml-2">{t('endDateLabel')}</span>
                                 <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="h-9 w-full bg-bg-secondary/50 rounded-lg border border-border-main/50 px-3 text-[10px] font-bold" />
                             </div>
                         </div>
