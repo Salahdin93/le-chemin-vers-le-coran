@@ -15,7 +15,7 @@ import {
     Trash2, Plus, Info, Star, ChevronRight, Activity, Sparkles, BookMarked
 } from 'lucide-react';
 
-type FormType = 'surahPart' | 'hizb' | 'juzz' | null;
+type FormType = 'surahPart' | 'hizb' | 'juzz' | 'hadith' | null;
 
 const StatusIndicator: React.FC<{ status: MemorizationStatus | HadithMemorizationStatus }> = ({ status }) => {
     const colors: Record<string, string> = {
@@ -81,6 +81,13 @@ const MemorizationView: React.FC = () => {
                 const itemToAdd: MemorizedJuzz = { number: juzzData.id, level: selectedLevel, status, componentHizbs: [{ number: hizb1Num, details: hizb1Details, level: selectedLevel, status }, { number: hizb2Num, details: hizb2Details, level: selectedLevel, status }] };
                 payload = { type: 'juzz', item: itemToAdd };
             }
+        } else if (formType === 'hadith') {
+            const hadithId = parseInt(selectedItemId);
+            if (!isNaN(hadithId)) {
+                const hStat = selectedLevel === 'excellent' ? 'acquis' : (selectedLevel === 'bon' ? 'en_memorisation' : 'a_reprendre');
+                dispatch({ type: 'UPDATE_HADITH_PROGRESS', payload: { hadithId, status: hStat, date: new Date().toISOString() } });
+                dispatch({ type: 'SET_TOAST', payload: t('saved') });
+            }
         }
 
         if (payload) {
@@ -135,6 +142,7 @@ const MemorizationView: React.FC = () => {
         if (formType === 'surahPart') options = MEMORIZATION_SURAH_OPTIONS.map(opt => ({ value: opt.id, label: opt.name }));
         else if (formType === 'hizb') options = HIZB_DATA.map((h, i) => ({ value: i.toString(), label: `${t('hizb')} ${h.name} - ${h.details}` }));
         else if (formType === 'juzz') options = JUZ_DATA.map(j => ({ value: j.id.toString(), label: `${t('juzz')} ${j.id}` }));
+        else if (formType === 'hadith') options = HADITH_COLLECTION.map(h => ({ value: h.id.toString(), label: `${t('hadith')} n°${h.id}` }));
 
         return (
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="p-8 premium-card border-none bg-accent-color/5 shadow-2xl relative overflow-hidden group">
@@ -143,7 +151,7 @@ const MemorizationView: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Plus className="text-accent-color" size={20} />
-                            <h3 className="text-lg font-black tracking-tight">{t('add')} {t(formType)}</h3>
+                            <h3 className="text-lg font-black tracking-tight">{t('addLabel')} {t(formType)}</h3>
                         </div>
                         <button onClick={() => setFormType(null)} className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Annuler</button>
                     </div>
@@ -199,6 +207,7 @@ const MemorizationView: React.FC = () => {
                         <button onClick={() => setFormType('surahPart')} className="flex-1 xl:flex-none h-12 px-6 rounded-xl bg-bg-secondary hover:bg-bg-main transition-all border border-border-main/50 text-[10px] font-black uppercase tracking-widest shadow-sm">+ {t('surah')}</button>
                         <button onClick={() => setFormType('hizb')} className="flex-1 xl:flex-none h-12 px-6 rounded-xl bg-bg-secondary hover:bg-bg-main transition-all border border-border-main/50 text-[10px] font-black uppercase tracking-widest shadow-sm">+ {t('hizb')}</button>
                         <button onClick={() => setFormType('juzz')} className="flex-1 xl:flex-none h-12 px-6 rounded-xl bg-bg-secondary hover:bg-bg-main transition-all border border-border-main/50 text-[10px] font-black uppercase tracking-widest shadow-sm">+ {t('juzz')}</button>
+                        <button onClick={() => setFormType('hadith')} className="flex-1 xl:flex-none h-12 px-6 rounded-xl bg-bg-secondary hover:bg-bg-main transition-all border border-border-main/50 text-[10px] font-black uppercase tracking-widest shadow-sm">+ {t('hadith')}</button>
                     </div>
                 )}
             </header>
@@ -213,7 +222,7 @@ const MemorizationView: React.FC = () => {
                         <TabsTrigger
                             key={tab}
                             value={tab}
-                            className="px-6 md:px-8 h-10 rounded-xl text-text-main/50 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                            className="px-6 md:px-8 h-10 rounded-xl text-text-main/50 data-[state=active]:bg-white data-[state=active]:!text-slate-900 data-[state=active]:shadow-xl text-[10px] font-black uppercase tracking-widest transition-all"
                         >
                             {t(`tab_${tab}`) || t(tab === 'surah' ? 'memorizedSurahs' : tab === 'juzz' ? 'memorizedJuzz' : tab === 'hizb' ? 'memorizedHizbs' : tab === 'hadith' ? 'hadith' : 'showAll')}
                         </TabsTrigger>

@@ -41,7 +41,7 @@ const Notification: React.FC<NotificationProps> = ({ id, title, message, content
             className={clsx(
                 'bg-card-bg p-4 rounded-lg shadow-lg border-l-4 transition-all duration-500 ease-out max-w-sm cursor-pointer hover:shadow-xl',
                 typeClasses[type],
-                isExiting ? 'opacity-0 translate-x-full' : 'opacity-100 translate-x-0'
+                isExiting ? 'opacity-0 -translate-y-4 scale-95' : 'opacity-100 translate-y-0 scale-100'
             )}
         >
             {content ? (

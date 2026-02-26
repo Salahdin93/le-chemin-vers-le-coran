@@ -1,7 +1,7 @@
 export const fr = {
     "appName": "Le Chemin vers le Coran",
     "100hadiths": "100 Hadiths",
-    "greeting": "ٱلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّٰهِ وَبَرَكَاتُهُ,",
+    "greeting": "ٱلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّٰهِ وَبَرَكَاتُهُ",
     "logoutConfirm": "Souhaitez-vous vous déconnecter ?",
     "logout": "Déconnexion",
     "sessionTracker": "Suivi de session",
@@ -299,6 +299,8 @@ export const fr = {
     "missionHadith": "Mission Hadiths",
     "streak": "Série de jours",
     "revisionEmptySubtitle": "Ajoutez vos premières mémorisations pour commencer l'aventure.",
+    "memorizedTitle": "Mon Trésor Sacré",
+    "memorizedSubtitle": "Consacrez vos progrès et gardez une trace de vos accomplissements sacrés.",
     "newMemorizationGoal": "Nouvel Objectif",
     "tab_all": "Tout",
     "tab_juzz": "Juzz",
@@ -455,5 +457,11 @@ export const fr = {
     "clearHistory": "Vider l'historique",
     "installAppTitle": "Installer l'application",
     "installAppDesc": "Installez Le Chemin vers le Coran sur votre écran d'accueil pour un accès rapide et hors-ligne.",
-    "install": "Installer"
+    "install": "Installer",
+    "statsSubtitle": "Analysez vos efforts et visualisez votre ascension spirituelle.",
+    "liveStats": "Mise à jour en direct",
+    "noDataYet": "Aucune donnée pour le moment",
+    "statsAppearHere": "Vos statistiques apparaîtront ici au fur et à mesure de votre progression.",
+    "readingActivity": "Activité de Lecture",
+    "revisionActivity": "Activité de Révision"
 };

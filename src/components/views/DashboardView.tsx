@@ -201,6 +201,7 @@ const DashboardView: React.FC = () => {
                             {t('dashboard')}
                         </h1>
                         <p className="text-text-secondary font-medium text-lg md:text-xl max-w-2xl leading-relaxed">
+                            <span className="font-amiri text-2xl text-warning block mb-2" style={{ direction: 'rtl' }}>{t('greeting')}</span>
                             Bienvenue, <span className="text-text-main font-black underline decoration-accent-color/30 underline-offset-4">{activeProfile.name}</span>. {t('supportMsg2') || 'Votre voyage spirituel continue ici.'}
                         </p>
                     </div>
