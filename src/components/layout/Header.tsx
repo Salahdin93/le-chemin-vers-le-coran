@@ -5,10 +5,15 @@ import { clsx } from 'clsx';
 import { LogOut, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Header: React.FC = () => {
-    const { dispatch, t } = useStore();
+interface HeaderProps {
+    onNotificationClick?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
+    const { state, dispatch, t } = useStore();
     const activeProfile = useActiveProfileSelector();
     const [scrolled, setScrolled] = useState(false);
+    const notificationCount = state.notificationHistory.length;
 
     const isDark = !['light', 'sepia', 'emerald', 'aube', 'oasis', 'sand', 'wood', 'sunrise', 'leafy', 'pearl'].includes(activeProfile?.theme ?? 'dark');
     const logoSrc = isDark ? LOGO_URL_DARK : LOGO_URL;
@@ -55,12 +60,12 @@ const Header: React.FC = () => {
                         <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="hidden lg:flex flex-col items-center"
+                            className="flex flex-col items-center lg:mx-auto"
                         >
-                            <span className="font-amiri text-lg text-warning drop-shadow-sm" style={{ direction: 'rtl' }}>
+                            <span className="font-amiri text-sm md:text-lg text-warning drop-shadow-sm" style={{ direction: 'rtl' }}>
                                 ٱلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّٰهِ وَبَرَكَاتُهُ
                             </span>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
                                 {greeting}, {activeProfile.name}
                             </span>
                         </motion.div>
@@ -68,7 +73,23 @@ const Header: React.FC = () => {
                 </AnimatePresence>
 
                 {/* Right: Actions */}
-                <div className="flex items-center gap-2 md:gap-4">
+                <div className="flex items-center gap-1.5 md:gap-4">
+                    {/* Notifications */}
+                    <button
+                        onClick={onNotificationClick}
+                        className="relative p-2 md:p-3 rounded-lg md:rounded-2xl bg-white/5 hover:bg-accent-color/10 text-text-main/20 hover:text-accent-color transition-all duration-300"
+                        title={t('openNotifications')}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" className="md:w-5 md:h-5">
+                            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z" />
+                        </svg>
+                        {notificationCount > 0 && (
+                            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-bg-main shadow-lg">
+                                {notificationCount}
+                            </span>
+                        )}
+                    </button>
+
                     {/* User Profile / Status */}
                     {activeProfile && (
                         <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-3 py-1 md:py-1.5 pr-1 md:pr-1.5 rounded-xl md:rounded-2xl bg-bg-secondary/50 border border-border-main/30 backdrop-blur-md">

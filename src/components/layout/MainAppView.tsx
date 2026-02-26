@@ -15,7 +15,6 @@ import AchievementsView from '@/components/views/AchievementsView';
 import StatsView from '@/components/views/StatsView';
 import Toast from '@/components/ui/Toast';
 import NotificationContainer from '@/components/ui/NotificationContainer';
-import NotificationCenterButton from '@/components/ui/NotificationCenterButton';
 import NotificationCenterPanel from '@/components/ui/NotificationCenterPanel';
 import { LOGO_URL } from '@/constants/ui';
 import ShareModal from '@/components/ui/ShareModal';
@@ -86,7 +85,7 @@ const MainAppView: React.FC = () => {
   return (
     <div className="min-h-screen dynamic-bg geometric-overlay flex flex-col items-center selection:bg-accent-color selection:text-white">
       <div className="w-full max-w-7xl px-4 md:px-8 flex flex-col">
-        <Header />
+        <Header onNotificationClick={() => setIsNotificationPanelOpen(true)} />
         <Nav />
 
         <main className="relative mt-4">
@@ -109,9 +108,7 @@ const MainAppView: React.FC = () => {
         <ShareModal />
         <PaceReadjustmentModal />
 
-        <div className="fixed bottom-10 left-10 z-40 hidden lg:block">
-          <NotificationCenterButton onClick={() => setIsNotificationPanelOpen(true)} />
-        </div>
+
 
         <WhatsAppFloatButton />
       </div>

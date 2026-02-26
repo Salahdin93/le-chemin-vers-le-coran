@@ -296,7 +296,7 @@ const DashboardView: React.FC = () => {
 
                                 <div className="p-8 md:p-12 space-y-10 relative z-10">
                                     <div className="flex items-center justify-between">
-                                        <div className={`${missionBadgeBase} bg-emerald-500 text-white shadow-emerald-500/20`}>
+                                        <div className={`${missionBadgeBase} bg-success text-white shadow-success/20`}>
                                             {t('missionReading')}
                                         </div>
                                         <div className="text-[10px] font-black uppercase tracking-widest opacity-30">Jour {currentReading.day}</div>
