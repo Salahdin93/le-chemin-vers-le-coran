@@ -403,12 +403,27 @@ function appReducer(state: AppState, action: AppAction): AppState {
           }
         });
       }
+      let toReviewHistory = [...state.progress.history.toReview];
+      if (action.payload.status === 'to-review') {
+        const historyItem = {
+          day: action.payload.revisionIndex + 1,
+          date: new Date().toISOString(),
+          units: newRevisionPlan[action.payload.revisionIndex].units,
+          difficulties: action.payload.difficulties || []
+        };
+        toReviewHistory = [historyItem, ...toReviewHistory];
+      }
+
       const updatedProfile = activeProfile ? { ...activeProfile, difficulties: newDifficulties } : null;
       const newState = {
         ...state,
         plans: { ...state.plans, revision: newRevisionPlan },
         profiles: updatedProfile ? state.profiles.map(p => p.id === activeProfile?.id ? updatedProfile : p) : state.profiles,
-        progress: { ...state.progress, currentRevisionIndex: action.payload.status === 'revised' ? state.progress.currentRevisionIndex + 1 : state.progress.currentRevisionIndex }
+        progress: {
+          ...state.progress,
+          currentRevisionIndex: action.payload.status === 'revised' ? state.progress.currentRevisionIndex + 1 : state.progress.currentRevisionIndex,
+          history: { ...state.progress.history, toReview: toReviewHistory }
+        }
       };
       const badge = checkRevisionMilestone(newState);
       return unlockBadge(newState, badge);

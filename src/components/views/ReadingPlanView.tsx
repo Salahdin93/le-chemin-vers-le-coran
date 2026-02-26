@@ -103,6 +103,13 @@ const GlobalProgressCard: React.FC = () => {
     );
 }
 
+const getDateForDay = (day: number, startDateStr: string | null) => {
+    if (!startDateStr) return null;
+    const date = new Date(startDateStr);
+    date.setDate(date.getDate() + (day - 1));
+    return date;
+};
+
 const ReadingPlanView: React.FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
     const [kahfModalOpen, setKahfModalOpen] = useState(false);
@@ -198,6 +205,53 @@ const ReadingPlanView: React.FC = () => {
                 </header>
             </motion.div>
 
+            {/* Hadith — Récompense de la lecture */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease: [0.23, 1, 0.32, 1] }}>
+                <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 text-white shadow-2xl border border-white/5 group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none" />
+                    <div className="absolute -top-16 -right-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
+                    <div className="p-8 md:p-12 relative z-10 space-y-8">
+                        {/* Label */}
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                                <BookOpen size={24} />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400/60">Hadith</span>
+                                <h3 className="text-lg font-black tracking-tight text-white leading-tight">La récompense de la lecture du Coran</h3>
+                            </div>
+                        </div>
+
+                        {/* Arabic text */}
+                        <div className="p-8 rounded-[2rem] bg-white/5 border border-white/5 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-6 opacity-5">
+                                <BookOpen size={80} />
+                            </div>
+                            <p className="font-amiri text-2xl md:text-3xl rtl text-right leading-[2.2] md:leading-[2.8] text-white/90 relative z-10">
+                                عَنْ عَبْدَ اللَّهِ بْنَ مَسْعُودٍ، يَقُولُ: قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: " مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ، وَالحَسَنَةُ بِعَشْرِ أَمْثَالِهَا، لَا أَقُولُ الم حَرْفٌ، وَلَكِنْ أَلِفٌ حَرْفٌ وَلَامٌ حَرْفٌ وَمِيمٌ حَرْفٌ "
+                            </p>
+                        </div>
+
+                        {/* Translation */}
+                        <div className="border-l-4 border-emerald-500/60 pl-6 space-y-2">
+                            <p className="text-sm font-semibold text-emerald-400/80 mb-1">
+                                D'après Abdallah ibn Mas'ud (qu'Allah l'agrée), le Prophète (ﷺ) a dit :
+                            </p>
+                            <p className="text-base md:text-lg italic font-medium text-white/80 leading-relaxed">
+                                « Celui qui lit une seule lettre du Coran obtient une bonne action et la bonne action est décuplée. Je ne dis pas que 'Alif Lam Mim' est une lettre mais Alif est une lettre, Lam est une lettre et Mim est une lettre ».
+                            </p>
+                        </div>
+
+                        {/* Source */}
+                        <div className="flex justify-end">
+                            <span className="px-5 py-2 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] border border-emerald-500/20">
+                                Tirmidhi n°2910 · Authentifié par Cheikh Albani
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {readingPlan.map((day, i) => {
                     const status = state.progress.readingHistory[`day_${day.day}`]?.status || 'not_read';
@@ -230,11 +284,18 @@ const ReadingPlanView: React.FC = () => {
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2 mb-1">
                                             <Calendar size={12} className="text-accent-color opacity-50" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color">{t('day')} {day.day}</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color">
+                                                {t('day')} {day.day}
+                                                {state.progress.startDate && (
+                                                    <span className="ml-2 font-black text-text-main group-hover:text-accent-color transition-colors">
+                                                        — {getDateForDay(day.day, state.progress.startDate)?.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                    </span>
+                                                )}
+                                            </span>
                                         </div>
-                                        <h4 className="text-xl font-black tracking-tight">{hizbDetails.surahName}</h4>
+                                        <h4 className="text-2xl font-black tracking-tight">{hizbDetails.surahName}</h4>
                                         {hizbInfo && (
-                                            <p className="text-xs font-semibold text-text-secondary mt-1">
+                                            <p className="text-sm font-semibold text-text-secondary mt-1">
                                                 {hizbInfo.details} — Pages : {day.startPage} à {day.endPage}
                                             </p>
                                         )}
@@ -265,6 +326,31 @@ const ReadingPlanView: React.FC = () => {
                                             Hizb {hizbDetails.hizbNum} <ChevronRight size={8} className="inline mx-1" /> {endHizbDetails.hizbNum}
                                         </span>
                                     </div>
+
+                                    {day.isKahfDay && (
+                                        <div className="mt-4 p-4 bg-accent-color/5 border border-accent-color/20 rounded-2xl space-y-4">
+                                            <div className="flex items-center gap-2 text-accent-color">
+                                                <Star size={14} fill="currentColor" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Sourate Al-Kahf</span>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {(['done', 'partial', 'not_read'] as const).map(kStatus => (
+                                                    <button
+                                                        key={kStatus}
+                                                        onClick={(e) => { e.stopPropagation(); handleStatusChange(day, kStatus, true); }}
+                                                        className={clsx(
+                                                            "py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border",
+                                                            state.progress.readingHistory[`day_${day.day}`]?.kahfStatus === kStatus
+                                                                ? (kStatus === 'done' ? "bg-accent-color border-accent-color text-white" : kStatus === 'partial' ? "bg-warning border-warning text-white" : "bg-danger border-danger text-white")
+                                                                : "bg-white/5 border-white/5 hover:border-accent-color/30 text-text-main/60"
+                                                        )}
+                                                    >
+                                                        {kStatus === 'done' ? 'Lu' : kStatus === 'partial' ? 'Partiel' : 'Non lu'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <AnimatePresence>
@@ -278,24 +364,36 @@ const ReadingPlanView: React.FC = () => {
                                             <div className="grid grid-cols-2 gap-2">
                                                 <Button
                                                     size="sm"
-                                                    className="rounded-xl h-10 font-black"
+                                                    className={clsx(
+                                                        "rounded-xl h-12 font-black transition-all duration-300",
+                                                        status === 'done' ? "shadow-lg shadow-success/30 scale-105" : ""
+                                                    )}
                                                     variant={status === 'done' ? 'success' : 'secondary'}
                                                     onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'done'); }}
                                                 >
-                                                    {t('goalAchieved')}
+                                                    <div className="flex flex-col items-center leading-none gap-1">
+                                                        <span>{t('goalAchieved')}</span>
+                                                        <span className="text-[8px] opacity-60 font-black">{day.endPage - day.startPage + 1} pages</span>
+                                                    </div>
                                                 </Button>
                                                 <Button
                                                     size="sm"
-                                                    className="rounded-xl h-10 font-black"
-                                                    variant="warning"
+                                                    className={clsx(
+                                                        "rounded-xl h-12 font-black transition-all duration-300",
+                                                        status === 'partial' ? "shadow-lg shadow-warning/30 scale-105" : ""
+                                                    )}
+                                                    variant={status === 'partial' ? 'warning' : 'secondary'}
                                                     onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'partial'); }}
                                                 >
                                                     {t('partial')}
                                                 </Button>
                                                 <Button
                                                     size="sm"
-                                                    className="rounded-xl h-10 font-black"
-                                                    variant="secondary"
+                                                    className={clsx(
+                                                        "rounded-xl h-12 font-black transition-all duration-300",
+                                                        status === 'not_read' ? "shadow-lg shadow-danger/30 scale-105" : ""
+                                                    )}
+                                                    variant={status === 'not_read' ? 'danger' : 'secondary'}
                                                     onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'not_read'); }}
                                                 >
                                                     {t('notReadStatus') || 'Non lu'}

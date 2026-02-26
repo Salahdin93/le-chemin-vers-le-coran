@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Card from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
+import { clsx } from 'clsx';
 import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLogic';
 import { HIZB_DATA } from '@/constants/quranData';
 import { checkReadingProgress } from '@/services/progressLogic';
@@ -14,7 +15,7 @@ import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 import { HADITH_COLLECTION } from '@/constants/hadithData';
-import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, AlertCircle, Star, Calendar } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 
 const cardVariants: Variants = {
@@ -116,6 +117,17 @@ const DashboardView: React.FC = () => {
     const masteredHadiths = Object.values(hadithProgress).filter(s => s === 'acquis').length;
     const hadithPercent = Math.floor((masteredHadiths / HADITH_COLLECTION.length) * 100);
 
+    const currentReading = readingPlan ? readingPlan[state.progress.currentReadingDay - 1] : null;
+    const readingHistoryEntry = currentReading ? state.progress.readingHistory[`day_${currentReading.day}`] : null;
+    const readingStatus = readingHistoryEntry?.status || 'not_read';
+
+    const handleRevisionStatusUpdate = (_revisionDay: any, status: any) => {
+        dispatch({
+            type: 'UPDATE_REVISION_STATUS',
+            payload: { revisionIndex: state.progress.currentRevisionIndex, status }
+        });
+    };
+
     const handleStatusChange = (day: PlanDay, status: ReadingStatus, isKahf: boolean = false, time?: number) => {
         const execute = (adj: number) => {
             if (!activeProfile) return;
@@ -152,7 +164,6 @@ const DashboardView: React.FC = () => {
         dispatch({ type: 'SET_TOAST', payload: t('saved') });
     };
 
-    const currentReading = isReadingActive ? readingPlan?.find(d => d.day === state.progress.currentReadingDay) : null;
     const currentRevision = isRevisionActive ? revisionPlan?.[state.progress.currentRevisionIndex] : null;
 
     const revisionItems = currentRevision
@@ -180,7 +191,29 @@ const DashboardView: React.FC = () => {
                         <div className="w-8 h-8 rounded-lg accent-gradient flex items-center justify-center text-white shadow-lg shadow-accent-color/20 rotate-3">
                             <Sparkles size={16} />
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Lumière du jour</span>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Lumière du jour</span>
+                            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 mt-1">
+                                <div className="flex items-center gap-2">
+                                    <Calendar size={14} className="text-text-secondary" />
+                                    <span className="text-sm font-bold text-text-main">
+                                        {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}
+                                    </span>
+                                </div>
+                                <span className="hidden md:block w-px h-4 bg-white/10" />
+                                <div className="flex items-center gap-3">
+                                    <div className="p-3 bg-accent-color/20 rounded-2xl shadow-lg shadow-accent-color/20 animate-bounce-subtle">
+                                        <Sparkles size={20} className="text-accent-color" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Date Hégirienne</span>
+                                        <span className="text-2xl md:text-3xl font-black text-accent-color tracking-tighter drop-shadow-sm">
+                                            {new Intl.DateTimeFormat('fr-u-ca-islamic-uma-nu-latn', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gradient mb-4">
                         {t('dashboard')}
@@ -260,6 +293,32 @@ const DashboardView: React.FC = () => {
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysLeft') || 'Jours restants'}</span>
                                 </div>
                             </div>
+                            {currentRevision && (
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-6 border-t border-white/5">
+                                    {(['revised', 'to-review', 'not_revised'] as const).map(revStat => (
+                                        <Button
+                                            key={revStat}
+                                            variant={currentRevision.status === revStat ? (revStat === 'revised' ? 'success' : revStat === 'to-review' ? 'warning' : 'danger') : 'secondary'}
+                                            className={clsx(
+                                                "h-14 rounded-2xl border-none text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                                currentRevision.status === revStat
+                                                    ? "shadow-premium scale-105 opacity-100"
+                                                    : "bg-white/5 hover:bg-white/10 opacity-60 hover:opacity-100"
+                                            )}
+                                            onClick={() => handleRevisionStatusUpdate(currentRevision, revStat)}
+                                        >
+                                            {revStat === 'revised' ? t('revised') : revStat === 'to-review' ? t('toReview') : t('not_revised')}
+                                        </Button>
+                                    ))}
+                                    <Button
+                                        variant="accent"
+                                        className="h-14 rounded-2xl bg-blue-500 text-white border-none hover:scale-105 transition-transform text-[10px] font-black uppercase tracking-widest"
+                                        onClick={() => dispatch({ type: 'COMPLETE_REVISION_DAY' } as any)}
+                                    >
+                                        {t('nextDay') || 'Suivant'}
+                                    </Button>
+                                </div>
+                            )}
                         </Card>
                     </motion.div>
                 )}
@@ -316,42 +375,103 @@ const DashboardView: React.FC = () => {
                                                 <span className="text-2xl font-black text-emerald-500">{currentReading.endPage}</span>
                                             </div>
                                         </div>
+
+                                        {currentReading.isKahfDay && (
+                                            <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+                                                <div className="flex items-center justify-center gap-2 text-accent-color">
+                                                    <Star size={16} fill="currentColor" />
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sourate Al-Kahf (Vendredi)</span>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <button
+                                                        onClick={() => handleStatusChange(currentReading, 'done', true)}
+                                                        className={clsx(
+                                                            "py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border-2",
+                                                            state.progress.readingHistory[`day_${currentReading.day}`]?.kahfStatus === 'done'
+                                                                ? "bg-accent-color border-accent-color text-white"
+                                                                : "bg-white/5 border-white/10 hover:border-accent-color/50"
+                                                        )}
+                                                    >
+                                                        Lu
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleStatusChange(currentReading, 'partial', true)}
+                                                        className={clsx(
+                                                            "py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border-2",
+                                                            state.progress.readingHistory[`day_${currentReading.day}`]?.kahfStatus === 'partial'
+                                                                ? "bg-warning border-warning text-white"
+                                                                : "bg-white/5 border-white/10 hover:border-warning/50"
+                                                        )}
+                                                    >
+                                                        En partie
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleStatusChange(currentReading, 'not_read', true)}
+                                                        className={clsx(
+                                                            "py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border-2",
+                                                            state.progress.readingHistory[`day_${currentReading.day}`]?.kahfStatus === 'not_read'
+                                                                ? "bg-danger border-danger text-white"
+                                                                : "bg-white/5 border-white/10 hover:border-danger/50"
+                                                        )}
+                                                    >
+                                                        Non lu
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-6">
                                         <Timer onStop={(s) => handleStatusChange(currentReading, 'done', false, s)} />
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                             <Button
-                                                variant="success"
+                                                variant={readingStatus === 'done' ? 'success' : 'secondary'}
                                                 size="lg"
-                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase shadow-xl shadow-success/20 text-white whitespace-normal"
+                                                className={clsx(
+                                                    "h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase whitespace-normal transition-all duration-300 border-2",
+                                                    readingStatus === 'done' ? "shadow-premium scale-105 border-success bg-success text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
+                                                )}
                                                 onClick={() => handleStatusChange(currentReading, 'done')}
                                             >
-                                                <CheckCircle2 size={24} className="mr-3" /> {t('goalAchieved') || 'Accompli'}
+                                                <div className="flex flex-col items-center">
+                                                    <div className="flex items-center">
+                                                        <CheckCircle2 size={24} className="mr-3" /> {t('goalAchieved') || 'Accompli'}
+                                                    </div>
+                                                    <span className="text-[10px] mt-1 opacity-80">{currentReading.endPage - currentReading.startPage + 1} pages lues</span>
+                                                </div>
                                             </Button>
                                             <Button
-                                                variant="secondary"
+                                                variant={readingStatus === 'partial' ? 'warning' : 'secondary'}
                                                 size="lg"
-                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase border-border-main/50 text-white whitespace-normal"
+                                                className={clsx(
+                                                    "h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase whitespace-normal transition-all duration-300 border-2",
+                                                    readingStatus === 'partial' ? "shadow-premium scale-105 border-warning bg-warning text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
+                                                )}
                                                 onClick={() => handleStatusChange(currentReading, 'partial')}
                                             >
                                                 <AlertCircle size={24} className="mr-3" /> {t('partial') || 'Partiel'}
                                             </Button>
                                             <Button
-                                                variant="secondary"
+                                                variant={readingStatus === 'not_read' ? 'danger' : 'secondary'}
                                                 size="lg"
-                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase border-border-main/50 text-white"
+                                                className={clsx(
+                                                    "h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase whitespace-normal transition-all duration-300 border-2",
+                                                    readingStatus === 'not_read' ? "shadow-premium scale-105 border-danger bg-danger text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
+                                                )}
                                                 onClick={() => handleStatusChange(currentReading, 'not_read')}
                                             >
                                                 {t('notReadStatus') || 'Non lu'}
                                             </Button>
                                             <Button
-                                                variant="secondary"
+                                                variant={readingStatus === 'catchup' ? 'accent' : 'secondary'}
                                                 size="lg"
-                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase border-border-main/50 text-white whitespace-normal"
+                                                className={clsx(
+                                                    "h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase whitespace-normal transition-all duration-300",
+                                                    readingStatus === 'catchup' ? "shadow-2xl shadow-accent-color/40 scale-105 border-transparent" : "bg-white/5 border-white/10 opacity-70"
+                                                )}
                                                 onClick={() => handleStatusChange(currentReading, 'catchup')}
                                             >
-                                                {t('catchupStatus') || 'Pages supplémentaires'}
+                                                {t('catchupStatus') || 'Supp.'}
                                             </Button>
                                         </div>
                                         <Button variant="ghost" size="lg" className="w-full h-16 rounded-2xl text-[10px] font-black uppercase tracking-widest opacity-50 hover:opacity-100 hover:bg-bg-secondary" onClick={handleAdvance}>
@@ -408,11 +528,29 @@ const DashboardView: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 border-t border-white/5">
-                                        <Button variant="secondary" className="h-14 rounded-2xl bg-white/5 border-none hover:bg-white/10 text-[10px] font-black uppercase tracking-widest" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'lu')}>{t('read')}</Button>
-                                        <Button variant="secondary" className="h-14 rounded-2xl bg-white/5 border-none hover:bg-white/10 text-[10px] font-black uppercase tracking-widest" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'en_memorisation')}>{t('statusEnMemorisation')}</Button>
-                                        <Button variant="secondary" className="h-14 rounded-2xl bg-white/5 border-none hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-warning/80" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'a_reprendre')}>{t('statusARependre')}</Button>
-                                        <Button variant="accent" className="h-14 rounded-2xl bg-warning text-slate-900 border-none hover:scale-105 transition-transform text-[10px] font-black uppercase tracking-widest" onClick={() => handleHadithStatusChange(hadithDuJour.id, 'acquis')}>{t('statusAcquis')}</Button>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-6 border-t border-white/5">
+                                        {(['lu', 'en_memorisation', 'a_reprendre', 'acquis'] as const).map(hStat => {
+                                            const currentHadithStatus = activeProfile?.hadithProgress?.[hadithDuJour.id];
+                                            const isActive = currentHadithStatus === hStat;
+                                            return (
+                                                <Button
+                                                    key={hStat}
+                                                    variant={isActive ? (hStat === 'lu' || hStat === 'acquis' ? 'success' : hStat === 'a_reprendre' ? 'warning' : 'accent') : 'secondary'}
+                                                    className={clsx(
+                                                        "h-14 rounded-2xl border-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                                        isActive
+                                                            ? "shadow-premium scale-105 opacity-100 border-current"
+                                                            : "bg-white/5 border-white/10 opacity-60 hover:opacity-100"
+                                                    )}
+                                                    onClick={() => handleHadithStatusChange(hadithDuJour.id, hStat)}
+                                                >
+                                                    {hStat === 'lu' ? t('read') :
+                                                        hStat === 'en_memorisation' ? t('statusEnMemorisation') :
+                                                            hStat === 'a_reprendre' ? t('statusARependre') :
+                                                                t('statusAcquis')}
+                                                </Button>
+                                            );
+                                        })}
                                     </div>
                                 </>
                             ) : (
@@ -462,36 +600,24 @@ const DashboardView: React.FC = () => {
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/5">
-                                    <Button
-                                        variant="accent"
-                                        size="lg"
-                                        className="h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest"
-                                        onClick={() => dispatch({
-                                            type: 'UPDATE_REVISION_STATUS',
-                                            payload: { revisionIndex: state.progress.currentRevisionIndex, status: 'revised' }
-                                        })}
-                                    >
-                                        {t('revised')}
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        size="lg"
-                                        className="h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest"
-                                        onClick={() => dispatch({
-                                            type: 'UPDATE_REVISION_STATUS',
-                                            payload: { revisionIndex: state.progress.currentRevisionIndex, status: 'not_revised' }
-                                        })}
-                                    >
-                                        {t('not_revised')}
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        size="lg"
-                                        className="h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest"
-                                        onClick={() => setIsReadjustmentModalOpen(true)}
-                                    >
-                                        {t('toReview')}
-                                    </Button>
+                                    {(['revised', 'not_revised', 'to-review'] as const).map(revStat => {
+                                        const isActive = currentRevision.status === revStat;
+                                        return (
+                                            <Button
+                                                key={revStat}
+                                                variant={isActive ? (revStat === 'revised' ? 'success' : revStat === 'to-review' ? 'warning' : 'danger') : 'secondary'}
+                                                className={clsx(
+                                                    "h-14 rounded-2xl border-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                                    isActive
+                                                        ? "shadow-premium scale-105 opacity-100 border-current"
+                                                        : "bg-white/5 border-white/10 opacity-60 hover:opacity-100 text-white/70"
+                                                )}
+                                                onClick={() => revStat === 'to-review' ? setIsReadjustmentModalOpen(true) : handleRevisionStatusUpdate(currentRevision, revStat)}
+                                            >
+                                                {revStat === 'revised' ? t('revised') : revStat === 'to-review' ? t('toReview') : t('not_revised')}
+                                            </Button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </Card>

@@ -5,7 +5,7 @@ import { RevisionPlanDay, RevisionStatus } from '@/types';
 import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid } from 'lucide-react';
+import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid, History } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 import { HIZB_DATA } from '@/constants/quranData';
 
@@ -131,6 +131,53 @@ const RevisionPlanView: React.FC = () => {
                 </div>
             </header>
 
+            {/* Hadith — Importance de la révision */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease: [0.23, 1, 0.32, 1] }}>
+                <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 text-white shadow-2xl border border-white/5 group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none" />
+                    <div className="absolute -top-16 -right-16 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px]" />
+                    <div className="p-8 md:p-12 relative z-10 space-y-8">
+                        {/* Label */}
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                                <Brain size={24} />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400/60">Hadith</span>
+                                <h3 className="text-lg font-black tracking-tight text-white leading-tight">🔁 L’importance de la révision</h3>
+                            </div>
+                        </div>
+
+                        {/* Arabic text */}
+                        <div className="p-8 rounded-[2rem] bg-white/5 border border-white/5 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-6 opacity-5">
+                                <Brain size={80} />
+                            </div>
+                            <p className="font-amiri text-2xl md:text-3xl rtl text-right leading-[2.2] md:leading-[2.8] text-white/90 relative z-10">
+                                عَنْ أَبِي مُوسَى الأَشْعَرِيِّ، عَنِ النَّبِيِّ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ قَالَ: «تَعَاهَدُوا القُرْآنَ، فَوَالَّذِي نَفْسِي بِيَدِهِ لَهُوَ أَشَدُّ تَفَصِّيًا مِنَ الإِبِلِ فِي عُقُلِهَا»
+                            </p>
+                        </div>
+
+                        {/* Translation */}
+                        <div className="border-l-4 border-blue-500/60 pl-6 space-y-2">
+                            <p className="text-sm font-semibold text-blue-400/80 mb-1">
+                                D'après Abu Moussa Al Ach'ari (qu'Allah l'agrée), le Prophète (ﷺ) a dit :
+                            </p>
+                            <p className="text-base md:text-lg italic font-medium text-white/80 leading-relaxed">
+                                « Réviser régulièrement le Coran car, par Celui qui détient mon âme dans Sa main, il s'échappe plus vite que les chameaux de leurs enclos ».
+                            </p>
+                        </div>
+
+                        {/* Source */}
+                        <div className="flex justify-end">
+                            <span className="px-5 py-2 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] border border-blue-500/20">
+                                Boukhari n°5033 · Mouslim n°791
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+
             {/* Filters */}
             <div className="flex items-center gap-6 overflow-x-auto pb-2 no-scrollbar">
                 <div className="flex items-center gap-2 bg-bg-secondary/50 p-1.5 rounded-2xl border border-border-main/50">
@@ -191,6 +238,11 @@ const RevisionPlanView: React.FC = () => {
                                         <div>
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color mb-2 block">
                                                 {t('day')} {dayIndex + 1}
+                                                {day.date && (
+                                                    <span className="ml-2 font-black text-text-main group-hover:text-accent-color transition-colors">
+                                                        — {new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                    </span>
+                                                )}
                                             </span>
                                             <h4 className="text-2xl font-black tracking-tight">
                                                 {day.units.map(u => u.text).join(' + ')}
@@ -263,7 +315,10 @@ const RevisionPlanView: React.FC = () => {
                                             <Button
                                                 size="sm"
                                                 variant={day.status === 'revised' ? 'success' : 'secondary'}
-                                                className="h-12 font-black rounded-xl shadow-lg shadow-success/5"
+                                                className={clsx(
+                                                    "h-14 font-black rounded-xl transition-all duration-300",
+                                                    day.status === 'revised' ? "shadow-lg shadow-success/30 scale-105" : "bg-white/5 opacity-60"
+                                                )}
                                                 onClick={() => handleStatusUpdate(day, 'revised')}
                                             >
                                                 {t('revised')}
@@ -271,7 +326,10 @@ const RevisionPlanView: React.FC = () => {
                                             <Button
                                                 size="sm"
                                                 variant={day.status === 'not_revised' ? 'danger' : 'secondary'}
-                                                className="h-12 font-black rounded-xl shadow-lg shadow-danger/5"
+                                                className={clsx(
+                                                    "h-14 font-black rounded-xl transition-all duration-300",
+                                                    day.status === 'not_revised' ? "shadow-lg shadow-danger/30 scale-105" : "bg-white/5 opacity-60"
+                                                )}
                                                 onClick={() => handleStatusUpdate(day, 'not_revised')}
                                             >
                                                 {t('not_revised')}
@@ -279,7 +337,10 @@ const RevisionPlanView: React.FC = () => {
                                             <Button
                                                 size="sm"
                                                 variant={day.status === 'to-review' ? 'warning' : 'secondary'}
-                                                className="h-12 font-black rounded-xl shadow-lg shadow-warning/5"
+                                                className={clsx(
+                                                    "h-14 font-black rounded-xl transition-all duration-300",
+                                                    day.status === 'to-review' ? "shadow-lg shadow-warning/30 scale-105" : "bg-white/5 opacity-60"
+                                                )}
                                                 onClick={() => setReviewModalDay(day)}
                                             >
                                                 {t('toReview')}
@@ -314,6 +375,52 @@ const RevisionPlanView: React.FC = () => {
                     })}
                 />
             )}
+            <section className="mt-20 space-y-10">
+                <div className="flex items-center gap-4 border-b border-border-main pb-8">
+                    <div className="p-3 bg-warning/10 rounded-2xl text-warning">
+                        <History size={32} />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black tracking-tight text-gradient">Historique des unités à reprendre</h2>
+                        <p className="text-text-secondary font-medium">Retrouvez ici les unités marquées comme étant à revoir lors de vos sessions.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {state.progress.history.toReview && state.progress.history.toReview.length > 0 ? (
+                        state.progress.history.toReview.map((item, idx) => (
+                            <div key={idx} className="premium-card p-6 bg-warning/5 border-warning/10 border-2 rounded-[2rem] flex flex-col gap-4">
+                                <div className="flex justify-between items-start">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-warning opacity-60">
+                                        Jour {item.day} — {new Date(item.date).toLocaleDateString()}
+                                    </span>
+                                    <div className="p-2 bg-warning/20 rounded-lg text-warning">
+                                        <AlertCircle size={16} />
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    {item.units.map((u, i) => (
+                                        <div key={i} className="text-sm font-bold">{u.text}</div>
+                                    ))}
+                                </div>
+                                {item.difficulties && item.difficulties.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {item.difficulties.map((d, i) => (
+                                            <span key={i} className="px-3 py-1 bg-warning/10 text-[9px] font-black uppercase tracking-widest text-warning rounded-full border border-warning/20">
+                                                {d}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-12 text-center text-text-secondary opacity-50 font-medium">
+                            Aucune unité à reprendre pour le moment.
+                        </div>
+                    )}
+                </div>
+            </section>
         </div>
     );
 };
