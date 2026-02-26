@@ -141,9 +141,9 @@ const SettingsView: React.FC = () => {
             content: (
                 <div className="grid grid-cols-1 gap-2">
                     {[
-                        { id: 'fr', name: 'Français', flag: '🇫🇷' },
-                        { id: 'ar', name: 'العربية', flag: '🇸🇦' },
-                        { id: 'en', name: 'English', flag: '🇬🇧' }
+                        { id: 'fr', name: 'Français', flag: 'https://flagcdn.com/w40/fr.png' },
+                        { id: 'ar', name: 'العربية', flag: 'https://flagcdn.com/w40/sa.png' },
+                        { id: 'en', name: 'English', flag: 'https://flagcdn.com/w40/gb.png' }
                     ].map(lang => (
                         <button
                             key={lang.id}
@@ -156,7 +156,7 @@ const SettingsView: React.FC = () => {
                             )}
                         >
                             <div className="flex items-center gap-3">
-                                <span className="text-xl group-hover:scale-125 transition-transform">{lang.flag}</span>
+                                <img src={lang.flag} alt={lang.name} className="w-8 h-6 object-cover rounded shadow-sm group-hover:scale-110 transition-transform" />
                                 <span className="font-bold">{lang.name}</span>
                             </div>
                             {state.settings.lang === lang.id && (
@@ -317,7 +317,6 @@ const SettingsView: React.FC = () => {
                                 <div className="w-32 h-32 md:w-48 md:h-48 rounded-[3rem] flex items-center justify-center glass-card border-none shadow-2xl bg-white/5 relative z-10">
                                     <img src={isDark ? LOGO_URL_DARK : LOGO_URL} alt="Logo" className="w-20 h-20 md:w-32 md:h-32 object-contain" />
                                 </div>
-                                <div className="mt-8 text-4xl transform group-hover/logo:scale-125 transition-transform duration-500">⚖️</div>
                             </div>
 
                             <div className="space-y-6 font-medium leading-relaxed text-text-main/80">
@@ -412,8 +411,8 @@ const SettingsView: React.FC = () => {
                         <img src={isDark ? LOGO_URL_DARK : LOGO_URL} alt="Spirit Logo" className="w-10" />
                     </div>
                     <div className="flex flex-col gap-2">
-                        <p className="text-xs font-black uppercase tracking-[0.5em] text-text-main">Spirit Engine v7.0.4 Premium</p>
-                        <p className="text-[10px] font-bold text-accent-color/60 uppercase tracking-widest">Crafted with gratitude for your spiritual journey</p>
+                        <p className="text-xs font-black uppercase tracking-[0.5em] text-text-main">{t('footerAppVersion')}</p>
+                        <p className="text-[10px] font-bold text-accent-color/60 uppercase tracking-widest">{t('footerTagline')}</p>
                     </div>
                     <div className="flex items-center gap-8 mt-6">
                         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="p-2 hover:text-accent-color transition-colors group">

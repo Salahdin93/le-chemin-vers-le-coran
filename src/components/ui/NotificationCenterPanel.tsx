@@ -1,6 +1,7 @@
 import React from 'react';
 import { clsx } from 'clsx';
 import Button from './Button';
+import Modal from './Modal';
 import { useStore } from '@/context/AppContext';
 
 interface NotificationCenterPanelProps {
@@ -15,9 +16,12 @@ const NotificationCenterPanel: React.FC<NotificationCenterPanelProps> = ({ isOpe
     dispatch({ type: 'CLEAR_NOTIFICATION_HISTORY' });
   };
 
-  const handleRemove = (id: string) => {
+  const handleRemove = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     dispatch({ type: 'REMOVE_NOTIFICATION_FROM_HISTORY', payload: id });
   };
+
+  const [selectedNotification, setSelectedNotification] = React.useState<any>(null);
 
   return (
     <div className={clsx(
@@ -32,10 +36,17 @@ const NotificationCenterPanel: React.FC<NotificationCenterPanelProps> = ({ isOpe
         {state.notificationHistory.length > 0 ? (
           <ul className="space-y-3">
             {state.notificationHistory.map(notif => (
-              <li key={notif.id} className="p-3 rounded-lg bg-bg-main relative group">
+              <li
+                key={notif.id}
+                className={clsx("p-3 rounded-lg bg-bg-main relative group", notif.content ? "cursor-pointer hover:ring-2 hover:ring-accent-color transition-all" : "")}
+                onClick={() => { if (notif.content) setSelectedNotification(notif); }}
+              >
                 <p className="font-semibold">{notif.title}</p>
-                <p className="text-sm opacity-80">{typeof notif.message === 'string' ? notif.message : t('customContent')}</p>
-                <button onClick={() => handleRemove(notif.id!)} className="absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-sm opacity-80">{typeof notif.message === 'string' ? notif.message : (notif.content ? t('clickToView') : '')}</p>
+                <button
+                  onClick={(e) => handleRemove(notif.id!, e)}
+                  className="absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-danger/20 hover:text-danger rounded-full"
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" /></svg>
                 </button>
               </li>
@@ -50,6 +61,16 @@ const NotificationCenterPanel: React.FC<NotificationCenterPanelProps> = ({ isOpe
           {t('clearHistory')}
         </Button>
       </div>
+
+      <Modal
+        isOpen={!!selectedNotification}
+        onClose={() => setSelectedNotification(null)}
+      >
+        <div className="p-2 md:p-6 bg-card-bg">
+          <h2 className="text-xl font-bold mb-4">{selectedNotification?.title || t('notification')}</h2>
+          {selectedNotification?.content}
+        </div>
+      </Modal>
     </div>
   );
 };

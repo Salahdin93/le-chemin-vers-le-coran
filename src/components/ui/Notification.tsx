@@ -44,14 +44,14 @@ const Notification: React.FC<NotificationProps> = ({ id, title, message, content
                 isExiting ? 'opacity-0 -translate-y-4 scale-95' : 'opacity-100 translate-y-0 scale-100'
             )}
         >
-            {content ? (
-                content
-            ) : (
+            {title || message ? (
                 <>
                     {title && <h4 className="font-bold text-text-main">{title}</h4>}
                     {message && <p className="text-sm text-text-secondary" dangerouslySetInnerHTML={{ __html: message }} />}
                 </>
-            )}
+            ) : content ? (
+                content
+            ) : null}
         </div>
     );
 };

@@ -471,5 +471,7 @@ export const fr = {
     "resetEverything": "Réinitialisation Totale",
     "startDateLabel": "Début",
     "endDateLabel": "Fin",
-    "yourNamePlaceholder": "Votre nom"
+    "yourNamePlaceholder": "Votre nom",
+    "footerAppVersion": "Spirit Engine v7.0.4 Premium",
+    "footerTagline": "Conçu avec gratitude pour votre voyage spirituel"
 };

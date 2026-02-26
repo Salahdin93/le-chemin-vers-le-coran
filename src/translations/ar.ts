@@ -450,5 +450,7 @@ export const ar = {
     "clearHistory": "مسح السجل",
     "installAppTitle": "تثبيت التطبيق",
     "installAppDesc": "ثبّت 'طريق القرآن' على شاشتك الرئيسية للوصول السريع وبدون إنترنت.",
-    "install": "تثبيت"
+    "install": "تثبيت",
+    "footerAppVersion": "محرك الروح v7.0.4 بريميوم",
+    "footerTagline": "صُنع بامتنان لرحلتك الروحية"
 };

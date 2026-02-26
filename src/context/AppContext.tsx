@@ -612,7 +612,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (state.appScreen === 'main' && activeProfile && !state.kahfNotificationShownThisSession) {
       const today = new Date();
       if (today.getDay() === 5 && activeProfile.goals.reading?.kahfOption) {
-        notificationService.show({ content: <AlKahfReminder />, duration: 30000, type: 'info' });
+        notificationService.show({
+          title: t('kahfReminderTitle') || "Sourate Al Kahf",
+          message: t('kahfReminderMessage') || "C'est vendredi, lisez la sourate Al Kahf.",
+          content: <AlKahfReminder />,
+          duration: 10000,
+          type: 'info'
+        });
         dispatch({ type: 'SET_KAHF_NOTIFICATION_SHOWN' });
       }
     }

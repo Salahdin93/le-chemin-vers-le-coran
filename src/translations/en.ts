@@ -452,5 +452,7 @@ export const en = {
     "clearHistory": "Clear history",
     "installAppTitle": "Install the App",
     "installAppDesc": "Install The Path to the Quran on your home screen for quick and offline access.",
-    "install": "Install"
+    "install": "Install",
+    "footerAppVersion": "Spirit Engine v7.0.4 Premium",
+    "footerTagline": "Crafted with gratitude for your spiritual journey"
 };
