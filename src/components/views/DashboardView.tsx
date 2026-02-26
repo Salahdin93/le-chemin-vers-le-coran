@@ -210,11 +210,11 @@ const DashboardView: React.FC = () => {
                     <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
                         <Card className="!bg-slate-900 border-white/5 shadow-2xl overflow-visible text-white p-8 group transition-all hover-glow">
                             <div className="flex justify-between items-start mb-8">
-                                <ProgressRing percent={overallPercent} color="text-accent-color" icon={<BookOpen size={24} />} label={t('readingGoal')} />
+                                <ProgressRing percent={overallPercent} color="text-emerald-500" icon={<BookOpen size={24} />} label={t('readingGoal')} />
                             </div>
                             <div className="grid grid-cols-2 gap-4 mt-4 py-6 border-t border-white/5">
                                 <div>
-                                    <span className="block text-2xl font-black text-accent-color">{totalPagesRead}</span>
+                                    <span className="block text-2xl font-black text-emerald-500">{totalPagesRead}</span>
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('pagesReadShort') || 'Pages lues'}</span>
                                 </div>
                                 <div className="text-right">
@@ -275,8 +275,8 @@ const DashboardView: React.FC = () => {
                             className="relative group h-full"
                         >
                             <Card className="h-full relative border-none shadow-2xl overflow-hidden rounded-[3rem] group transition-all hover:scale-[1.01] duration-500">
-                                <div className="absolute inset-0 bg-gradient-to-br from-accent-color/5 to-transparent pointer-events-none" />
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent-color/5 blur-3xl rounded-full" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/5 blur-3xl rounded-full" />
 
                                 <div className="p-8 md:p-12 space-y-10 relative z-10">
                                     <div className="flex items-center justify-between">
@@ -308,12 +308,12 @@ const DashboardView: React.FC = () => {
                                         <div className="flex items-center justify-center gap-6 mt-4">
                                             <div className="flex flex-col">
                                                 <span className="text-[8px] font-black uppercase tracking-widest opacity-40 mb-1">{t('fromPage') || 'DEPUIS'}</span>
-                                                <span className="text-2xl font-black text-accent-color">{currentReading.startPage}</span>
+                                                <span className="text-2xl font-black text-emerald-500">{currentReading.startPage}</span>
                                             </div>
                                             <div className="h-8 w-px bg-white/10" />
                                             <div className="flex flex-col">
                                                 <span className="text-[8px] font-black uppercase tracking-widest opacity-40 mb-1">{t('toPage') || 'JUSQU\'À'}</span>
-                                                <span className="text-2xl font-black text-accent-color">{currentReading.endPage}</span>
+                                                <span className="text-2xl font-black text-emerald-500">{currentReading.endPage}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -322,9 +322,9 @@ const DashboardView: React.FC = () => {
                                         <Timer onStop={(s) => handleStatusChange(currentReading, 'done', false, s)} />
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                             <Button
-                                                variant="accent"
+                                                variant="success"
                                                 size="lg"
-                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase shadow-xl shadow-accent-color/20 text-white whitespace-normal"
+                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase shadow-xl shadow-success/20 text-white whitespace-normal"
                                                 onClick={() => handleStatusChange(currentReading, 'done')}
                                             >
                                                 <CheckCircle2 size={24} className="mr-3" /> {t('goalAchieved') || 'Accompli'}
@@ -370,8 +370,8 @@ const DashboardView: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-tr from-warning/5 to-transparent pointer-events-none" />
 
                         <div className="p-6 md:p-10 flex flex-col h-full space-y-8 relative z-10">
-                                <div className="flex items-center justify-between">
-                            <div className={`${missionBadgeBase} bg-warning text-slate-900 shadow-warning/20`}>
+                            <div className="flex items-center justify-between">
+                                <div className={`${missionBadgeBase} bg-warning text-slate-900 shadow-warning/20`}>
                                     {t('missionHadith')}
                                 </div>
                                 <div className="text-[10px] font-black uppercase tracking-widest text-white/80">{hadithMissionTitle}</div>
@@ -502,9 +502,9 @@ const DashboardView: React.FC = () => {
             {/* Quick Evaluation CTA */}
             <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants}>
                 <div className="relative overflow-hidden p-12 md:p-20 rounded-[4rem] bg-slate-950 text-white shadow-2xl group transition-all duration-700">
-                    <div className="absolute inset-0 bg-gradient-to-br from-accent-color/30 to-blue-600/10 opacity-40 group-hover:opacity-60 transition-opacity" />
-                    <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[120%] bg-accent-color/20 blur-[130px] pointer-events-none rotate-12" />
-                    <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-500/20 blur-[100px] pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-500/30 to-red-600/10 opacity-40 group-hover:opacity-60 transition-opacity" />
+                    <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[120%] bg-red-500/20 blur-[130px] pointer-events-none rotate-12" />
+                    <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-red-500/20 blur-[100px] pointer-events-none" />
 
                     <div className="absolute top-8 right-12 opacity-10 group-hover:opacity-20 transition-opacity">
                         <Sparkles size={120} className="animate-pulse" />
@@ -512,7 +512,7 @@ const DashboardView: React.FC = () => {
 
                     <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
                         <div className="text-center lg:text-left space-y-6">
-                            <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md">
+                            <div className="inline-flex items-center gap-3 px-4 py-2 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-red-500/20 backdrop-blur-md">
                                 <Play size={12} className="fill-current" /> Auto-évaluation
                             </div>
                             <h2 className="text-4xl md:text-7xl font-black mb-4 tracking-tighter leading-tight">
@@ -523,9 +523,9 @@ const DashboardView: React.FC = () => {
                             </p>
                         </div>
                         <Button
-                            variant="accent"
+                            variant="danger"
                             size="lg"
-                            className="w-full lg:w-auto px-16 h-24 text-xl font-black uppercase tracking-widest rounded-3xl shadow-2xl shadow-accent-color/30 group/btn transition-all active:scale-95"
+                            className="w-full lg:w-auto px-16 h-24 text-xl font-black uppercase tracking-widest rounded-3xl shadow-2xl shadow-danger/30 group/btn transition-all active:scale-95"
                             onClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'evaluation-view' })}
                         >
                             <Sparkles size={28} className="mr-4 group-hover/btn:rotate-12 transition-transform" /> {t('startEvaluationShort') || 'S\'évaluer maintenant'}

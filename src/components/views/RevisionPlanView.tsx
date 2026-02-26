@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid } from 'lucide-react';
-import ReadadjustmentModal from '@/components/ui/ReadadjustmentModal';
+import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 import { HIZB_DATA } from '@/constants/quranData';
 
 const cardVariants = {
@@ -161,10 +161,10 @@ const RevisionPlanView: React.FC = () => {
                             day.status === 'revised'
                                 ? 'text-success'
                                 : day.status === 'to-review'
-                                ? 'text-warning'
-                                : day.status === 'not_revised'
-                                ? 'text-danger'
-                                : 'text-text-main/20';
+                                    ? 'text-warning'
+                                    : day.status === 'not_revised'
+                                        ? 'text-danger'
+                                        : 'text-text-main/20';
 
                         return (
                             <motion.div
@@ -183,8 +183,8 @@ const RevisionPlanView: React.FC = () => {
                                             ? 'border-accent-color ring-8 ring-accent-color/5 shadow-premium'
                                             : 'border-border-main/50 bg-bg-secondary/40',
                                         day.status === 'revised' &&
-                                            !isCurrent &&
-                                            'opacity-60 grayscale-[0.5] border-success/10'
+                                        !isCurrent &&
+                                        'opacity-60 grayscale-[0.5] border-success/10'
                                     )}
                                 >
                                     <div className="flex justify-between items-start">
@@ -202,8 +202,8 @@ const RevisionPlanView: React.FC = () => {
                                                 day.status === 'revised'
                                                     ? 'bg-success text-white shadow-lg shadow-success/20'
                                                     : day.status === 'to-review'
-                                                    ? 'bg-warning text-white shadow-lg shadow-warning/20'
-                                                    : 'bg-bg-main border border-border-main/50',
+                                                        ? 'bg-warning text-white shadow-lg shadow-warning/20'
+                                                        : 'bg-bg-main border border-border-main/50',
                                                 statusColor
                                             )}
                                         >
@@ -293,10 +293,10 @@ const RevisionPlanView: React.FC = () => {
                 </AnimatePresence>
             </div>
             {reviewModalDay && (
-                <ReadadjustmentModal
+                <ReadjustmentModal
                     isOpen={!!reviewModalDay}
                     onClose={() => setReviewModalDay(null)}
-                    onConfirm={selectedItems => {
+                    onConfirm={(selectedItems: string[]) => {
                         handleStatusUpdate(reviewModalDay, 'to-review', selectedItems);
                         setReviewModalDay(null);
                     }}
