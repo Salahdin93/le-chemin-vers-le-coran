@@ -58,7 +58,7 @@ const Header: React.FC = () => {
                             className="hidden lg:flex flex-col items-center"
                         >
                             <span className="font-amiri text-lg text-warning drop-shadow-sm" style={{ direction: 'rtl' }}>
-                                السَّلاَمُ عَلَيْكُمْ
+                                ٱلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّٰهِ وَبَرَكَاتُهُ
                             </span>
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
                                 {greeting}, {activeProfile.name}
