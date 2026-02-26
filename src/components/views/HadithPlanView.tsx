@@ -114,6 +114,7 @@ const HadithPlanView: React.FC = () => {
     const filteredHadiths = useMemo(() => {
         return HADITH_COLLECTION.filter(h => {
             const matchesSearch = h.arabic.includes(searchQuery) ||
+                h.id.toString().includes(searchQuery) ||
                 ((h.translations as any)[state.settings.lang === 'ar' ? 'en' : state.settings.lang]?.toLowerCase() || '').includes(searchQuery.toLowerCase());
             const status = progress[h.id] || 'non_lu';
             const matchesFilter = filterStatus === 'all' || status === filterStatus;
@@ -141,7 +142,7 @@ const HadithPlanView: React.FC = () => {
                         <input
                             type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Rechercher un hadith..."
-                            className="w-full h-16 bg-bg-secondary/40 backdrop-blur-xl border-2 border-border-main/10 rounded-2xl pl-16 pr-8 text-sm font-bold placeholder:text-text-main/20 focus:outline-none focus:border-accent-color/50 transition-all shadow-inner"
+                            className="w-full h-16 bg-slate-900/60 backdrop-blur-xl border-2 border-border-main/20 rounded-2xl pl-16 pr-8 text-sm font-bold text-white placeholder:text-text-main/30 focus:outline-none focus:border-accent-color transition-all shadow-xl"
                         />
                     </div>
                     <div className="flex gap-2 p-1.5 bg-bg-secondary/40 backdrop-blur-xl rounded-2xl border-2 border-border-main/10 shadow-inner overflow-x-auto no-scrollbar">

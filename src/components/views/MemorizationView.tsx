@@ -207,20 +207,113 @@ const MemorizationView: React.FC = () => {
                 {formType && renderForm()}
             </AnimatePresence>
 
-            <Tabs defaultValue="juzz" className="w-full">
-                <TabsList className="inline-flex items-center gap-2 p-1.5 bg-bg-secondary/50 backdrop-blur-xl rounded-2xl border border-border-main/50 mb-12">
-                    {['juzz', 'hizb', 'surah', 'hadith'].map(tab => (
+            <Tabs defaultValue="all" className="w-full">
+                <TabsList className="flex flex-wrap items-center gap-2 p-1.5 bg-bg-secondary/50 backdrop-blur-xl rounded-2xl border border-border-main/50 mb-12 h-auto">
+                    {['all', 'juzz', 'hizb', 'surah', 'hadith'].map(tab => (
                         <TabsTrigger
                             key={tab}
                             value={tab}
-                            className="px-8 h-10 rounded-xl text-text-main/50 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                            className="px-6 md:px-8 h-10 rounded-xl text-text-main/50 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xl text-[10px] font-black uppercase tracking-widest transition-all"
                         >
-                            {t(`tab_${tab}`) || t(tab === 'surah' ? 'memorizedSurahs' : tab === 'juzz' ? 'memorizedJuzz' : tab === 'hizb' ? 'memorizedHizbs' : 'hadith')}
+                            {t(`tab_${tab}`) || t(tab === 'surah' ? 'memorizedSurahs' : tab === 'juzz' ? 'memorizedJuzz' : tab === 'hizb' ? 'memorizedHizbs' : tab === 'hadith' ? 'hadith' : 'showAll')}
                         </TabsTrigger>
                     ))}
                 </TabsList>
 
                 <AnimatePresence mode="wait">
+                    <TabsContent value="all" className="space-y-6 outline-none">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {memorizations.juzz.map((j, i) => (
+                                <motion.div
+                                    key={`all-j-${j.number}`}
+                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
+                                    className="premium-card p-6 flex items-center justify-between border-2 border-border-main/30 group relative overflow-hidden h-28"
+                                >
+                                    <div className="flex items-center gap-4 relative z-10 cursor-pointer" onClick={() => setModalContent({ title: `${t('juzz')} ${j.number}`, items: j.componentHizbs.map(h => ({ name: `${t('hizb')} ${h.number} - ${h.details}`, level: h.level, status: h.status })) })}>
+                                        <div className="w-12 h-12 rounded-xl bg-accent-color/10 flex items-center justify-center text-accent-color font-black">{j.number}</div>
+                                        <div>
+                                            <h4 className="text-sm font-black tracking-tight">{t('juzz')} {j.number}</h4>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <StatusIndicator status={j.status || 'bon'} />
+                                                <span className={clsx("px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest", levelClasses[j.level])}>{levels[j.level]}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => handleRemoveItem('juzz', j)} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all z-20">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </motion.div>
+                            ))}
+                            {memorizations.hizbs.map((h, i) => (
+                                <motion.div
+                                    key={`all-h-${h.number}`}
+                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (memorizations.juzz.length + i) * 0.02 }}
+                                    className="premium-card p-6 flex items-center justify-between border-2 border-border-main/30 group h-28"
+                                >
+                                    <div className="flex items-center gap-4 relative z-10 cursor-pointer" onClick={() => setModalContent({ title: `${t('hizb')} ${h.number} - ${h.details}`, items: h.componentSurahParts.map(s => ({ name: s.name, level: s.level, status: s.status })) })}>
+                                        <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-black">{h.number}</div>
+                                        <div>
+                                            <h4 className="text-sm font-black tracking-tight">{t('hizb')} {h.number}</h4>
+                                            <p className="text-[8px] font-bold opacity-30 uppercase tracking-widest truncate max-w-[120px]">{h.details}</p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <StatusIndicator status={h.status || 'bon'} />
+                                                <span className={clsx("px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest", levelClasses[h.level])}>{levels[h.level]}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => handleRemoveItem('hizb', h)} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all z-20">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </motion.div>
+                            ))}
+                            {memorizations.surahParts.map((s, i) => (
+                                <motion.div
+                                    key={`all-s-${s.id}`}
+                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (memorizations.juzz.length + memorizations.hizbs.length + i) * 0.02 }}
+                                    className="premium-card p-6 flex items-center justify-between border-2 border-border-main/30 group h-28"
+                                >
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600"><BookOpen size={18} /></div>
+                                        <div>
+                                            <h4 className="text-sm font-black tracking-tight truncate max-w-[120px]">{s.name}</h4>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <StatusIndicator status={s.status || 'bon'} />
+                                                <span className={clsx("px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest", levelClasses[s.level])}>{levels[s.level]}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => handleRemoveItem('surahPart', s)} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all z-20">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </motion.div>
+                            ))}
+                            {memorizedHadiths.map((h, i) => {
+                                const status = activeProfile.hadithProgress?.[h.id] || 'non_lu';
+                                return (
+                                    <motion.div
+                                        key={`all-hadith-${h.id}`}
+                                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (memorizations.juzz.length + memorizations.hizbs.length + memorizations.surahParts.length + i) * 0.02 }}
+                                        className="premium-card p-6 flex items-center justify-between border-2 border-border-main/30 group cursor-pointer h-28"
+                                        onClick={() => setSelectedHadith(h)}
+                                    >
+                                        <div className="flex items-center gap-4 relative z-10 flex-1 min-w-0">
+                                            <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600 font-black">{h.id}</div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-[10px] font-bold font-amiri rtl text-right truncate opacity-30 mb-1">{h.arabic}</h4>
+                                                <div className="flex items-center gap-2">
+                                                    <StatusIndicator status={status} />
+                                                    <span className="text-[8px] font-black text-accent-color uppercase tracking-widest">{hadithStatusText[status]}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )
+                            })}
+                        </div>
+                        {memorizations.juzz.length === 0 && memorizations.hizbs.length === 0 && memorizations.surahParts.length === 0 && memorizedHadiths.length === 0 && (
+                            <EmptyState label={t('noMemorizedItemsOfType')} icon={<Activity size={48} />} />
+                        )}
+                    </TabsContent>
                     <TabsContent value="juzz" className="space-y-6 outline-none">
                         {memorizations.juzz.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

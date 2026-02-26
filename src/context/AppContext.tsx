@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useRef, useSyncExternalStore } from 'react';
-import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan } from '../types/types';
+import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan, ToReviewHistoryItem } from '../types/types';
 import { generateReadingPlan, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan, generateHadithReadingPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
@@ -405,11 +405,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
       let toReviewHistory = [...state.progress.history.toReview];
       if (action.payload.status === 'to-review') {
-        const historyItem = {
+        const historyItem: ToReviewHistoryItem = {
           day: action.payload.revisionIndex + 1,
           date: new Date().toISOString(),
           units: newRevisionPlan[action.payload.revisionIndex].units,
-          difficulties: action.payload.difficulties || []
+          difficulties: action.payload.difficulties || [],
+          status: 'to-review'
         };
         toReviewHistory = [historyItem, ...toReviewHistory];
       }

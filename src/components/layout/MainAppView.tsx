@@ -9,6 +9,8 @@ import MemorizationView from '@/components/views/MemorizationView';
 import HistoryView from '@/components/views/HistoryView';
 import SettingsView from '@/components/views/SettingsView';
 import EvaluationView from '@/components/views/EvaluationView';
+import EvaluationPlansView from '@/components/views/EvaluationPlansView';
+import EvaluationPlanFormView from '@/components/views/EvaluationPlanFormView';
 import AchievementsView from '@/components/views/AchievementsView';
 import StatsView from '@/components/views/StatsView';
 import Toast from '@/components/ui/Toast';
@@ -53,6 +55,8 @@ const MainAppView: React.FC = () => {
       case 'revision-plan-view': return <RevisionPlanView />;
       case 'memorization-view': return <MemorizationView />;
       case 'evaluation-view': return <EvaluationView />;
+      case 'evaluation-plans-view': return <EvaluationPlansView />;
+      case 'evaluation-plan-form-view': return <EvaluationPlanFormView />;
       case 'stats-view': return <StatsView />;
       case 'achievements-view': return <AchievementsView />;
       case 'history-view': return <HistoryView />;

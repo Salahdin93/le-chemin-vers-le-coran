@@ -168,7 +168,6 @@ const DashboardView: React.FC = () => {
 
     const revisionItems = currentRevision
         ? currentRevision.units.flatMap(unit => {
-            // Si le texte contient un numéro de Hizb, on récupère les sourates détaillées depuis HIZB_DATA
             const hizbMatch = unit.text.match(/Hizb (\d+)/);
             if (hizbMatch) {
                 const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
@@ -177,7 +176,6 @@ const DashboardView: React.FC = () => {
                     return hizb.surahs;
                 }
             }
-            // Sinon on découpe simplement sur les virgules
             return unit.surahs.split(',').map(s => s.trim()).filter(Boolean);
         })
         : [];
@@ -187,40 +185,25 @@ const DashboardView: React.FC = () => {
             {/* Header Dashboard */}
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-border-main pb-10">
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="flex-1">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 rounded-lg accent-gradient flex items-center justify-center text-white shadow-lg shadow-accent-color/20 rotate-3">
-                            <Sparkles size={16} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Lumière du jour</span>
-                            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 mt-1">
-                                <div className="flex items-center gap-2">
-                                    <Calendar size={14} className="text-text-secondary" />
-                                    <span className="text-sm font-bold text-text-main">
-                                        {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}
-                                    </span>
-                                </div>
-                                <span className="hidden md:block w-px h-4 bg-white/10" />
-                                <div className="flex items-center gap-3">
-                                    <div className="p-3 bg-accent-color/20 rounded-2xl shadow-lg shadow-accent-color/20 animate-bounce-subtle">
-                                        <Sparkles size={20} className="text-accent-color" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Date Hégirienne</span>
-                                        <span className="text-2xl md:text-3xl font-black text-accent-color tracking-tighter drop-shadow-sm">
-                                            {new Intl.DateTimeFormat('fr-u-ca-islamic-uma-nu-latn', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}
-                                        </span>
-                                    </div>
-                                </div>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 bg-accent-color/10 rounded-2xl text-accent-color">
+                                <Sparkles size={28} />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Calendar size={14} className="text-text-secondary" />
+                                <span className="text-sm font-bold text-text-main">
+                                    {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}
+                                </span>
                             </div>
                         </div>
+                        <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gradient mb-4">
+                            {t('dashboard')}
+                        </h1>
+                        <p className="text-text-secondary font-medium text-lg md:text-xl max-w-2xl leading-relaxed">
+                            Bienvenue, <span className="text-text-main font-black underline decoration-accent-color/30 underline-offset-4">{activeProfile.name}</span>. {t('supportMsg2') || 'Votre voyage spirituel continue ici.'}
+                        </p>
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gradient mb-4">
-                        {t('dashboard')}
-                    </h1>
-                    <p className="text-text-secondary font-medium text-lg md:text-xl max-w-2xl leading-relaxed">
-                        Bienvenue, <span className="text-text-main font-black underline decoration-accent-color/30 underline-offset-4">{activeProfile.name}</span>. {t('supportMsg2') || 'Votre voyage spirituel continue ici.'}
-                    </p>
                 </motion.div>
 
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.8 }} className="flex flex-col items-center">
@@ -293,32 +276,6 @@ const DashboardView: React.FC = () => {
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysLeft') || 'Jours restants'}</span>
                                 </div>
                             </div>
-                            {currentRevision && (
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-6 border-t border-white/5">
-                                    {(['revised', 'to-review', 'not_revised'] as const).map(revStat => (
-                                        <Button
-                                            key={revStat}
-                                            variant={currentRevision.status === revStat ? (revStat === 'revised' ? 'success' : revStat === 'to-review' ? 'warning' : 'danger') : 'secondary'}
-                                            className={clsx(
-                                                "h-14 rounded-2xl border-none text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                                                currentRevision.status === revStat
-                                                    ? "shadow-premium scale-105 opacity-100"
-                                                    : "bg-white/5 hover:bg-white/10 opacity-60 hover:opacity-100"
-                                            )}
-                                            onClick={() => handleRevisionStatusUpdate(currentRevision, revStat)}
-                                        >
-                                            {revStat === 'revised' ? t('revised') : revStat === 'to-review' ? t('toReview') : t('not_revised')}
-                                        </Button>
-                                    ))}
-                                    <Button
-                                        variant="accent"
-                                        className="h-14 rounded-2xl bg-blue-500 text-white border-none hover:scale-105 transition-transform text-[10px] font-black uppercase tracking-widest"
-                                        onClick={() => dispatch({ type: 'COMPLETE_REVISION_DAY' } as any)}
-                                    >
-                                        {t('nextDay') || 'Suivant'}
-                                    </Button>
-                                </div>
-                            )}
                         </Card>
                     </motion.div>
                 )}
@@ -428,50 +385,60 @@ const DashboardView: React.FC = () => {
                                                 variant={readingStatus === 'done' ? 'success' : 'secondary'}
                                                 size="lg"
                                                 className={clsx(
-                                                    "h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase whitespace-normal transition-all duration-300 border-2",
+                                                    "h-28 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
                                                     readingStatus === 'done' ? "shadow-premium scale-105 border-success bg-success text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
                                                 )}
                                                 onClick={() => handleStatusChange(currentReading, 'done')}
                                             >
-                                                <div className="flex flex-col items-center">
-                                                    <div className="flex items-center">
-                                                        <CheckCircle2 size={24} className="mr-3" /> {t('goalAchieved') || 'Accompli'}
+                                                <div className="flex flex-col items-center text-center">
+                                                    <div className="flex flex-col items-center mb-1">
+                                                        <CheckCircle2 size={18} className="mb-1" />
+                                                        <span>{t('goalAchieved') || 'Lu'}</span>
                                                     </div>
-                                                    <span className="text-[10px] mt-1 opacity-80">{currentReading.endPage - currentReading.startPage + 1} pages lues</span>
+                                                    <span className="text-[8px] opacity-80 leading-none">{currentReading.endPage - currentReading.startPage + 1} pages lues</span>
                                                 </div>
                                             </Button>
                                             <Button
                                                 variant={readingStatus === 'partial' ? 'warning' : 'secondary'}
                                                 size="lg"
                                                 className={clsx(
-                                                    "h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase whitespace-normal transition-all duration-300 border-2",
+                                                    "h-28 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
                                                     readingStatus === 'partial' ? "shadow-premium scale-105 border-warning bg-warning text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
                                                 )}
                                                 onClick={() => handleStatusChange(currentReading, 'partial')}
                                             >
-                                                <AlertCircle size={24} className="mr-3" /> {t('partial') || 'Partiel'}
+                                                <div className="flex flex-col items-center text-center">
+                                                    <AlertCircle size={18} className="mb-1" />
+                                                    <span>{t('partial') || 'Partiel'}</span>
+                                                </div>
                                             </Button>
                                             <Button
                                                 variant={readingStatus === 'not_read' ? 'danger' : 'secondary'}
                                                 size="lg"
                                                 className={clsx(
-                                                    "h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase whitespace-normal transition-all duration-300 border-2",
+                                                    "h-28 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
                                                     readingStatus === 'not_read' ? "shadow-premium scale-105 border-danger bg-danger text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
                                                 )}
                                                 onClick={() => handleStatusChange(currentReading, 'not_read')}
                                             >
-                                                {t('notReadStatus') || 'Non lu'}
+                                                <div className="flex flex-col items-center text-center">
+                                                    <EyeOff size={18} className="mb-1" />
+                                                    <span>{t('notReadStatus') || 'Non lu'}</span>
+                                                </div>
                                             </Button>
                                             <Button
                                                 variant={readingStatus === 'catchup' ? 'accent' : 'secondary'}
                                                 size="lg"
                                                 className={clsx(
-                                                    "h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase whitespace-normal transition-all duration-300",
-                                                    readingStatus === 'catchup' ? "shadow-2xl shadow-accent-color/40 scale-105 border-transparent" : "bg-white/5 border-white/10 opacity-70"
+                                                    "h-28 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
+                                                    readingStatus === 'catchup' ? "shadow-2xl shadow-accent-color/40 scale-105 border-transparent bg-accent-color text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
                                                 )}
                                                 onClick={() => handleStatusChange(currentReading, 'catchup')}
                                             >
-                                                {t('catchupStatus') || 'Supp.'}
+                                                <div className="flex flex-col items-center text-center">
+                                                    <Sparkles size={18} className="mb-1" />
+                                                    <span>{t('catchupStatus') || 'Supp.'}</span>
+                                                </div>
                                             </Button>
                                         </div>
                                         <Button variant="ghost" size="lg" className="w-full h-16 rounded-2xl text-[10px] font-black uppercase tracking-widest opacity-50 hover:opacity-100 hover:bg-bg-secondary" onClick={handleAdvance}>
@@ -638,7 +605,7 @@ const DashboardView: React.FC = () => {
 
                     <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
                         <div className="text-center lg:text-left space-y-6">
-                            <div className="inline-flex items-center gap-3 px-4 py-2 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-red-500/20 backdrop-blur-md">
+                            <div className={`${missionBadgeBase} inline-flex items-center gap-3 bg-danger text-white`}>
                                 <Play size={12} className="fill-current" /> Auto-évaluation
                             </div>
                             <h2 className="text-4xl md:text-7xl font-black mb-4 tracking-tighter leading-tight">
