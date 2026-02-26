@@ -3,9 +3,10 @@ import { Profile, Settings, AppState } from '../types/types';
 
 /**
  * Service pour gérer la persistance des données avec Supabase.
- * En mode "Local-First" : on lit/écrit localement, et on synchronise avec Supabase.
+ * Utilise les tables : profiles, user_settings
  */
 export const dbService = {
+
     /**
      * Récupère les profils de l'utilisateur connecté.
      */
@@ -14,9 +15,9 @@ export const dbService = {
         if (!user) return [];
 
         const { data, error } = await supabase
-            .from('profils')
+            .from('profiles')
             .select('*')
-            .eq('ID de l\'utilisateur', user.id)
+            .eq('user_id', user.id)
             .order('created_at', { ascending: true });
 
         if (error) {
@@ -27,17 +28,17 @@ export const dbService = {
         return (data || []).map(row => ({
             id: row.id,
             name: row.name,
-            gender: row.gender,
+            gender: row.gender || 'male',
             password: row.password,
-            theme: row.theme,
-            accentColor: row.couleur_accent,
+            theme: row.theme || 'light',
+            accentColor: row.accent_color || '#2E7D32',
             goals: row.goals || {},
-            memorizations: row.memorisations || { surahParts: [], hizbs: [], juzz: [] },
-            hadithProgress: row.hadith_progression || {},
-            hadithHistory: row.hadith_historique || [],
-            evaluationPlans: row.plans_evaluation || [],
+            memorizations: row.memorizations || { surahParts: [], hizbs: [], juzz: [] },
+            hadithProgress: row.hadith_progress || {},
+            hadithHistory: row.hadith_history || [],
+            evaluationPlans: row.evaluation_plans || [],
             difficulties: row.difficulties || [],
-            evaluationHistory: row.historique_evaluation || [],
+            evaluationHistory: row.evaluation_history || [],
             badges: row.badges || [],
             progress: row.progression || null,
             plans: row.plans || null
@@ -53,28 +54,28 @@ export const dbService = {
 
         const profileData = {
             id: profile.id,
-            "ID de l'utilisateur": user.id,
+            user_id: user.id,
             name: profile.name,
-            gender: profile.gender,
-            password: profile.password,
-            theme: profile.theme,
-            couleur_accent: profile.accentColor,
-            goals: profile.goals,
-            memorisations: profile.memorizations,
-            hadith_progression: profile.hadithProgress,
-            hadith_historique: profile.hadithHistory,
-            plans_evaluation: profile.evaluationPlans,
-            difficulties: profile.difficulties,
-            historique_evaluation: profile.evaluationHistory,
-            badges: profile.badges,
-            progression: progress || profile.progress,
-            plans: plans || profile.plans,
+            gender: profile.gender || 'male',
+            password: profile.password || null,
+            theme: profile.theme || 'light',
+            accent_color: profile.accentColor || '#2E7D32',
+            goals: profile.goals || {},
+            memorizations: profile.memorizations || { surahParts: [], hizbs: [], juzz: [] },
+            hadith_progress: profile.hadithProgress || {},
+            hadith_history: profile.hadithHistory || [],
+            evaluation_plans: profile.evaluationPlans || [],
+            difficulties: profile.difficulties || [],
+            evaluation_history: profile.evaluationHistory || [],
+            badges: profile.badges || [],
+            progression: progress !== undefined ? progress : (profile.progress || null),
+            plans: plans !== undefined ? plans : (profile.plans || null),
             updated_at: new Date().toISOString()
         };
 
         const { error } = await supabase
-            .from('profils')
-            .upsert(profileData);
+            .from('profiles')
+            .upsert(profileData, { onConflict: 'id' });
 
         if (error) {
             console.error('Erreur lors de la sauvegarde du profil:', error);
@@ -88,7 +89,7 @@ export const dbService = {
      */
     async deleteProfile(profileId: string): Promise<boolean> {
         const { error } = await supabase
-            .from('profils')
+            .from('profiles')
             .delete()
             .eq('id', profileId);
 
@@ -107,9 +108,9 @@ export const dbService = {
         if (!user) return null;
 
         const { data, error } = await supabase
-            .from('paramètres utilisateur')
+            .from('user_settings')
             .select('*')
-            .eq('ID de l\'utilisateur', user.id)
+            .eq('user_id', user.id)
             .single();
 
         if (error && error.code !== 'PGRST116') { // PGRST116 = No rows found
@@ -121,11 +122,11 @@ export const dbService = {
 
         return {
             settings: {
-                lang: data.langue,
-                enableNotifications: data.activer_notifications,
-                notificationTime: data.heure_de_notification,
+                lang: data.lang as 'fr' | 'en' | 'ar',
+                enableNotifications: data.enable_notifications,
+                notificationTime: data.notification_time,
             },
-            activeProfileId: data.id_profil_actuel
+            activeProfileId: data.active_profile_id || null
         };
     },
 
@@ -137,17 +138,17 @@ export const dbService = {
         if (!user) return false;
 
         const settingsData = {
-            "ID de l'utilisateur": user.id,
-            langue: settings.lang,
-            activer_notifications: settings.enableNotifications,
-            heure_de_notification: settings.notificationTime,
-            id_profil_actuel: activeProfileId,
+            user_id: user.id,
+            lang: settings.lang,
+            enable_notifications: settings.enableNotifications ?? true,
+            notification_time: settings.notificationTime || '09:00',
+            active_profile_id: activeProfileId || null,
             updated_at: new Date().toISOString()
         };
 
         const { error } = await supabase
-            .from('paramètres utilisateur')
-            .upsert(settingsData);
+            .from('user_settings')
+            .upsert(settingsData, { onConflict: 'user_id' });
 
         if (error) {
             console.error('Erreur lors de la sauvegarde des paramètres:', error);
@@ -157,19 +158,22 @@ export const dbService = {
     },
 
     /**
-     * Synchronise tout l'état de l'application (pour un utilisateur qui switch d'appareil).
+     * Synchronise tout l'état de l'application
      */
     async syncFullState(state: AppState): Promise<void> {
-        // On sauvegarde chaque profil
-        for (const profile of state.profiles) {
-            if (profile.id === state.activeProfileId) {
-                // Pour le profil actif, on utilise l'état global actuel (progression, plans)
-                await this.saveProfile(profile, state.progress, state.plans);
-            } else {
-                await this.saveProfile(profile);
-            }
+        try {
+            const profilePromises = state.profiles.map(profile => {
+                if (profile.id === state.activeProfileId) {
+                    // Pour le profil actif, on utilise l'état global (progression, plans)
+                    return this.saveProfile(profile, state.progress, state.plans);
+                } else {
+                    return this.saveProfile(profile);
+                }
+            });
+            await Promise.all(profilePromises);
+            await this.saveSettings(state.settings, state.activeProfileId);
+        } catch (error) {
+            console.error('Erreur lors de la synchronisation complète:', error);
         }
-        // On sauvegarde les paramètres
-        await this.saveSettings(state.settings, state.activeProfileId);
     }
 };

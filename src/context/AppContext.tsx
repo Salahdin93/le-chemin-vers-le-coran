@@ -146,9 +146,31 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'FINISH_WIZARD': {
       const { wizardData, profileId, startDate } = action.payload as { wizardData: Partial<WizardData>; mode: WizardMode; profileId: string; startDate: string };
       const tFn = (key: string) => (TRANSLATIONS[state.settings.lang] as Record<string, string>)[key] || key;
-      const newProgress = { ...defaultState.progress, startDate };
-      const readingPlan = wizardData.wantsReading ? generateReadingPlan({ duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! }, startDate) : null;
-      const revisionPlan = wizardData.wantsRevision ? generateRevisionPlan({ selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined }, startDate, 1, tFn, { surahParts: [], hizbs: [], juzz: [] }) : null;
+      const wizardMode = (action.payload as any).mode as WizardMode;
+      const wizardFlow = state.wizard.type; // 'full' | 'reading' | 'revision'
+
+      // Calculer pagesPerDay avant de générer le plan
+      const totalPages = 604;
+      const calculatedPagesPerDay = wizardData.duration ? Math.ceil((totalPages * (wizardData.khatmas || 1)) / wizardData.duration) : wizardData.pagesPerDay || 1;
+
+      const readingPlan = wizardData.wantsReading ? generateReadingPlan({
+        duration: wizardData.duration!,
+        khatmas: wizardData.khatmas!,
+        kahfOption: wizardData.kahfOption!,
+        kahfPages: wizardData.kahfPages!,
+        pagesPerDay: calculatedPagesPerDay
+      }, startDate) : null;
+
+      const revisionPlan = wizardData.wantsRevision ? generateRevisionPlan({
+        selection: wizardData.revisionSelection!,
+        revisionMode: wizardData.revisionMode!,
+        unitsPerDay: wizardData.unitsPerDay!,
+        revisionDuration: wizardData.revisionDuration!,
+        frequency: wizardData.revisionFrequency!,
+        boosterSurahs: wizardData.boosterSurahs!,
+        boosterSurahFreq: wizardData.boosterSurahFreq!,
+        prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined
+      }, startDate, 1, tFn, activeProfile?.memorizations || { surahParts: [], hizbs: [], juzz: [] }) : null;
 
       let hadithPlan = null;
       if (wizardData.wantsHadith) {
@@ -168,6 +190,62 @@ function appReducer(state: AppState, action: AppAction): AppState {
         }
       }
 
+      // Mode modification d'un objectif existant (reading ou revision)
+      if ((wizardFlow === 'reading' || wizardFlow === 'revision') && activeProfile) {
+        const newReadingGoal = wizardData.wantsReading ? {
+          duration: wizardData.duration!,
+          khatmas: wizardData.khatmas!,
+          kahfOption: wizardData.kahfOption!,
+          kahfPages: wizardData.kahfPages!,
+          pagesPerDay: calculatedPagesPerDay
+        } : activeProfile.goals.reading;
+
+        const newRevisionGoal = wizardData.wantsRevision ? {
+          selection: wizardData.revisionSelection!,
+          revisionMode: wizardData.revisionMode!,
+          unitsPerDay: wizardData.unitsPerDay!,
+          revisionDuration: wizardData.revisionDuration!,
+          frequency: wizardData.revisionFrequency!,
+          boosterSurahs: wizardData.boosterSurahs!,
+          boosterSurahFreq: wizardData.boosterSurahFreq!,
+          prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined
+        } : activeProfile.goals.revision;
+
+        const updatedProfile: Profile = {
+          ...activeProfile,
+          goals: {
+            ...activeProfile.goals,
+            reading: newReadingGoal,
+            revision: newRevisionGoal,
+          }
+        };
+
+        const newProgress = wizardMode === 'new'
+          ? { ...defaultState.progress, startDate }
+          : state.progress; // Conserver la progression en mode reprise
+
+        const newPlans = {
+          reading: wizardData.wantsReading ? readingPlan : (wizardFlow === 'revision' ? state.plans.reading : null),
+          originalReading: wizardData.wantsReading ? readingPlan : (wizardFlow === 'revision' ? state.plans.originalReading : null),
+          revision: wizardData.wantsRevision ? revisionPlan : (wizardFlow === 'reading' ? state.plans.revision : null),
+          hadithRevision: state.plans.hadithRevision
+        };
+
+        return {
+          ...state,
+          profiles: state.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p),
+          progress: newProgress,
+          plans: newPlans,
+          appScreen: 'main',
+          activeView: wizardFlow === 'reading' ? 'reading-plan-view' : 'revision-plan-view',
+          wizard: { ...state.wizard, isOpen: false },
+          isLoading: false,
+          toast: { message: tFn('saved') || 'Objectif mis à jour avec succès', visible: true }
+        };
+      }
+
+      // Mode création d'un nouveau profil complet (flow = 'full')
+      const newProgress = { ...defaultState.progress, startDate };
       const newProfile: Profile = {
         id: profileId,
         name: wizardData.name || 'Utilisateur',
@@ -176,8 +254,23 @@ function appReducer(state: AppState, action: AppAction): AppState {
         theme: wizardData.theme || 'light',
         accentColor: wizardData.accentColor || '#2E7D32',
         goals: {
-          reading: wizardData.wantsReading ? { duration: wizardData.duration!, khatmas: wizardData.khatmas!, kahfOption: wizardData.kahfOption!, kahfPages: wizardData.kahfPages!, pagesPerDay: wizardData.pagesPerDay! } : undefined,
-          revision: wizardData.wantsRevision ? { selection: wizardData.revisionSelection!, revisionMode: wizardData.revisionMode!, unitsPerDay: wizardData.unitsPerDay!, revisionDuration: wizardData.revisionDuration!, frequency: wizardData.revisionFrequency!, boosterSurahs: wizardData.boosterSurahs!, boosterSurahFreq: wizardData.boosterSurahFreq!, prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined } : undefined,
+          reading: wizardData.wantsReading ? {
+            duration: wizardData.duration!,
+            khatmas: wizardData.khatmas!,
+            kahfOption: wizardData.kahfOption!,
+            kahfPages: wizardData.kahfPages!,
+            pagesPerDay: calculatedPagesPerDay
+          } : undefined,
+          revision: wizardData.wantsRevision ? {
+            selection: wizardData.revisionSelection!,
+            revisionMode: wizardData.revisionMode!,
+            unitsPerDay: wizardData.unitsPerDay!,
+            revisionDuration: wizardData.revisionDuration!,
+            frequency: wizardData.revisionFrequency!,
+            boosterSurahs: wizardData.boosterSurahs!,
+            boosterSurahFreq: wizardData.boosterSurahFreq!,
+            prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined
+          } : undefined,
           hadithRevision: (wizardData.wantsHadith && wizardData.hadithType === 'revision') ? {
             selectedHadiths: wizardData.hadithSelection || [],
             hadithsPerSession: wizardData.hadithPerDay || 1,
@@ -200,7 +293,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         profiles: [...state.profiles, newProfile],
         activeProfileId: newProfile.id,
         progress: newProgress,
-        plans: { reading: readingPlan, originalReading: readingPlan, revision: revisionPlan, hadithRevision: null },
+        plans: { reading: readingPlan, originalReading: readingPlan, revision: revisionPlan, hadithRevision: hadithPlan },
         appScreen: 'main',
         activeView: 'dashboard-view',
         wizard: { ...state.wizard, isOpen: false },
@@ -241,6 +334,27 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'COMPLETE_HADITH_REVISION_GOAL': {
       const newHistory = [...state.progress.history.hadithRevisionHistory, action.payload.goal];
       return { ...state, progress: { ...state.progress, history: { ...state.progress.history, hadithRevisionHistory: newHistory, }, }, };
+    }
+    case 'UNLOCK_BADGE': {
+      if (!activeProfile) return state;
+      const badgeId = action.payload as BadgeId;
+      const alreadyUnlocked = activeProfile.badges?.find(b => b.id === badgeId && b.unlockedOn !== null);
+      if (alreadyUnlocked) return state;
+      const updatedBadges = (activeProfile.badges || []).map(b =>
+        b.id === badgeId ? { ...b, unlockedOn: new Date().toISOString() } : b
+      );
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, badges: updatedBadges } : p) };
+    }
+    case 'UPDATE_HADITH_PROGRESS': {
+      if (!activeProfile) return state;
+      const { hadithId, status, date } = action.payload as { hadithId: number; status: HadithMemorizationStatus; date: string };
+      const newHistoryEntry: HadithHistoryEntry = { date, hadithId, action: status };
+      const newHadithHistory = [newHistoryEntry, ...(activeProfile.hadithHistory || [])];
+      const newHadithProgress = { ...activeProfile.hadithProgress, [hadithId]: status };
+      const updatedProfile = { ...activeProfile, hadithProgress: newHadithProgress, hadithHistory: newHadithHistory };
+      const newState = { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p) };
+      const badge = checkHadithMilestones(newState);
+      return unlockBadge(newState, badge);
     }
     case 'LOGOUT': {
       const updatedProfiles = state.profiles.map(p =>
@@ -462,34 +576,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error("Failed to save state to localStorage", error);
     }
 
-    // 2. Gestion de la synchronisation Supabase
-    const handleSync = async (isImmediate = false) => {
+    // 2. Synchronisation Supabase avec debounce adaptatif
+    // Délai court (500ms) si nouveau profil ajouté, sinon 3s
+    // Toujours synchroniser avec debounce (3 secondes)
+    // La synchronisation immédiate à l'ajout de profil est gérée par le délai
+    const delay = state.profiles.length !== prevProfilesCount.current ? 500 : 3000;
+    prevProfilesCount.current = state.profiles.length;
+    const timeoutId = setTimeout(async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        if (isImmediate) {
-          console.log('🚀 Immediate Sync (Profile Change)...');
-          await dbService.syncFullState(state);
-        } else {
-          // Debounced sync handled by setTimeout below
-        }
+        console.log('☁️ Syncing to Supabase...');
+        await dbService.syncFullState(state);
       }
-    };
-
-    // Si le nombre de profils a changé, on synchronise immédiatement
-    if (state.profiles.length > prevProfilesCount.current) {
-      handleSync(true);
-      prevProfilesCount.current = state.profiles.length;
-    } else {
-      // Sinon, on utilise le debounce de 3 secondes pour les autres changements
-      const timeoutId = setTimeout(async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          console.log('☁️ Syncing to Supabase (optimized)...');
-          await dbService.syncFullState(state);
-        }
-      }, 3000);
-      return () => clearTimeout(timeoutId);
-    }
+    }, delay);
+    return () => clearTimeout(timeoutId);
   }, [state.profiles, state.settings, state.progress, state.plans, state.activeProfileId]);
 
   useEffect(() => {

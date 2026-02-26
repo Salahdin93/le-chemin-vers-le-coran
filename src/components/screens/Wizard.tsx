@@ -109,9 +109,12 @@ const Wizard: FC = () => {
 
     const handleFinish = () => {
         if (!isStepValid) return;
-        const profileId = generateUUID();
         const startDate = new Date().toISOString().split('T')[0];
-        dispatch({ type: 'FINISH_WIZARD', payload: { wizardData: formData, mode, profileId, startDate } });
+        // En mode modification (reading/revision), on réutilise l'id du profil actif
+        const profileId = (flow === 'reading' || flow === 'revision')
+            ? (activeProfile?.id || generateUUID())
+            : generateUUID();
+        dispatch({ type: 'FINISH_WIZARD', payload: { wizardData: { ...formData, wantsReading, wantsRevision }, mode, profileId, startDate } });
     };
 
     const CurrentStepComponent = activeSteps[currentStepIndex]?.component;

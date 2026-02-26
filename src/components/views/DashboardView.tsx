@@ -338,7 +338,7 @@ const DashboardView: React.FC = () => {
                                                         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                                                         className="mt-6 p-6 bg-white/5 rounded-[2rem] border border-white/5 text-sm md:text-base text-white/70 max-w-lg italic leading-relaxed backdrop-blur-md"
                                                     >
-                                                        "{state.settings.lang === 'ar' ? null : (hadithDuJour.translations as any)[state.settings.lang] || hadithDuJour.translations.en}"
+                                                        {state.settings.lang === 'ar' ? null : (hadithDuJour.translations as any)[state.settings.lang] || hadithDuJour.translations.en}
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
@@ -426,7 +426,7 @@ const DashboardView: React.FC = () => {
                             </div>
 
                             <div className="p-8 md:p-10 glass-card border-none bg-accent-color/5 rounded-[3rem] italic text-lg md:text-xl leading-relaxed text-text-main/80 font-medium">
-                                "{state.settings.lang === 'ar' ? null : (hadithModalContent.translations as any)[state.settings.lang] || hadithModalContent.translations.en}"
+                                {state.settings.lang === 'ar' ? null : (hadithModalContent.translations as any)[state.settings.lang] || hadithModalContent.translations.en}
                             </div>
 
                             <Button variant="accent" size="lg" className="w-full h-20 rounded-3xl text-sm font-black uppercase tracking-widest" onClick={() => setHadithModalContent(null)}>{t('close') || 'Quitter la lecture'}</Button>
