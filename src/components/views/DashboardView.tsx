@@ -3,6 +3,7 @@ import Card from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
 import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLogic';
+import { HIZB_DATA } from '@/constants/quranData';
 import { checkReadingProgress } from '@/services/progressLogic';
 import EndOfGoalModal from '@/components/ui/EndOfGoalModal';
 import Modal from '@/components/ui/Modal';
@@ -23,6 +24,9 @@ const cardVariants: Variants = {
         transition: { delay: i * 0.1, duration: 0.6, ease: [0.23, 1, 0.32, 1] }
     })
 };
+
+const missionBadgeBase =
+    'px-6 py-2.5 text-xs font-black uppercase tracking-[0.25em] rounded-full shadow-lg';
 
 const ProgressRing: React.FC<{ percent: number, color: string, icon: React.ReactNode, label: string }> = ({ percent, color, icon, label }) => (
     <div className="flex flex-col items-center group">
@@ -151,6 +155,22 @@ const DashboardView: React.FC = () => {
     const currentReading = isReadingActive ? readingPlan?.find(d => d.day === state.progress.currentReadingDay) : null;
     const currentRevision = isRevisionActive ? revisionPlan?.[state.progress.currentRevisionIndex] : null;
 
+    const revisionItems = currentRevision
+        ? currentRevision.units.flatMap(unit => {
+            // Si le texte contient un numéro de Hizb, on récupère les sourates détaillées depuis HIZB_DATA
+            const hizbMatch = unit.text.match(/Hizb (\d+)/);
+            if (hizbMatch) {
+                const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
+                const hizb = HIZB_DATA[hizbIndex];
+                if (hizb && Array.isArray(hizb.surahs)) {
+                    return hizb.surahs;
+                }
+            }
+            // Sinon on découpe simplement sur les virgules
+            return unit.surahs.split(',').map(s => s.trim()).filter(Boolean);
+        })
+        : [];
+
     return (
         <div className="space-y-12 md:space-y-16 pb-32 pt-2 px-2 md:px-0">
             {/* Header Dashboard */}
@@ -260,15 +280,32 @@ const DashboardView: React.FC = () => {
 
                                 <div className="p-8 md:p-12 space-y-10 relative z-10">
                                     <div className="flex items-center justify-between">
-                                        <div className="px-5 py-2 bg-accent-color text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg shadow-accent-color/20">
+                                        <div className={`${missionBadgeBase} bg-emerald-500 text-white shadow-emerald-500/20`}>
                                             {t('missionReading')}
                                         </div>
                                         <div className="text-[10px] font-black uppercase tracking-widest opacity-30">Jour {currentReading.day}</div>
                                     </div>
 
                                     <div className="p-10 md:p-14 bg-slate-900 rounded-[3.5rem] border border-white/5 text-center shadow-inner group/target hover:bg-slate-800 transition-colors duration-500">
-                                        <h4 className="text-4xl md:text-5xl font-black mb-6 text-white tracking-tight drop-shadow-md">{getHizbDetailsFromPage(currentReading.startPage).surahName}</h4>
-                                        <div className="flex items-center justify-center gap-6">
+                                        {(() => {
+                                            const { surahName, hizbNum } = getHizbDetailsFromPage(currentReading.startPage);
+                                            const hizbInfo = HIZB_DATA[hizbNum - 1];
+                                            const details = hizbInfo?.details || '';
+
+                                            return (
+                                                <>
+                                                    <h4 className="text-4xl md:text-5xl font-black mb-3 text-white tracking-tight drop-shadow-md">
+                                                        {surahName}
+                                                    </h4>
+                                                    {details && (
+                                                        <p className="text-xs md:text-sm font-semibold text-text-secondary mb-6">
+                                                            {details}
+                                                        </p>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+                                        <div className="flex items-center justify-center gap-6 mt-4">
                                             <div className="flex flex-col">
                                                 <span className="text-[8px] font-black uppercase tracking-widest opacity-40 mb-1">{t('fromPage') || 'DEPUIS'}</span>
                                                 <span className="text-2xl font-black text-accent-color">{currentReading.startPage}</span>
@@ -283,12 +320,38 @@ const DashboardView: React.FC = () => {
 
                                     <div className="space-y-6">
                                         <Timer onStop={(s) => handleStatusChange(currentReading, 'done', false, s)} />
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <Button variant="accent" size="lg" className="h-20 rounded-3xl text-sm font-black uppercase tracking-widest shadow-xl shadow-accent-color/20" onClick={() => handleStatusChange(currentReading, 'done')}>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <Button
+                                                variant="accent"
+                                                size="lg"
+                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase shadow-xl shadow-accent-color/20 text-white whitespace-normal"
+                                                onClick={() => handleStatusChange(currentReading, 'done')}
+                                            >
                                                 <CheckCircle2 size={24} className="mr-3" /> {t('goalAchieved') || 'Accompli'}
                                             </Button>
-                                            <Button variant="secondary" size="lg" className="h-20 rounded-3xl text-sm font-black uppercase tracking-widest border-border-main/50" onClick={() => handleStatusChange(currentReading, 'partial')}>
+                                            <Button
+                                                variant="secondary"
+                                                size="lg"
+                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase border-border-main/50 text-white whitespace-normal"
+                                                onClick={() => handleStatusChange(currentReading, 'partial')}
+                                            >
                                                 <AlertCircle size={24} className="mr-3" /> {t('partial') || 'Partiel'}
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="lg"
+                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase border-border-main/50 text-white"
+                                                onClick={() => handleStatusChange(currentReading, 'not_read')}
+                                            >
+                                                {t('notReadStatus') || 'Non lu'}
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="lg"
+                                                className="h-24 rounded-3xl px-10 md:px-12 text-base md:text-lg font-black uppercase border-border-main/50 text-white whitespace-normal"
+                                                onClick={() => handleStatusChange(currentReading, 'catchup')}
+                                            >
+                                                {t('catchupStatus') || 'Pages supplémentaires'}
                                             </Button>
                                         </div>
                                         <Button variant="ghost" size="lg" className="w-full h-16 rounded-2xl text-[10px] font-black uppercase tracking-widest opacity-50 hover:opacity-100 hover:bg-bg-secondary" onClick={handleAdvance}>
@@ -307,11 +370,11 @@ const DashboardView: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-tr from-warning/5 to-transparent pointer-events-none" />
 
                         <div className="p-6 md:p-10 flex flex-col h-full space-y-8 relative z-10">
-                            <div className="flex items-center justify-between">
-                                <div className="px-5 py-2 bg-warning text-slate-900 text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg shadow-warning/20">
+                                <div className="flex items-center justify-between">
+                            <div className={`${missionBadgeBase} bg-warning text-slate-900 shadow-warning/20`}>
                                     {t('missionHadith')}
                                 </div>
-                                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">{hadithMissionTitle}</div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-white/80">{hadithMissionTitle}</div>
                             </div>
 
                             {hadithDuJour ? (
@@ -364,6 +427,76 @@ const DashboardView: React.FC = () => {
                         </div>
                     </Card>
                 </motion.div>
+
+                {/* Mission Revision */}
+                {isRevisionActive && currentRevision && (
+                    <motion.div
+                        custom={5}
+                        initial="hidden"
+                        animate="visible"
+                        variants={cardVariants}
+                        className="relative group h-full xl:col-span-2"
+                    >
+                        <Card className="h-full relative border-none shadow-2xl overflow-hidden rounded-[3rem] group transition-all hover:scale-[1.01] duration-500 bg-slate-900 text-white">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none" />
+
+                            <div className="p-8 md:p-12 space-y-10 relative z-10">
+                                <div className="flex items-center justify-between">
+                                    <div className={`${missionBadgeBase} bg-blue-500 text-white shadow-blue-500/20`}>
+                                        {t('missionRevision')}
+                                    </div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                                        {t('day')} {state.progress.currentRevisionIndex + 1}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {currentRevision.units.map((unit, idx) => (
+                                        <div key={idx} className="p-4 rounded-2xl bg-bg-main/60 border border-border-main/40 text-left">
+                                            <div className="text-sm font-black">{unit.text}</div>
+                                            <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                                                {unit.surahs}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/5">
+                                    <Button
+                                        variant="accent"
+                                        size="lg"
+                                        className="h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                                        onClick={() => dispatch({
+                                            type: 'UPDATE_REVISION_STATUS',
+                                            payload: { revisionIndex: state.progress.currentRevisionIndex, status: 'revised' }
+                                        })}
+                                    >
+                                        {t('revised')}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="lg"
+                                        className="h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                                        onClick={() => dispatch({
+                                            type: 'UPDATE_REVISION_STATUS',
+                                            payload: { revisionIndex: state.progress.currentRevisionIndex, status: 'not_revised' }
+                                        })}
+                                    >
+                                        {t('not_revised')}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="lg"
+                                        className="h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                                        onClick={() => setIsReadjustmentModalOpen(true)}
+                                    >
+                                        {t('toReview')}
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+                    </motion.div>
+                )}
             </section>
 
             {/* Quick Evaluation CTA */}
@@ -405,7 +538,23 @@ const DashboardView: React.FC = () => {
             <EndOfGoalModal isOpen={isEndOfGoalModalOpen} onClose={() => setIsEndOfGoalModalOpen(false)} />
             <InputModal isOpen={inputModalState.isOpen} onClose={() => setInputModalState({ ...inputModalState, isOpen: false })} onSubmit={inputModalState.onSubmit} title={inputModalState.title} label={inputModalState.label} confirmText={t('validate')} cancelText={t('cancel')} />
             {isReadjustmentModalOpen && currentRevision && (
-                <ReadjustmentModal isOpen={isReadjustmentModalOpen} onClose={() => setIsReadjustmentModalOpen(false)} onConfirm={() => setIsReadjustmentModalOpen(false)} title={t('toReview')} items={currentRevision.units.map(u => u.surahs).join(', ').split(', ')} />
+                <ReadjustmentModal
+                    isOpen={isReadjustmentModalOpen}
+                    onClose={() => setIsReadjustmentModalOpen(false)}
+                    onConfirm={(selectedItems) => {
+                        dispatch({
+                            type: 'UPDATE_REVISION_STATUS',
+                            payload: {
+                                revisionIndex: state.progress.currentRevisionIndex,
+                                status: 'to-review',
+                                difficulties: selectedItems,
+                            },
+                        });
+                        setIsReadjustmentModalOpen(false);
+                    }}
+                    title={t('toReview')}
+                    items={revisionItems}
+                />
             )}
 
             <AnimatePresence>

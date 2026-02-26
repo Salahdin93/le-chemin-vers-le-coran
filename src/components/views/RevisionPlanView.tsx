@@ -6,6 +6,8 @@ import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid } from 'lucide-react';
+import ReadadjustmentModal from '@/components/ui/ReadadjustmentModal';
+import { HIZB_DATA } from '@/constants/quranData';
 
 const cardVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -23,6 +25,7 @@ const cardVariants = {
 const RevisionPlanView: React.FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
     const [filter, setFilter] = useState<RevisionStatus | 'all'>('all');
+    const [reviewModalDay, setReviewModalDay] = useState<RevisionPlanDay | null>(null);
 
     const revisionPlan = state.plans.revision;
 
@@ -30,22 +33,29 @@ const RevisionPlanView: React.FC = () => {
         if (!activeProfile || !revisionPlan) return [];
         const currentDay = revisionPlan[state.progress.currentRevisionIndex];
         if (!currentDay) return [];
-        const currentHizbNums = currentDay.units.map(u => {
-            const m = u.text.match(/Hizb (\d+)/);
-            return m ? parseInt(m[1]) : null;
-        }).filter(Boolean);
+        const currentHizbNums = currentDay.units
+            .map(u => {
+                const m = u.text.match(/Hizb (\d+)/);
+                return m ? parseInt(m[1], 10) : null;
+            })
+            .filter(Boolean) as number[];
 
-        return (activeProfile.difficulties || []).filter(d => d.hizbNum && currentHizbNums.includes(d.hizbNum as number)).map(d => d.surahName);
+        return (activeProfile.difficulties || [])
+            .filter(d => d.hizbNum && currentHizbNums.includes(d.hizbNum as number))
+            .map(d => d.surahName);
     }, [activeProfile?.difficulties, revisionPlan, state.progress.currentRevisionIndex]);
 
     const pastRevisionsCount = state.progress.currentRevisionIndex;
     const totalDays = revisionPlan?.length || 0;
     const progressPercent = totalDays > 0 ? Math.round((pastRevisionsCount / totalDays) * 100) : 0;
 
-    const handleStatusUpdate = (day: RevisionPlanDay, status: RevisionStatus) => {
+    const handleStatusUpdate = (day: RevisionPlanDay, status: RevisionStatus, difficulties?: string[]) => {
         const hizbNumMatch = day.units[0]?.text.match(/Hizb (\d+)/);
-        const hizbNum = hizbNumMatch ? parseInt(hizbNumMatch[1]) : undefined;
-        dispatch({ type: 'UPDATE_REVISION_STATUS', payload: { revisionIndex: state.plans.revision!.indexOf(day), status, hizbNum } });
+        const hizbNum = hizbNumMatch ? parseInt(hizbNumMatch[1], 10) : undefined;
+        dispatch({
+            type: 'UPDATE_REVISION_STATUS',
+            payload: { revisionIndex: state.plans.revision!.indexOf(day), status, hizbNum, difficulties }
+        });
         dispatch({ type: 'SET_TOAST', payload: t('saved') });
     };
 
@@ -57,9 +67,17 @@ const RevisionPlanView: React.FC = () => {
                 </div>
                 <div className="max-w-md">
                     <h3 className="text-3xl font-black mb-3 text-gradient">{t('noGoalsYet')}</h3>
-                    <p className="text-text-secondary font-medium leading-relaxed">{t('revisionEmptySubtitle') || 'Vous n\'avez pas encore défini d\'objectif de révision pour fortifier votre mémoire.'}</p>
+                    <p className="text-text-secondary font-medium leading-relaxed">
+                        {t('revisionEmptySubtitle') ||
+                            "Vous n'avez pas encore défini d'objectif de révision pour fortifier votre mémoire."}
+                    </p>
                 </div>
-                <Button variant="accent" size="lg" className="rounded-2xl px-10 h-14 font-black shadow-xl shadow-accent-color/20" onClick={() => dispatch({ type: 'START_WIZARD', payload: { type: 'revision', mode: 'new' } })}>
+                <Button
+                    variant="accent"
+                    size="lg"
+                    className="rounded-2xl px-10 h-14 font-black shadow-xl shadow-accent-color/20"
+                    onClick={() => dispatch({ type: 'START_WIZARD', payload: { type: 'revision', mode: 'new' } })}
+                >
                     {t('newMemorizationGoal')}
                 </Button>
             </Card>
@@ -78,9 +96,12 @@ const RevisionPlanView: React.FC = () => {
                             <Brain size={32} />
                         </div>
                         <div>
-                            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gradient">{t('revisionTitle')}</h1>
+                            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gradient">
+                                {t('revisionTitle')}
+                            </h1>
                             <p className="text-text-secondary font-medium mt-1 text-sm md:text-base">
-                                {t('revisionSubtitle') || 'Entretenez vos acquis et fortifiez votre mémoire grâce à une révision structurée.'}
+                                {t('revisionSubtitle') ||
+                                    'Entretenez vos acquis et fortifiez votre mémoire grâce à une révision structurée.'}
                             </p>
                         </div>
                     </div>
@@ -92,14 +113,20 @@ const RevisionPlanView: React.FC = () => {
                             <LayoutGrid size={80} />
                         </div>
                         <span className="text-4xl font-black block text-accent-color mb-2">{progressPercent}%</span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t('totalProgress')}</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                            {t('totalProgress')}
+                        </span>
                     </div>
                     <div className="p-8 premium-card border-none bg-bg-secondary/40 flex-1 xl:min-w-[200px] shadow-xl relative overflow-hidden group">
                         <div className="absolute -right-10 -bottom-10 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-transform duration-700">
                             <CheckCircle2 size={80} />
                         </div>
-                        <span className="text-4xl font-black block text-text-main mb-2">{pastRevisionsCount} <span className="text-lg opacity-20">/ {totalDays}</span></span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary">{t('daysCompleted')}</span>
+                        <span className="text-4xl font-black block text-text-main mb-2">
+                            {pastRevisionsCount} <span className="text-lg opacity-20">/ {totalDays}</span>
+                        </span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary">
+                            {t('daysCompleted')}
+                        </span>
                     </div>
                 </div>
             </header>
@@ -112,10 +139,10 @@ const RevisionPlanView: React.FC = () => {
                             key={f}
                             onClick={() => setFilter(f)}
                             className={clsx(
-                                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
                                 filter === f
-                                    ? "bg-accent-color text-white shadow-lg shadow-accent-color/20"
-                                    : "text-text-main/40 hover:text-text-main hover:bg-bg-main"
+                                    ? 'bg-accent-color text-white shadow-lg shadow-accent-color/20'
+                                    : 'text-text-main/40 hover:text-text-main hover:bg-bg-main'
                             )}
                         >
                             {t(f === 'all' ? 'showAll' : f)}
@@ -130,7 +157,14 @@ const RevisionPlanView: React.FC = () => {
                     {filteredPlan.map((day, i) => {
                         const dayIndex = revisionPlan.indexOf(day);
                         const isCurrent = dayIndex === state.progress.currentRevisionIndex;
-                        const statusColor = day.status === 'revised' ? 'text-success' : day.status === 'to-review' ? 'text-warning' : day.status === 'not_revised' ? 'text-danger' : 'text-text-main/20';
+                        const statusColor =
+                            day.status === 'revised'
+                                ? 'text-success'
+                                : day.status === 'to-review'
+                                ? 'text-warning'
+                                : day.status === 'not_revised'
+                                ? 'text-danger'
+                                : 'text-text-main/20';
 
                         return (
                             <motion.div
@@ -142,40 +176,65 @@ const RevisionPlanView: React.FC = () => {
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 variants={cardVariants}
                             >
-                                <div className={clsx(
-                                    "premium-card h-full p-8 flex flex-col gap-8 border-2 transition-all relative overflow-hidden group",
-                                    isCurrent ? "border-accent-color ring-8 ring-accent-color/5 shadow-premium" : "border-border-main/50 bg-bg-secondary/40",
-                                    day.status === 'revised' && !isCurrent && "opacity-60 grayscale-[0.5] border-success/10"
-                                )}>
+                                <div
+                                    className={clsx(
+                                        'premium-card h-full p-8 flex flex-col gap-8 border-2 transition-all relative overflow-hidden group',
+                                        isCurrent
+                                            ? 'border-accent-color ring-8 ring-accent-color/5 shadow-premium'
+                                            : 'border-border-main/50 bg-bg-secondary/40',
+                                        day.status === 'revised' &&
+                                            !isCurrent &&
+                                            'opacity-60 grayscale-[0.5] border-success/10'
+                                    )}
+                                >
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color mb-2 block">
                                                 {t('day')} {dayIndex + 1}
                                             </span>
-                                            <h4 className="text-2xl font-black tracking-tight">{day.units.map(u => u.text).join(' + ')}</h4>
+                                            <h4 className="text-2xl font-black tracking-tight">
+                                                {day.units.map(u => u.text).join(' + ')}
+                                            </h4>
                                         </div>
-                                        <div className={clsx(
-                                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
-                                            day.status === 'revised' ? "bg-success text-white shadow-lg shadow-success/20" :
-                                                day.status === 'to-review' ? "bg-warning text-white shadow-lg shadow-warning/20" :
-                                                    "bg-bg-main border border-border-main/50",
-                                            statusColor
-                                        )}>
-                                            {day.status === 'revised' ? <CheckCircle2 size={24} /> :
-                                                day.status === 'to-review' ? <Clock size={24} /> :
-                                                    isCurrent ? <Circle size={24} className="animate-pulse" /> : <Clock size={20} />}
+                                        <div
+                                            className={clsx(
+                                                'w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500',
+                                                day.status === 'revised'
+                                                    ? 'bg-success text-white shadow-lg shadow-success/20'
+                                                    : day.status === 'to-review'
+                                                    ? 'bg-warning text-white shadow-lg shadow-warning/20'
+                                                    : 'bg-bg-main border border-border-main/50',
+                                                statusColor
+                                            )}
+                                        >
+                                            {day.status === 'revised' ? (
+                                                <CheckCircle2 size={24} />
+                                            ) : day.status === 'to-review' ? (
+                                                <Clock size={24} />
+                                            ) : isCurrent ? (
+                                                <Circle size={24} className="animate-pulse" />
+                                            ) : (
+                                                <Clock size={20} />
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="flex-1 space-y-3">
                                         {day.units.map((unit, j) => (
-                                            <div key={j} className="flex items-center gap-4 p-4 rounded-2xl bg-bg-main/50 border border-border-main/30 group-hover:bg-bg-main transition-colors">
+                                            <div
+                                                key={j}
+                                                className="flex items-center gap-4 p-4 rounded-2xl bg-bg-main/50 border border-border-main/30 group-hover:bg-bg-main transition-colors"
+                                            >
                                                 <div className="w-10 h-10 rounded-xl bg-accent-color/10 flex items-center justify-center text-accent-color font-black text-xs">
                                                     {j + 1}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-base font-black tracking-tight">{unit.text}</span>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">{unit.surahs}</span>
+                                                    <span className="text-base font-black tracking-tight">
+                                                        {unit.text}
+                                                    </span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">
+                                                        {unit.surahs}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))}
@@ -188,15 +247,19 @@ const RevisionPlanView: React.FC = () => {
                                             >
                                                 <AlertCircle size={20} className="text-danger shrink-0 mt-0.5" />
                                                 <div className="space-y-1">
-                                                    <p className="text-[9px] font-black text-danger uppercase tracking-[0.2em]">{t('difficultyWarning')}</p>
-                                                    <p className="text-xs font-bold leading-relaxed">{currentSurahNames.join(', ')}</p>
+                                                    <p className="text-[9px] font-black text-danger uppercase tracking-[0.2em]">
+                                                        {t('difficultyWarning')}
+                                                    </p>
+                                                    <p className="text-xs font-bold leading-relaxed">
+                                                        {currentSurahNames.join(', ')}
+                                                    </p>
                                                 </div>
                                             </motion.div>
                                         )}
                                     </div>
 
                                     {(isCurrent || dayIndex < state.progress.currentRevisionIndex) && (
-                                        <div className="grid grid-cols-2 gap-3 mt-2">
+                                        <div className="grid grid-cols-3 gap-3 mt-2">
                                             <Button
                                                 size="sm"
                                                 variant={day.status === 'revised' ? 'success' : 'secondary'}
@@ -207,9 +270,17 @@ const RevisionPlanView: React.FC = () => {
                                             </Button>
                                             <Button
                                                 size="sm"
+                                                variant={day.status === 'not_revised' ? 'danger' : 'secondary'}
+                                                className="h-12 font-black rounded-xl shadow-lg shadow-danger/5"
+                                                onClick={() => handleStatusUpdate(day, 'not_revised')}
+                                            >
+                                                {t('not_revised')}
+                                            </Button>
+                                            <Button
+                                                size="sm"
                                                 variant={day.status === 'to-review' ? 'warning' : 'secondary'}
                                                 className="h-12 font-black rounded-xl shadow-lg shadow-warning/5"
-                                                onClick={() => handleStatusUpdate(day, 'to-review')}
+                                                onClick={() => setReviewModalDay(day)}
                                             >
                                                 {t('toReview')}
                                             </Button>
@@ -221,6 +292,28 @@ const RevisionPlanView: React.FC = () => {
                     })}
                 </AnimatePresence>
             </div>
+            {reviewModalDay && (
+                <ReadadjustmentModal
+                    isOpen={!!reviewModalDay}
+                    onClose={() => setReviewModalDay(null)}
+                    onConfirm={selectedItems => {
+                        handleStatusUpdate(reviewModalDay, 'to-review', selectedItems);
+                        setReviewModalDay(null);
+                    }}
+                    title={t('toReview')}
+                    items={reviewModalDay.units.flatMap(unit => {
+                        const hizbMatch = unit.text.match(/Hizb (\d+)/);
+                        if (hizbMatch) {
+                            const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
+                            const hizb = HIZB_DATA[hizbIndex];
+                            if (hizb && Array.isArray(hizb.surahs)) {
+                                return hizb.surahs;
+                            }
+                        }
+                        return unit.surahs.split(',').map(s => s.trim()).filter(Boolean);
+                    })}
+                />
+            )}
         </div>
     );
 };

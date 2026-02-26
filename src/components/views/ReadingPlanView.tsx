@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import Modal from '@/components/ui/Modal';
 import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLogic';
-import { TOTAL_PAGES } from '@/constants/quranData';
+import { TOTAL_PAGES, HIZB_DATA } from '@/constants/quranData';
 import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, CheckCircle2, Circle, ArrowRight, Star, BookOpen, Calendar, ChevronRight } from 'lucide-react';
@@ -205,6 +205,7 @@ const ReadingPlanView: React.FC = () => {
                     const isEditing = editingDay === day.day;
                     const hizbDetails = getHizbDetailsFromPage(day.startPage);
                     const endHizbDetails = getHizbDetailsFromPage(day.endPage);
+                    const hizbInfo = HIZB_DATA[hizbDetails.hizbNum - 1];
 
                     return (
                         <motion.div key={day.day} custom={i} initial="hidden" animate="visible" variants={cardVariants}>
@@ -232,6 +233,11 @@ const ReadingPlanView: React.FC = () => {
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color">{t('day')} {day.day}</span>
                                         </div>
                                         <h4 className="text-xl font-black tracking-tight">{hizbDetails.surahName}</h4>
+                                        {hizbInfo && (
+                                            <p className="text-xs font-semibold text-text-secondary mt-1">
+                                                {hizbInfo.details} — Pages : {day.startPage} à {day.endPage}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className={clsx(
                                         "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
@@ -285,6 +291,22 @@ const ReadingPlanView: React.FC = () => {
                                                     onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'partial'); }}
                                                 >
                                                     {t('partial')}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    className="rounded-xl h-10 font-black"
+                                                    variant="secondary"
+                                                    onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'not_read'); }}
+                                                >
+                                                    {t('notReadStatus') || 'Non lu'}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    className="rounded-xl h-10 font-black"
+                                                    variant="secondary"
+                                                    onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'catchup'); }}
+                                                >
+                                                    {t('catchupStatus') || 'Pages supplémentaires'}
                                                 </Button>
                                             </div>
                                             {isCurrent && (

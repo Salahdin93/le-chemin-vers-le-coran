@@ -36,8 +36,8 @@ const Header: React.FC = () => {
             <div className="max-w-7xl mx-auto flex items-center justify-between">
                 {/* Left: Branding */}
                 <div className="flex items-center gap-3 md:gap-4 group cursor-pointer" onClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'dashboard-view' })}>
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center glass-card border-none shadow-premium bg-accent-color/10 group-hover:scale-105 md:group-hover:scale-110 transition-transform duration-500">
-                        <img src={logoSrc} alt="Logo" className="w-7 h-7 md:w-9 md:h-9 object-contain" />
+                    <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl flex items-center justify-center glass-card border-none shadow-premium bg-accent-color/10 group-hover:scale-105 md:group-hover:scale-110 transition-transform duration-500">
+                        <img src={logoSrc} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain" />
                     </div>
                     <div className="hidden xs:flex flex-col">
                         <span className="text-xs md:text-sm font-black tracking-tight text-gradient leading-tight">
