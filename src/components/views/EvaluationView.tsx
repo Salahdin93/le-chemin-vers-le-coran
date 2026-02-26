@@ -16,6 +16,7 @@ import {
     Plus, LayoutGrid, Brain, Info, Activity, Calendar
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import ConfirmModal from '../ui/ConfirmModal';
 
 type PlanFormData = Partial<EvaluationPlan> & { id?: string };
 
@@ -29,6 +30,7 @@ const EvaluationView: React.FC = () => {
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [evaluationItems, setEvaluationItems] = useState<EvaluationItem[]>([]);
     const [openBoosters, setOpenBoosters] = useState<Partial<Record<EvaluationContentType, boolean>>>({});
+    const [planToDelete, setPlanToDelete] = useState<string | null>(null);
 
     const contentTypeToTranslationKey: Record<EvaluationContentType, string> = {
         surahPart: 'revModeSurah',
@@ -74,8 +76,13 @@ const EvaluationView: React.FC = () => {
     };
 
     const handleDelete = (planId: string) => {
-        if (window.confirm(t('confirmDeletePlan'))) {
-            dispatch({ type: 'REMOVE_EVALUATION_PLAN', payload: { id: planId } });
+        setPlanToDelete(planId);
+    };
+
+    const confirmDelete = () => {
+        if (planToDelete) {
+            dispatch({ type: 'REMOVE_EVALUATION_PLAN', payload: { id: planToDelete } });
+            setPlanToDelete(null);
         }
     };
 
@@ -421,6 +428,16 @@ const EvaluationView: React.FC = () => {
                     </AnimatePresence>
                 </Tabs>
             )}
+
+            <ConfirmModal
+                isOpen={!!planToDelete}
+                onClose={() => setPlanToDelete(null)}
+                onConfirm={confirmDelete}
+                title={t('deletePlanTitle') || 'Supprimer le protocole'}
+                message={t('confirmDeletePlan') || 'Voulez-vous vraiment supprimer ce protocole ?'}
+                variant="danger"
+                confirmText={t('delete') || 'Supprimer'}
+            />
         </div>
     );
 };

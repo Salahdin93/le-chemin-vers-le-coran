@@ -6,6 +6,7 @@ import Select from '@/components/ui/Select';
 import { JUZ_DATA, HIZB_DATA, MEMORIZATION_SURAH_OPTIONS } from '@/constants/quranData';
 import { MemorizationLevel, MemorizationStatus, MemorizedHizb, MemorizedJuzz, MemorizedSurahPart } from '@/types';
 import { motion } from 'framer-motion';
+import ConfirmModal from '../ui/ConfirmModal';
 
 type SelectionMode = 'juzz' | 'hizb' | 'surahPart';
 
@@ -13,9 +14,15 @@ const MemorizationSettingsView: React.FC = () => {
     const { dispatch, t } = useStore();
     const [mode, setMode] = useState<SelectionMode>('juzz');
     const [selectedLevel, setSelectedLevel] = useState<MemorizationLevel>('bon');
+    const [confirmAction, setConfirmAction] = useState<'memorize' | 'unmemorize' | null>(null);
 
     const handleToggleAll = (isSelected: boolean) => {
-        if (!window.confirm(isSelected ? t('confirmAllMemorized') : t('confirmAllNotMemorized'))) return;
+        setConfirmAction(isSelected ? 'memorize' : 'unmemorize');
+    };
+
+    const confirmToggleAll = () => {
+        if (!confirmAction) return;
+        const isSelected = confirmAction === 'memorize';
 
         if (mode === 'surahPart') {
             MEMORIZATION_SURAH_OPTIONS.forEach(s => {
@@ -40,6 +47,7 @@ const MemorizationSettingsView: React.FC = () => {
                 dispatch({ type: isSelected ? 'ADD_MEMORIZATION' : 'REMOVE_MEMORIZATION', payload: { type: 'juzz', item } });
             });
         }
+        setConfirmAction(null);
     };
 
     const renderSelectionList = () => {
@@ -128,6 +136,17 @@ const MemorizationSettingsView: React.FC = () => {
                     </div>
                 </div>
             </Card>
+
+            <ConfirmModal
+                isOpen={!!confirmAction}
+                onClose={() => setConfirmAction(null)}
+                onConfirm={confirmToggleAll}
+                title={t('confirmAction') || 'Confirmation'}
+                message={confirmAction === 'memorize' ? (t('confirmAllMemorized') || 'Voulez-vous marquer tout comme mémorisé ?') : (t('confirmAllNotMemorized') || 'Voulez-vous marquer tout comme non mémorisé ?')}
+                variant="warning"
+                cancelText={t('cancel')}
+                confirmText={t('confirm') || 'Confirmer'}
+            />
         </motion.div>
     );
 };

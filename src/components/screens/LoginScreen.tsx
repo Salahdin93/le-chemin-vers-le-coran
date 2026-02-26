@@ -4,11 +4,13 @@ import { useStore } from '@/context/AppContext';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { Lock, ArrowLeft, RotateCcw } from 'lucide-react';
+import ConfirmModal from '../ui/ConfirmModal';
 
 const LoginScreen: React.FC = () => {
     const { dispatch, t, activeProfile } = useStore();
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
     const handleLogin = () => {
         if (activeProfile?.password === password) {
@@ -20,11 +22,9 @@ const LoginScreen: React.FC = () => {
         }
     };
 
-    const handleForgotPassword = () => {
-        if (window.confirm(t('confirmReset'))) {
-            dispatch({ type: 'RESET_APP' });
-        }
-    }
+    const confirmReset = () => {
+        dispatch({ type: 'RESET_APP' });
+    };
 
     return (
         <div
@@ -82,7 +82,7 @@ const LoginScreen: React.FC = () => {
                         <div className="flex flex-col gap-2 pt-4">
                             <button
                                 type="button"
-                                onClick={handleForgotPassword}
+                                onClick={() => setIsResetConfirmOpen(true)}
                                 className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-colors"
                                 style={{ color: 'rgba(251,191,36,0.4)' }}
                                 onMouseEnter={e => (e.currentTarget.style.color = 'rgba(251,191,36,0.8)')}
@@ -107,6 +107,17 @@ const LoginScreen: React.FC = () => {
                     </div>
                 </form>
             </motion.div>
+
+            <ConfirmModal
+                isOpen={isResetConfirmOpen}
+                onClose={() => setIsResetConfirmOpen(false)}
+                onConfirm={confirmReset}
+                title={t('resetEverything') || 'Réinitialisation Totale'}
+                message={t('confirmReset') || 'Voulez-vous vraiment TOUT réinitialiser ?'}
+                variant="danger"
+                cancelText={t('cancel')}
+                confirmText={t('confirmResetBtn') || 'Confirmer'}
+            />
         </div>
     );
 };

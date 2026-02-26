@@ -4,6 +4,7 @@ import { LOGO_URL, LOGO_URL_DARK } from '@/constants/ui';
 import { clsx } from 'clsx';
 import { LogOut, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ConfirmModal from '../ui/ConfirmModal';
 
 interface HeaderProps {
     onNotificationClick?: () => void;
@@ -13,6 +14,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
     const { state, dispatch, t } = useStore();
     const activeProfile = useActiveProfileSelector();
     const [scrolled, setScrolled] = useState(false);
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const notificationCount = state.notificationHistory.length;
 
     const isDark = !['light', 'sepia', 'emerald', 'aube', 'oasis', 'sand', 'wood', 'sunrise', 'leafy', 'pearl'].includes(activeProfile?.theme ?? 'dark');
@@ -105,16 +107,23 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
 
                     {/* Exit */}
                     <button
-                        onClick={() => {
-                            if (confirm(t('confirmLogout') || 'Voulez-vous changer de profil ?')) {
-                                dispatch({ type: 'LOGOUT' });
-                            }
-                        }}
+                        onClick={() => setIsLogoutConfirmOpen(true)}
                         className="p-2 md:p-3 rounded-lg md:rounded-2xl bg-white/5 hover:bg-danger/10 text-text-main/20 hover:text-danger transition-all duration-300"
                         title={t('logout')}
                     >
                         <LogOut size={18} className="md:w-5 md:h-5" />
                     </button>
+
+                    <ConfirmModal
+                        isOpen={isLogoutConfirmOpen}
+                        onClose={() => setIsLogoutConfirmOpen(false)}
+                        onConfirm={() => dispatch({ type: 'LOGOUT' })}
+                        title={t('logout') || 'Déconnexion'}
+                        message={t('confirmLogout') || 'Voulez-vous changer de profil ?'}
+                        variant="warning"
+                        confirmText={t('confirm') || 'Confirmer'}
+                        cancelText={t('cancel') || 'Annuler'}
+                    />
                 </div>
             </div>
         </header>

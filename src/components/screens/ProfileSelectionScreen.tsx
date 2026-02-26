@@ -7,6 +7,7 @@ import { LOGO_URL_DARK } from '@/constants/ui';
 import Card from '@/components/ui/Card';
 import ProfileEditorModal from '@/components/modals/ProfileEditorModal';
 import { Edit, Trash2, Plus } from 'lucide-react'; // Icônes pour un look plus propre
+import ConfirmModal from '../ui/ConfirmModal';
 
 const ProfileCard = React.memo<{ profile: Profile; onSelect: () => void; onEdit: () => void; onDelete: () => void; t: any; }>(
     ({ profile, onSelect, onEdit, onDelete, t }) => {
@@ -52,6 +53,7 @@ const ProfileSelectionScreen: React.FC = () => {
     const [passwordInput, setPasswordInput] = useState('');
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [profileToEdit, setProfileToEdit] = useState<Profile | null>(null);
+    const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
 
     const logoSrc = LOGO_URL_DARK; // Use dark logo for better visibility on dark green
 
@@ -84,8 +86,13 @@ const ProfileSelectionScreen: React.FC = () => {
     };
 
     const handleDeleteProfile = (profile: Profile) => {
-        if (window.confirm(t('confirmProfileDeletion', { name: profile.name }))) {
-            dispatch({ type: 'REMOVE_PROFILE', payload: profile.id });
+        setProfileToDelete(profile);
+    };
+
+    const confirmDeleteProfile = () => {
+        if (profileToDelete) {
+            dispatch({ type: 'REMOVE_PROFILE', payload: profileToDelete.id });
+            setProfileToDelete(null);
         }
     };
 
@@ -183,6 +190,16 @@ const ProfileSelectionScreen: React.FC = () => {
                 isOpen={isEditorOpen}
                 onClose={() => setIsEditorOpen(false)}
                 profileToEdit={profileToEdit}
+            />
+            <ConfirmModal
+                isOpen={!!profileToDelete}
+                onClose={() => setProfileToDelete(null)}
+                onConfirm={confirmDeleteProfile}
+                title={t('confirmProfileDeletionTitle') || 'Supprimer le profil'}
+                message={t('confirmProfileDeletion', { name: profileToDelete?.name || '' })}
+                variant="danger"
+                confirmText={t('delete') || 'Supprimer'}
+                cancelText={t('cancel') || 'Annuler'}
             />
         </>
     );

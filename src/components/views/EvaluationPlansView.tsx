@@ -4,11 +4,13 @@ import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
 import { EvaluationPlan, EvaluationStatus, EvaluationContentType, EvaluationItem } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ConfirmModal from '../ui/ConfirmModal';
 
 const EvaluationPlansView: React.FC = () => {
     const { state, dispatch, t } = useStore();
     const activeProfile = state.profiles.find(p => p.id === state.activeProfileId);
     const [activeTab, setActiveTab] = useState<'plans' | 'history'>('plans');
+    const [planToDelete, setPlanToDelete] = useState<string | null>(null);
 
     const contentTypeToTranslationKey: Record<EvaluationContentType, string> = {
         surahPart: 'revModeSurah',
@@ -28,8 +30,13 @@ const EvaluationPlansView: React.FC = () => {
     };
 
     const handleDelete = (planId: string) => {
-        if (window.confirm(t('confirmDeletePlan'))) {
-            dispatch({ type: 'REMOVE_EVALUATION_PLAN', payload: { id: planId } });
+        setPlanToDelete(planId);
+    };
+
+    const confirmDelete = () => {
+        if (planToDelete) {
+            dispatch({ type: 'REMOVE_EVALUATION_PLAN', payload: { id: planToDelete } });
+            setPlanToDelete(null);
         }
     };
 
@@ -108,6 +115,16 @@ const EvaluationPlansView: React.FC = () => {
                     {renderHistoryList()}
                 </TabsContent>
             </Tabs>
+
+            <ConfirmModal
+                isOpen={!!planToDelete}
+                onClose={() => setPlanToDelete(null)}
+                onConfirm={confirmDelete}
+                title={t('deletePlanTitle') || 'Supprimer le plan'}
+                message={t('confirmDeletePlan') || 'Voulez-vous vraiment supprimer ce plan ?'}
+                variant="danger"
+                confirmText={t('delete') || 'Supprimer'}
+            />
         </div>
     );
 };

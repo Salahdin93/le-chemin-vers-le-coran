@@ -14,6 +14,7 @@ import {
     BookOpen, Brain, LayoutGrid, Clock,
     Trash2, Plus, Info, Star, ChevronRight, Activity, Sparkles, BookMarked
 } from 'lucide-react';
+import ConfirmModal from '../ui/ConfirmModal';
 
 type FormType = 'surahPart' | 'hizb' | 'juzz' | 'hadith' | null;
 
@@ -42,6 +43,7 @@ const MemorizationView: React.FC = () => {
     const [selectedLevel, setSelectedLevel] = useState<MemorizationLevel>('bon');
     const [modalContent, setModalContent] = useState<{ title: string, items: { name: string, level: MemorizationLevel, status?: MemorizationStatus }[] } | null>(null)
     const [selectedHadith, setSelectedHadith] = useState<Hadith | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<{ type: 'juzz' | 'hizb' | 'surahPart', item: Juzz | Hizb | SurahPart } | null>(null);
 
     const memorizations = activeProfile?.memorizations;
     if (!memorizations || !activeProfile) return null;
@@ -105,9 +107,13 @@ const MemorizationView: React.FC = () => {
     };
 
     const handleRemoveItem = (type: 'juzz' | 'hizb' | 'surahPart', item: Juzz | Hizb | SurahPart) => {
-        const itemName = 'name' in item ? item.name : `${t(type)} ${item.number}`;
-        if (window.confirm(`Êtes-vous sûr de vouloir supprimer "${itemName}" de votre liste ?`)) {
-            dispatch({ type: 'REMOVE_MEMORIZATION', payload: { type, item } });
+        setItemToDelete({ type, item });
+    };
+
+    const confirmRemoveItem = () => {
+        if (itemToDelete) {
+            dispatch({ type: 'REMOVE_MEMORIZATION', payload: { type: itemToDelete.type, item: itemToDelete.item } });
+            setItemToDelete(null);
         }
     };
 
@@ -535,6 +541,17 @@ const MemorizationView: React.FC = () => {
                     </div>
                 )}
             </Modal>
+
+            <ConfirmModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmRemoveItem}
+                title={t('confirmDeletionTitle') || 'Supprimer l\'élément'}
+                message={itemToDelete ? `Êtes-vous sûr de vouloir supprimer "${'name' in itemToDelete.item ? itemToDelete.item.name : `${t(itemToDelete.type)} ${itemToDelete.item.number}`}" de votre liste ?` : ''}
+                variant="danger"
+                cancelText={t('cancel')}
+                confirmText={t('delete') || 'Supprimer'}
+            />
         </div>
     );
 };
