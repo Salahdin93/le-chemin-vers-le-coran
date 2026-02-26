@@ -18,13 +18,15 @@ export default {
         navy: '#0d1b2a',
 
         // Theme-aware semantic tokens
-        'bg-main': 'var(--bg)',
-        'text-main': 'var(--text)',
+        'bg-main': 'var(--bg-main)',
+        'bg-secondary': 'var(--bg-secondary)',
+        'text-main': 'var(--text-main)',
+        'text-secondary': 'var(--text-secondary)',
         'card-bg': 'var(--card-bg)',
-        'border-main': 'var(--border-color)',
-        success: 'var(--success-color)',
-        warning: 'var(--warning-color)',
-        danger: 'var(--danger-color)',
+        'border-main': 'var(--border-main)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        danger: 'var(--danger)',
       },
       fontFamily: {
         cairo: ['Cairo', 'sans-serif'],

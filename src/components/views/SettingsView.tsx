@@ -62,7 +62,7 @@ const SettingsView: React.FC = () => {
                         onChange={e => setName(e.target.value)}
                         onBlur={e => handleNameChange(e.target.value)}
                         placeholder={t('yourNamePlaceholder')}
-                        className="bg-bg-secondary !text-text-main border-border-main font-black text-lg py-6"
+                        className="bg-bg-secondary text-text-main border-border-main font-black text-lg py-6"
                     />
                     <div className="flex items-center justify-between p-4 bg-bg-main/50 rounded-2xl border border-border-main/50">
                         <div className="flex flex-col">
@@ -202,11 +202,11 @@ const SettingsView: React.FC = () => {
                         <div className="grid grid-cols-2 gap-2">
                             <div className="flex flex-col gap-1">
                                 <span className="text-[8px] font-black uppercase tracking-widest opacity-30 ml-2">{t('startDateLabel')}</span>
-                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="h-9 w-full bg-bg-secondary/50 rounded-lg border border-border-main/50 px-3 text-[10px] font-bold" />
+                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="h-9 w-full bg-bg-secondary text-text-main rounded-lg border border-border-main/50 px-3 text-[10px] font-bold focus:outline-none focus:border-accent-color transition-colors" />
                             </div>
                             <div className="flex flex-col gap-1">
                                 <span className="text-[8px] font-black uppercase tracking-widest opacity-30 ml-2">{t('endDateLabel')}</span>
-                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="h-9 w-full bg-bg-secondary/50 rounded-lg border border-border-main/50 px-3 text-[10px] font-bold" />
+                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="h-9 w-full bg-bg-secondary text-text-main rounded-lg border border-border-main/50 px-3 text-[10px] font-bold focus:outline-none focus:border-accent-color transition-colors" />
                             </div>
                         </div>
                         <Button variant="accent" size="sm" className="w-full rounded-xl shadow-lg shadow-accent-color/10" onClick={() => generateProgressPDF(state, t, startDate, endDate)}>
