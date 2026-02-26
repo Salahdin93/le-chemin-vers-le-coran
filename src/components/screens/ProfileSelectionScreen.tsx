@@ -122,7 +122,7 @@ const ProfileSelectionScreen: React.FC = () => {
 
     return (
         <>
-            <div className="min-h-screen dynamic-bg geometric-overlay flex flex-col items-center justify-center p-4 overflow-hidden" style={{ background: 'linear-gradient(160deg, #052e16 0%, #064e3b 35%, #065f46 60%, #047857 100%)' }}>
+            <div className="min-h-screen dynamic-bg geometric-overlay flex flex-col items-center justify-center p-4 overflow-hidden" style={{ background: 'linear-gradient(160deg, #052e16 0%, #064e3b 35%, #065f46 60%, #047857 100%)', ...({ '--text-main': '#ffffff' } as React.CSSProperties) }}>
                 {/* Background glows */}
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-color/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
