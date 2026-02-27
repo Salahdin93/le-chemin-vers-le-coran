@@ -445,6 +445,8 @@ export type AppAction =
   | { type: 'CLEAR_NOTIFICATION_HISTORY' }
   | { type: 'SET_KAHF_NOTIFICATION_SHOWN' }
   | { type: 'UPDATE_MEMORIZATION_STATUS'; payload: { type: 'juzz' | 'hizb' | 'surahPart'; ids: (string | number)[]; status: MemorizationStatus } }
+  | { type: 'UPDATE_MEMORIZATION_ITEM'; payload: { type: 'juzz' | 'hizb' | 'surahPart'; id: string | number; status?: MemorizationStatus; level?: MemorizationLevel } }
+  | { type: 'UPDATE_HIZB_COMPONENT_ANNOTATION'; payload: { hizbNumber: string; surahPartId: string; status?: MemorizationStatus; level?: MemorizationLevel } }
   | { type: 'ADD_PROFILE'; payload: Profile }
   | { type: 'REMOVE_PROFILE'; payload: string }
   | { type: 'SET_ACTIVE_PROFILE'; payload: string | null }

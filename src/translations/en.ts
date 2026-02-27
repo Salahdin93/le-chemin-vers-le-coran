@@ -177,6 +177,7 @@ export const en = {
     "revisionProgress": "Revision Progress",
     "readingGoal": "Reading Goal",
     "hadithGoal": "Hadith Goal",
+    "hadithReadingGoal": "Hadith reading goal",
     "revisionGoal": "Revision Goal",
     "pagesReadShort": "Pages read",
     "mastered": "Mastered",

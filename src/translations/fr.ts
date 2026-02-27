@@ -183,6 +183,7 @@ export const fr = {
     "revisionProgress": "Progression de Révision",
     "readingGoal": "Objectif de lecture",
     "hadithGoal": "Objectif de hadiths",
+    "hadithReadingGoal": "Objectif lecture hadiths",
     "revisionGoal": "Objectif de révision",
     "pagesReadShort": "Pages lues",
     "mastered": "Acquis",

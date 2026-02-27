@@ -70,6 +70,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
           if (!profile.difficulties) profile.difficulties = [];
           if (!(profile.memorizations as any).surahParts) { (profile.memorizations as any).surahParts = (profile.memorizations as any).surahs || []; }
+          if ((profile.memorizations as any).juzzs && !(profile.memorizations as any).juzz) { (profile.memorizations as any).juzz = (profile.memorizations as any).juzzs; delete (profile.memorizations as any).juzzs; }
+          if (!Array.isArray((profile.memorizations as any).juzz)) (profile.memorizations as any).juzz = [];
+          if (!Array.isArray((profile.memorizations as any).hizbs)) (profile.memorizations as any).hizbs = [];
           if (!profile.evaluationHistory) profile.evaluationHistory = [];
 
           if (profile.evaluationPlan && !profile.evaluationPlans) {
@@ -497,7 +500,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'ADD_MEMORIZATION': {
       if (!activeProfile) return state;
       const { type, item } = action.payload;
-      const newMemorizations = { ...activeProfile.memorizations, [type + 's']: [...(activeProfile.memorizations as any)[type + 's'], item] };
+      const listKey = type === 'surahPart' ? 'surahParts' : type === 'juzz' ? 'juzz' : 'hizbs';
+      const currentList = (activeProfile.memorizations as any)[listKey];
+      const list = Array.isArray(currentList) ? currentList : [];
+      const newMemorizations = { ...activeProfile.memorizations, [listKey]: [...list, item] };
       const newState = { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: newMemorizations } : p) };
       const badge = checkFirstMemorization(newState);
       return unlockBadge(newState, badge);
@@ -505,7 +511,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'REMOVE_MEMORIZATION': {
       if (!activeProfile) return state;
       const { type, item } = action.payload;
-      const newMemorizations = { ...activeProfile.memorizations, [type + 's']: (activeProfile.memorizations as any)[type + 's'].filter((i: any) => i.id !== item.id && i.number !== item.number) };
+      const listKey = type === 'surahPart' ? 'surahParts' : type === 'juzz' ? 'juzz' : 'hizbs';
+      const currentList = (activeProfile.memorizations as any)[listKey];
+      const list = Array.isArray(currentList) ? currentList : [];
+      const newMemorizations = { ...activeProfile.memorizations, [listKey]: list.filter((i: any) => i.id !== item.id && i.number !== item.number) };
       return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: newMemorizations } : p) };
     }
     case 'UPDATE_MEMORIZATIONS': {
@@ -515,9 +524,36 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'UPDATE_MEMORIZATION_STATUS': {
       if (!activeProfile) return state;
       const { type, ids, status } = action.payload;
-      const listKey = type === 'surahPart' ? 'surahParts' : type + 's';
-      const newList = (activeProfile.memorizations as any)[listKey].map((item: any) => ids.includes(item.id || item.number) ? { ...item, status } : item);
+      const listKey = type === 'surahPart' ? 'surahParts' : type === 'juzz' ? 'juzz' : 'hizbs';
+      const currentList = (activeProfile.memorizations as any)[listKey];
+      const list = Array.isArray(currentList) ? currentList : [];
+      const newList = list.map((item: any) => ids.includes(item.id || item.number) ? { ...item, status } : item);
       const newMemorizations = { ...activeProfile.memorizations, [listKey]: newList };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: newMemorizations } : p) };
+    }
+    case 'UPDATE_MEMORIZATION_ITEM': {
+      if (!activeProfile) return state;
+      const { type, id, status, level } = action.payload;
+      const listKey = type === 'surahPart' ? 'surahParts' : type === 'juzz' ? 'juzz' : 'hizbs';
+      const currentList = (activeProfile.memorizations as any)[listKey];
+      const list = Array.isArray(currentList) ? currentList : [];
+      const newList = list.map((item: any) => (item.id === id || item.number === id) ? { ...item, ...(status != null && { status }), ...(level != null && { level }) } : item);
+      const newMemorizations = { ...activeProfile.memorizations, [listKey]: newList };
+      return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: newMemorizations } : p) };
+    }
+    case 'UPDATE_HIZB_COMPONENT_ANNOTATION': {
+      if (!activeProfile) return state;
+      const { hizbNumber, surahPartId, status, level } = action.payload;
+      const currentList = (activeProfile.memorizations as any).hizbs;
+      const list = Array.isArray(currentList) ? currentList : [];
+      const newList = list.map((h: any) => {
+        if (String(h.number) !== String(hizbNumber)) return h;
+        const componentSurahParts = Array.isArray(h.componentSurahParts) ? h.componentSurahParts.map((s: any) =>
+          s.id === surahPartId ? { ...s, ...(status != null && { status }), ...(level != null && { level }) } : s
+        ) : [];
+        return { ...h, componentSurahParts };
+      });
+      const newMemorizations = { ...activeProfile.memorizations, hizbs: newList };
       return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, memorizations: newMemorizations } : p) };
     }
     case 'SAVE_EVALUATION_RESULTS': {

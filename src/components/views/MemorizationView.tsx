@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import {
     BookOpen, Brain, LayoutGrid, Clock,
-    Trash2, Plus, Info, Star, ChevronRight, Activity, Sparkles, BookMarked
+    Trash2, Plus, Info, Star, ChevronRight, Activity, Sparkles, BookMarked, Pencil
 } from 'lucide-react';
 import ConfirmModal from '../ui/ConfirmModal';
 
@@ -41,12 +41,18 @@ const MemorizationView: React.FC = () => {
     const [formType, setFormType] = useState<FormType>(null);
     const [selectedItemId, setSelectedItemId] = useState('');
     const [selectedLevel, setSelectedLevel] = useState<MemorizationLevel>('bon');
-    const [modalContent, setModalContent] = useState<{ title: string, items: { name: string, level: MemorizationLevel, status?: MemorizationStatus }[] } | null>(null)
+    const [modalContent, setModalContent] = useState<{ title: string, items: { id?: string, name: string, level: MemorizationLevel, status?: MemorizationStatus }[], hizbNumber?: string } | null>(null)
+    const [editItem, setEditItem] = useState<{ type: 'hizb' | 'juzz' | 'surahPart'; item: MemorizedHizb | MemorizedJuzz | MemorizedSurahPart } | null>(null)
+    const [editLevel, setEditLevel] = useState<MemorizationLevel>('bon')
+    const [editStatus, setEditStatus] = useState<MemorizationStatus>('bon')
     const [selectedHadith, setSelectedHadith] = useState<Hadith | null>(null);
     const [itemToDelete, setItemToDelete] = useState<{ type: 'juzz' | 'hizb' | 'surahPart', item: Juzz | Hizb | SurahPart } | null>(null);
 
     const memorizations = activeProfile?.memorizations;
     if (!memorizations || !activeProfile) return null;
+    const juzzList = Array.isArray(juzzList) ? juzzList : [];
+    const hizbsList = Array.isArray(hizbsList) ? hizbsList : [];
+    const surahPartsList = Array.isArray(surahPartsList) ? surahPartsList : [];
 
     const handleAddItem = () => {
         if (!selectedItemId || !formType || !activeProfile) return;
@@ -121,6 +127,19 @@ const MemorizationView: React.FC = () => {
         dispatch({ type: 'UPDATE_HADITH_STATUS', payload: { hadithId, status } });
         dispatch({ type: 'SET_TOAST', payload: t('saved') });
         setSelectedHadith(null);
+    };
+
+    const handleSaveEditAnnotation = () => {
+        if (!editItem) return;
+        const id = 'number' in editItem.item ? editItem.item.number : (editItem.item as MemorizedSurahPart).id;
+        dispatch({ type: 'UPDATE_MEMORIZATION_ITEM', payload: { type: editItem.type, id, level: editLevel, status: editStatus } });
+        dispatch({ type: 'SET_TOAST', payload: t('saved') });
+        setEditItem(null);
+    };
+
+    const handleHizbComponentAnnotationChange = (hizbNumber: string, surahPartId: string, level: MemorizationLevel, status: MemorizationStatus) => {
+        dispatch({ type: 'UPDATE_HIZB_COMPONENT_ANNOTATION', payload: { hizbNumber, surahPartId, level, status } });
+        dispatch({ type: 'SET_TOAST', payload: t('saved') });
     };
 
     const levelClasses: Record<MemorizationLevel, string> = {
@@ -238,7 +257,7 @@ const MemorizationView: React.FC = () => {
                 <AnimatePresence mode="wait">
                     <TabsContent value="all" className="space-y-6 outline-none">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {memorizations.juzz.map((j, i) => (
+                            {juzzList.map((j, i) => (
                                 <motion.div
                                     key={`all-j-${j.number}`}
                                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
@@ -254,18 +273,23 @@ const MemorizationView: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => handleRemoveItem('juzz', j)} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all z-20">
-                                        <Trash2 size={14} />
-                                    </button>
+                                    <div className="flex items-center gap-1 z-20">
+                                            <button onClick={(e) => { e.stopPropagation(); setEditItem({ type: 'juzz', item: j }); setEditLevel(j.level); setEditStatus(j.status || 'bon'); }} className="p-2 rounded-lg bg-accent-color/10 text-accent-color opacity-0 group-hover:opacity-100 transition-all" title={t('edit') || 'Modifier'}>
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleRemoveItem('juzz', j); }} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                 </motion.div>
                             ))}
-                            {memorizations.hizbs.map((h, i) => (
+                            {hizbsList.map((h, i) => (
                                 <motion.div
                                     key={`all-h-${h.number}`}
-                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (memorizations.juzz.length + i) * 0.02 }}
+                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (juzzList.length + i) * 0.02 }}
                                     className="premium-card p-6 flex items-center justify-between border-2 border-border-main/30 group h-28"
                                 >
-                                    <div className="flex items-center gap-4 relative z-10 cursor-pointer" onClick={() => setModalContent({ title: `${t('hizb')} ${h.number} - ${h.details}`, items: h.componentSurahParts.map(s => ({ name: s.name, level: s.level, status: s.status })) })}>
+                                    <div className="flex items-center gap-4 relative z-10 cursor-pointer" onClick={() => setModalContent({ title: `${t('hizb')} ${h.number} - ${h.details}`, items: h.componentSurahParts.map(s => ({ id: s.id, name: s.name, level: s.level, status: s.status })), hizbNumber: h.number })}>
                                         <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-black">{h.number}</div>
                                         <div>
                                             <h4 className="text-sm font-black tracking-tight">{t('hizb')} {h.number}</h4>
@@ -276,15 +300,20 @@ const MemorizationView: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => handleRemoveItem('hizb', h)} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all z-20">
-                                        <Trash2 size={14} />
-                                    </button>
+                                    <div className="flex items-center gap-1 z-20">
+                                            <button onClick={(e) => { e.stopPropagation(); setEditItem({ type: 'hizb', item: h }); setEditLevel(h.level); setEditStatus(h.status || 'bon'); }} className="p-2 rounded-lg bg-accent-color/10 text-accent-color opacity-0 group-hover:opacity-100 transition-all" title={t('edit') || 'Modifier'}>
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleRemoveItem('hizb', h); }} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                 </motion.div>
                             ))}
-                            {memorizations.surahParts.map((s, i) => (
+                            {surahPartsList.map((s, i) => (
                                 <motion.div
                                     key={`all-s-${s.id}`}
-                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (memorizations.juzz.length + memorizations.hizbs.length + i) * 0.02 }}
+                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (juzzList.length + hizbsList.length + i) * 0.02 }}
                                     className="premium-card p-6 flex items-center justify-between border-2 border-border-main/30 group h-28"
                                 >
                                     <div className="flex items-center gap-4 relative z-10">
@@ -297,9 +326,14 @@ const MemorizationView: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => handleRemoveItem('surahPart', s)} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all z-20">
-                                        <Trash2 size={14} />
-                                    </button>
+                                    <div className="flex items-center gap-1 z-20">
+                                            <button onClick={(e) => { e.stopPropagation(); setEditItem({ type: 'surahPart', item: s }); setEditLevel(s.level); setEditStatus(s.status || 'bon'); }} className="p-2 rounded-lg bg-accent-color/10 text-accent-color opacity-0 group-hover:opacity-100 transition-all" title={t('edit') || 'Modifier'}>
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleRemoveItem('surahPart', s); }} className="p-2 rounded-lg bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                 </motion.div>
                             ))}
                             {memorizedHadiths.map((h, i) => {
@@ -307,7 +341,7 @@ const MemorizationView: React.FC = () => {
                                 return (
                                     <motion.div
                                         key={`all-hadith-${h.id}`}
-                                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (memorizations.juzz.length + memorizations.hizbs.length + memorizations.surahParts.length + i) * 0.02 }}
+                                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (juzzList.length + hizbsList.length + surahPartsList.length + i) * 0.02 }}
                                         className="premium-card p-6 flex items-center justify-between border-2 border-border-main/30 group cursor-pointer h-28"
                                         onClick={() => setSelectedHadith(h)}
                                     >
@@ -325,14 +359,14 @@ const MemorizationView: React.FC = () => {
                                 )
                             })}
                         </div>
-                        {memorizations.juzz.length === 0 && memorizations.hizbs.length === 0 && memorizations.surahParts.length === 0 && memorizedHadiths.length === 0 && (
+                        {juzzList.length === 0 && hizbsList.length === 0 && surahPartsList.length === 0 && memorizedHadiths.length === 0 && (
                             <EmptyState label={t('noMemorizedItemsOfType')} icon={<Activity size={48} />} />
                         )}
                     </TabsContent>
                     <TabsContent value="juzz" className="space-y-6 outline-none">
-                        {memorizations.juzz.length > 0 ? (
+                        {juzzList.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {memorizations.juzz.map((j, i) => (
+                                {juzzList.map((j, i) => (
                                     <motion.div
                                         key={j.number}
                                         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
@@ -345,7 +379,10 @@ const MemorizationView: React.FC = () => {
                                             <div className="w-14 h-14 rounded-[1.25rem] bg-accent-color/10 flex items-center justify-center text-accent-color shadow-inner">
                                                 <span className="text-2xl font-black">{j.number}</span>
                                             </div>
-                                            <div className="flex flex-col items-end">
+                                            <div className="flex items-center gap-1">
+                                                <button onClick={() => { setEditItem({ type: 'juzz', item: j }); setEditLevel(j.level); setEditStatus(j.status || 'bon'); }} className="p-2 rounded-xl bg-accent-color/10 text-accent-color opacity-0 group-hover:opacity-100 transition-all hover:scale-110" title={t('edit') || 'Modifier'}>
+                                                    <Pencil size={16} />
+                                                </button>
                                                 <button onClick={() => handleRemoveItem('juzz', j)} className="p-2 rounded-xl bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all hover:scale-110">
                                                     <Trash2 size={16} />
                                                 </button>
@@ -371,15 +408,15 @@ const MemorizationView: React.FC = () => {
                     </TabsContent>
 
                     <TabsContent value="hizb" className="space-y-6 outline-none">
-                        {memorizations.hizbs.length > 0 ? (
+                        {hizbsList.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {memorizations.hizbs.map((h, i) => (
+                                {hizbsList.map((h, i) => (
                                     <motion.div
                                         key={h.number}
                                         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
                                         className="premium-card p-6 flex items-center justify-between transition-all hover-glow border-2 border-border-main/30 group"
                                     >
-                                        <div className="flex items-center gap-5 flex-1 cursor-pointer" onClick={() => setModalContent({ title: `${t('hizb')} ${h.number} - ${h.details}`, items: h.componentSurahParts.map(s => ({ name: s.name, level: s.level, status: s.status })) })}>
+                                        <div className="flex items-center gap-5 flex-1 cursor-pointer" onClick={() => setModalContent({ title: `${t('hizb')} ${h.number} - ${h.details}`, items: h.componentSurahParts.map(s => ({ id: s.id, name: s.name, level: s.level, status: s.status })), hizbNumber: h.number })}>
                                             <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner group-hover:scale-110 transition-transform">
                                                 <span className="text-xl font-black">{h.number}</span>
                                             </div>
@@ -392,9 +429,14 @@ const MemorizationView: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={() => handleRemoveItem('hizb', h)} className="p-3 rounded-xl hover:bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all">
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => { setEditItem({ type: 'hizb', item: h }); setEditLevel(h.level); setEditStatus(h.status || 'bon'); }} className="p-3 rounded-xl hover:bg-accent-color/10 text-accent-color opacity-0 group-hover:opacity-100 transition-all" title={t('edit') || 'Modifier'}>
+                                                <Pencil size={16} />
+                                            </button>
+                                            <button onClick={() => handleRemoveItem('hizb', h)} className="p-3 rounded-xl hover:bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </motion.div>
                                 ))}
                             </div>
@@ -404,9 +446,9 @@ const MemorizationView: React.FC = () => {
                     </TabsContent>
 
                     <TabsContent value="surah" className="space-y-6 outline-none">
-                        {memorizations.surahParts.length > 0 ? (
+                        {surahPartsList.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {memorizations.surahParts.map((s, i) => (
+                                {surahPartsList.map((s, i) => (
                                     <motion.div
                                         key={s.id}
                                         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
@@ -416,9 +458,14 @@ const MemorizationView: React.FC = () => {
                                             <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600 shadow-inner">
                                                 <BookOpen size={20} />
                                             </div>
+                                            <div className="flex items-center gap-1">
+                                            <button onClick={() => { setEditItem({ type: 'surahPart', item: s }); setEditLevel(s.level); setEditStatus(s.status || 'bon'); }} className="p-2 rounded-xl bg-accent-color/10 text-accent-color opacity-0 group-hover:opacity-100 transition-all" title={t('edit') || 'Modifier'}>
+                                                <Pencil size={14} />
+                                            </button>
                                             <button onClick={() => handleRemoveItem('surahPart', s)} className="p-2 rounded-xl bg-danger/5 text-danger opacity-0 group-hover:opacity-100 transition-all">
                                                 <Trash2 size={14} />
                                             </button>
+                                        </div>
                                         </div>
                                         <div className="relative z-10 mt-4">
                                             <h4 className="text-lg font-black tracking-tight mb-2 truncate">{s.name}</h4>
@@ -485,12 +532,28 @@ const MemorizationView: React.FC = () => {
                         </header>
                         <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-4 no-scrollbar">
                             {modalContent.items.map((item, index) => (
-                                <div key={item.name + index} className='flex justify-between items-center p-5 rounded-2xl bg-bg-secondary/40 border border-border-main/30 group hover:bg-bg-secondary transition-colors'>
+                                <div key={(item.id || item.name) + String(index)} className='flex flex-wrap justify-between items-center gap-3 p-5 rounded-2xl bg-bg-secondary/40 border border-border-main/30 group hover:bg-bg-secondary transition-colors'>
                                     <div className="flex items-center gap-4">
                                         <StatusIndicator status={item.status || 'bon'} />
                                         <span className="text-base font-black tracking-tight">{item.name}</span>
                                     </div>
-                                    <span className={clsx("px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full", levelClasses[item.level])}>{levels[item.level]}</span>
+                                    {modalContent.hizbNumber && item.id ? (
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Select className="h-9 rounded-xl bg-bg-main border border-border-main/50 text-[10px] font-bold w-28" value={item.level} onChange={e => handleHizbComponentAnnotationChange(modalContent.hizbNumber!, item.id!, e.target.value as MemorizationLevel, item.status || 'bon')}>
+                                                <option value="excellent">{levels.excellent}</option>
+                                                <option value="bon">{levels.bon}</option>
+                                                <option value="moyen">{levels.moyen}</option>
+                                            </Select>
+                                            <Select className="h-9 rounded-xl bg-bg-main border border-border-main/50 text-[10px] font-bold w-28" value={item.status || 'bon'} onChange={e => handleHizbComponentAnnotationChange(modalContent.hizbNumber!, item.id!, item.level, e.target.value as MemorizationStatus)}>
+                                                <option value="excellent">{levels.excellent}</option>
+                                                <option value="bon">{levels.bon}</option>
+                                                <option value="moyen">{levels.moyen}</option>
+                                                <option value="a_revoir">{t('toReview') || 'À revoir'}</option>
+                                            </Select>
+                                        </div>
+                                    ) : (
+                                        <span className={clsx("px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full", levelClasses[item.level])}>{levels[item.level]}</span>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -538,6 +601,37 @@ const MemorizationView: React.FC = () => {
                             </div>
                         </div>
                         <Button variant="ghost" onClick={() => setSelectedHadith(null)} className="w-full text-text-main/20 hover:text-text-main font-black uppercase tracking-widest text-[10px]">Fermer le Hadith</Button>
+                    </div>
+                )}
+            </Modal>
+
+            <Modal isOpen={!!editItem} onClose={() => setEditItem(null)}>
+                {editItem && (
+                    <div className="space-y-6 p-2">
+                        <h3 className="text-xl font-black tracking-tight">{t('edit') || 'Modifier'} {t(editItem.type)}</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-2">{t('level')}</label>
+                                <Select className="w-full h-12 rounded-xl bg-bg-secondary border border-border-main/50" value={editLevel} onChange={e => setEditLevel(e.target.value as MemorizationLevel)}>
+                                    <option value="excellent">{levels.excellent}</option>
+                                    <option value="bon">{levels.bon}</option>
+                                    <option value="moyen">{levels.moyen}</option>
+                                </Select>
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-2">{t('status') || 'Statut'}</label>
+                                <Select className="w-full h-12 rounded-xl bg-bg-secondary border border-border-main/50" value={editStatus} onChange={e => setEditStatus(e.target.value as MemorizationStatus)}>
+                                    <option value="excellent">{levels.excellent}</option>
+                                    <option value="bon">{levels.bon}</option>
+                                    <option value="moyen">{levels.moyen}</option>
+                                    <option value="a_revoir">{t('toReview') || 'À revoir'}</option>
+                                </Select>
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button variant="secondary" onClick={() => setEditItem(null)} className="flex-1 h-12 rounded-xl font-black text-xs uppercase">{t('cancel')}</Button>
+                            <Button variant="accent" onClick={handleSaveEditAnnotation} className="flex-1 h-12 rounded-xl font-black text-xs uppercase">{t('save') || 'Enregistrer'}</Button>
+                        </div>
                     </div>
                 )}
             </Modal>

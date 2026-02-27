@@ -122,9 +122,17 @@ const DashboardView: React.FC = () => {
     const readingHistoryEntry = currentReading ? state.progress.readingHistory[`day_${currentReading.day}`] : null;
     const readingStatus = readingHistoryEntry?.status || 'not_read';
 
+    const hasHadithRevisionGoal = !!activeProfile?.goals?.hadithRevision;
+    const hasHadithReadingPlan = !!(hadithPlan && hadithPlan.length > 0 && !hasHadithRevisionGoal);
+
     const handleHadithPlanStatusChange = (index: number, status: RevisionStatus) => {
         if (status === 'revised') {
-            setRatingSelector({ isOpen: true, type: 'hadith', index });
+            if (hasHadithRevisionGoal) {
+                setRatingSelector({ isOpen: true, type: 'hadith', index });
+            } else {
+                dispatch({ type: 'UPDATE_HADITH_REVISION_STATUS', payload: { dayIndex: index, status } });
+                dispatch({ type: 'SET_TOAST', payload: t('mayAllahEase') });
+            }
         } else {
             dispatch({ type: 'UPDATE_HADITH_REVISION_STATUS', payload: { dayIndex: index, status } });
             const msg = t('mayAllahEase');
@@ -311,17 +319,37 @@ const DashboardView: React.FC = () => {
                 <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
                     <Card className="!bg-slate-900 border-white/5 shadow-2xl overflow-visible text-white p-8 group transition-all hover-glow">
                         <div className="flex justify-between items-start mb-8">
-                            <ProgressRing percent={hadithPercent} color="text-warning" icon={<Sparkles size={24} />} label={t('hadithGoal')} />
+                            <ProgressRing
+                                percent={hasHadithReadingPlan && hadithPlan ? Math.floor((state.progress.currentHadithRevisionIndex / hadithPlan.length) * 100) : hadithPercent}
+                                color="text-warning"
+                                icon={<Sparkles size={24} />}
+                                label={hasHadithReadingPlan ? (t('hadithReadingGoal') || 'Objectif lecture hadiths') : t('hadithGoal')}
+                            />
                         </div>
                         <div className="grid grid-cols-2 gap-4 mt-4 py-6 border-t border-white/5">
-                            <div>
-                                <span className="block text-2xl font-black text-warning">{masteredHadiths}</span>
-                                <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('mastered') || 'Hadiths acquis'}</span>
-                            </div>
-                            <div className="text-right">
-                                <span className="block text-2xl font-black text-white">{HADITH_COLLECTION.length - masteredHadiths}</span>
-                                <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('remaining') || 'Reste à apprendre'}</span>
-                            </div>
+                            {hasHadithReadingPlan && hadithPlan ? (
+                                <>
+                                    <div>
+                                        <span className="block text-2xl font-black text-warning">{state.progress.currentHadithRevisionIndex}</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysCompleted') || 'Jours effectués'}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="block text-2xl font-black text-white">{hadithPlan.length - state.progress.currentHadithRevisionIndex}</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysLeft') || 'Jours restants'}</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div>
+                                        <span className="block text-2xl font-black text-warning">{masteredHadiths}</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('mastered') || 'Hadiths acquis'}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="block text-2xl font-black text-white">{HADITH_COLLECTION.length - masteredHadiths}</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('remaining') || 'Reste à apprendre'}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </Card>
                 </motion.div>

@@ -178,6 +178,7 @@ export const ar = {
     "revisionProgress": "تقدم المراجعة",
     "readingGoal": "هدف القراءة",
     "hadithGoal": "هدف الأحاديث",
+    "hadithReadingGoal": "هدف قراءة الأحاديث",
     "revisionGoal": "هدف المراجعة",
     "pagesReadShort": "صفحات مقروءة",
     "mastered": "متقن",
