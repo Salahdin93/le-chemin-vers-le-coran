@@ -69,7 +69,8 @@ const RevisionPlanView: React.FC = () => {
                 type: 'UPDATE_REVISION_STATUS',
                 payload: { revisionIndex: index, status, hizbNum, difficulties }
             });
-            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+            const msg = t('mayAllahEase');
+            dispatch({ type: 'SET_TOAST', payload: msg });
         }
     };
 
@@ -97,7 +98,8 @@ const RevisionPlanView: React.FC = () => {
                 payload: { revisionIndex: index, status: 'revised', hizbNum, quality: rating }
             });
             setRatingSelector(null);
-            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+            const msg = Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik');
+            dispatch({ type: 'SET_TOAST', payload: msg });
             return;
         }
 
@@ -131,7 +133,8 @@ const RevisionPlanView: React.FC = () => {
                 }
             });
             setRatingSelector(null);
-            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+            const msg = Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik');
+            dispatch({ type: 'SET_TOAST', payload: msg });
         } else {
             setRatingSelector({ ...ratingSelector, surahRatings: newSurahRatings });
         }

@@ -156,7 +156,10 @@ const ReadingPlanView: React.FC = () => {
             };
             const recPlan = state.plans.originalReading ? recalculateFuturePlan(state.plans.originalReading, updatedHistory, state.progress.currentReadingDay) : null;
             dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory: updatedHistory, recalculatedPlan: recPlan! } });
-            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+            const msg = (status === 'done' || status === 'catchup')
+                ? (Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik'))
+                : t('mayAllahEase');
+            dispatch({ type: 'SET_TOAST', payload: msg });
             setEditingDay(null);
         };
 
@@ -181,7 +184,8 @@ const ReadingPlanView: React.FC = () => {
         const cDays = (s === 'done' || s === 'catchup') ? state.progress.consecutiveDays + 1 : 0;
         const rPlan = state.plans.originalReading ? recalculateFuturePlan(state.plans.originalReading, h, d + 1) : null;
         dispatch({ type: 'ADVANCE_DAY', payload: { newHistory: h, newConsecutiveDays: cDays, recalculatedPlan: rPlan! } });
-        dispatch({ type: 'SET_TOAST', payload: t('saved') });
+        const msg = Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik');
+        dispatch({ type: 'SET_TOAST', payload: msg });
     };
 
     return (

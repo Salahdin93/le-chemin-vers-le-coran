@@ -127,7 +127,10 @@ const DashboardView: React.FC = () => {
             setRatingSelector({ isOpen: true, type: 'hadith', index });
         } else {
             dispatch({ type: 'UPDATE_HADITH_REVISION_STATUS', payload: { dayIndex: index, status } });
-            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+            const msg = (status === 'revised')
+                ? (Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik'))
+                : t('mayAllahEase');
+            dispatch({ type: 'SET_TOAST', payload: msg });
         }
     };
 
@@ -139,7 +142,10 @@ const DashboardView: React.FC = () => {
             const newHistory = { ...state.progress.readingHistory, [dayKey]: isKahf ? { ...existing, kahfStatus: status } : { ...existing, status, realPages: status === 'not_read' ? 0 : day.recalculatedPages + adj, adjustment: adj, timeSpent: time !== undefined ? (existing.timeSpent || 0) + time : existing.timeSpent } };
             const recPlan = originalReadingPlan ? recalculateFuturePlan(originalReadingPlan, newHistory, state.progress.currentReadingDay) : null;
             dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory, recalculatedPlan: recPlan! } });
-            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+            const msg = (status === 'done' || status === 'catchup')
+                ? (Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik'))
+                : t('mayAllahEase');
+            dispatch({ type: 'SET_TOAST', payload: msg });
         };
         if (!isKahf && (status === 'partial' || status === 'catchup')) {
             setInputModalState({ isOpen: true, title: t(status === 'partial' ? 'partialReadingTitle' : 'catchUpReadingTitle'), label: t(status === 'partial' ? 'partialLabel' : 'catchUpLabel'), onSubmit: (v) => { const n = parseInt(v) || 0; if (n >= 0) execute(status === 'partial' ? -n : n); } });
@@ -148,7 +154,10 @@ const DashboardView: React.FC = () => {
 
     const handleHadithStatusChange = (hadithId: number, status: HadithMemorizationStatus) => {
         dispatch({ type: 'UPDATE_HADITH_PROGRESS', payload: { hadithId, status, date: new Date().toISOString() } });
-        dispatch({ type: 'SET_TOAST', payload: t('saved') });
+        const msg = (status === 'acquis' || status === 'lu')
+            ? (Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik'))
+            : t('mayAllahEase');
+        dispatch({ type: 'SET_TOAST', payload: msg });
     };
 
     const handleRevisionRating = (rating: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir') => {
@@ -189,6 +198,8 @@ const DashboardView: React.FC = () => {
                     type: 'UPDATE_REVISION_STATUS',
                     payload: { revisionIndex: index, status: 'revised', quality: overallQuality, surahRatings: newSurahRatings }
                 });
+                const msg = Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik');
+                dispatch({ type: 'SET_TOAST', payload: msg });
                 setRatingSelector(null);
             } else {
                 setRatingSelector({ ...ratingSelector, surahRatings: newSurahRatings });
@@ -198,6 +209,8 @@ const DashboardView: React.FC = () => {
                 type: 'UPDATE_HADITH_REVISION_STATUS',
                 payload: { dayIndex: index, status: 'revised', quality: rating }
             });
+            const msg = Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik');
+            dispatch({ type: 'SET_TOAST', payload: msg });
             setRatingSelector(null);
         }
     };
@@ -215,7 +228,8 @@ const DashboardView: React.FC = () => {
         const rPlan = originalReadingPlan ? recalculateFuturePlan(originalReadingPlan, h, d + 1) : null;
         dispatch({ type: 'ADVANCE_DAY', payload: { newHistory: h, newConsecutiveDays: cDays, recalculatedPlan: rPlan! } });
         if (readingGoal && d === readingGoal.duration) setIsEndOfGoalModalOpen(true);
-        dispatch({ type: 'SET_TOAST', payload: t('saved') });
+        const msg = Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik');
+        dispatch({ type: 'SET_TOAST', payload: msg });
     };
 
     const currentRevision = isRevisionActive ? revisionPlan?.[state.progress.currentRevisionIndex] : null;
