@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import Notification, { NotificationProps } from './Notification';
+import React, { useCallback } from 'react';
+import { NotificationProps } from './Notification';
 import { useStore } from '@/context/AppContext';
 
 type NotificationData = Omit<NotificationProps, 'id' | 'onDismiss'>;
@@ -10,7 +10,6 @@ export const notificationService = {
 };
 
 const NotificationContainer: React.FC = () => {
-  const [notifications, setNotifications] = useState<NotificationProps[]>([]);
   const { dispatch } = useStore();
 
   const show = useCallback((data: NotificationData) => {
@@ -18,24 +17,16 @@ const NotificationContainer: React.FC = () => {
     const newNotification: NotificationProps = {
       ...data,
       id,
-      onDismiss: (idToRemove: string) => {
-        setNotifications(current => current.filter(n => n.id !== idToRemove));
-      }
+      onDismiss: () => { },
     };
-
-    setNotifications(current => [newNotification, ...current]);
+    // Only add to history — no floating toast shown; access via notification bell
     dispatch({ type: 'ADD_NOTIFICATION_TO_HISTORY', payload: newNotification });
   }, [dispatch]);
 
   notificationService.show = show;
 
-  return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] space-y-3 w-full max-w-sm px-4">
-      {notifications.map(notification => (
-        <Notification key={notification.id} {...notification} />
-      ))}
-    </div>
-  );
+  // Render nothing — notifications live in the center panel only
+  return null;
 };
 
 export default NotificationContainer;

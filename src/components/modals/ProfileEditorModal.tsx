@@ -6,19 +6,11 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Avatar from '@/components/ui/Avatar';
 import { getInitialBadges } from '@/services/achievementLogic';
+import { THEMES } from '@/constants/ui';
 
 const SKIN_TONES = ['#FFE0BD', '#F1C27D', '#E0AC69', '#8D5524', '#3D2415'];
 
-// Options pour les thèmes et couleurs
-const themeOptions: { value: Theme; label: string }[] = [
-  { value: 'light', label: 'Clair' },
-  { value: 'dark', label: 'Sombre' },
-  { value: 'aube', label: 'Aube' },
-  { value: 'crepuscule', label: 'Crépuscule' },
-  { value: 'oasis', label: 'Oasis' },
-  { value: 'sepia', label: 'Sépia' },
-  { value: 'nightblue', label: 'Bleu Nuit' },
-];
+
 
 const accentColorOptions: { value: AccentColor; label: string; color: string }[] = [
   { value: '#10b981', label: 'Vert Coran', color: '#10b981' },
@@ -102,7 +94,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-h-[80vh] overflow-y-auto px-1 py-2 custom-scrollbar">
         <h2 className="text-2xl font-bold text-center">{isEditing ? t('editProfile') : t('createProfile')}</h2>
 
         <Input
@@ -143,9 +135,9 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
         <div>
           <label className="block mb-2 font-semibold text-text-main text-left">{t('theme')}</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {themeOptions.map(option => (
-              <Button type="button" key={option.value} variant={theme === option.value ? 'primary' : 'ghost'} onClick={() => setTheme(option.value)} size="sm">
-                {option.label}
+            {THEMES.map(option => (
+              <Button type="button" key={option.id} variant={theme === option.id ? 'primary' : 'ghost'} onClick={() => setTheme(option.id as Theme)} size="sm">
+                {option.icon} {option.name}
               </Button>
             ))}
           </div>

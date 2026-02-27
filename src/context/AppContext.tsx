@@ -486,7 +486,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'SET_ACTIVE_EVALUATION_PLAN': return { ...state, activeEvaluationPlan: action.payload };
     case 'SET_EDITING_EVALUATION_PLAN_ID': return { ...state, editingEvaluationPlanId: action.payload };
-    case 'ADD_NOTIFICATION_TO_HISTORY': return { ...state, notificationHistory: [action.payload, ...state.notificationHistory] };
+    case 'ADD_NOTIFICATION_TO_HISTORY': {
+      // Deduplicate: don't add if title+message identical to most recent
+      const isDuplicate = state.notificationHistory.some(
+        n => n.title === action.payload.title && n.message === action.payload.message
+      );
+      if (isDuplicate) return state;
+      return { ...state, notificationHistory: [action.payload, ...state.notificationHistory] };
+    }
     case 'REMOVE_NOTIFICATION_FROM_HISTORY': return { ...state, notificationHistory: state.notificationHistory.filter(n => n.id !== action.payload) };
     case 'CLEAR_NOTIFICATION_HISTORY': return { ...state, notificationHistory: [] };
     case 'SET_KAHF_NOTIFICATION_SHOWN': return { ...state, kahfNotificationShownThisSession: true };

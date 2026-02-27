@@ -41,7 +41,7 @@
 
   /* --- DARK THEME (Deep Aurora) --- */
   html.dark,
-  html:not(.light):not(.sepia):not(.midnight):not(.chalkboard):not(.wood):not(.nightblue):not(.sand):not(.emerald):not(.sunrise):not(.leafy):not(.pearl) {
+  html:not(.light):not(.sepia):not(.midnight):not(.chalkboard):not(.wood):not(.nightblue):not(.sand):not(.emerald):not(.sunrise):not(.leafy):not(.pearl):not(.rose):not(.onboarding):not(.crepuscule):not(.oasis) {
     --bg-main: #020617;
     --bg-secondary: #0f172a;
     --card-bg: #1e293b;

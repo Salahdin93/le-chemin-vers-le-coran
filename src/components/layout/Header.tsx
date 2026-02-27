@@ -19,7 +19,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const notificationCount = state.notificationHistory.length;
 
-    const isDark = !['light', 'sepia', 'emerald', 'aube', 'oasis', 'sand', 'wood', 'sunrise', 'leafy', 'pearl'].includes(activeProfile?.theme ?? 'dark');
+    const isDark = !['light', 'sepia', 'emerald', 'aube', 'oasis', 'sand', 'wood', 'sunrise', 'leafy', 'pearl', 'rose'].includes(activeProfile?.theme ?? 'dark');
     const logoSrc = isDark ? LOGO_URL_DARK : LOGO_URL;
 
     useEffect(() => {
@@ -30,9 +30,9 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
 
     const greeting = (() => {
         const h = new Date().getHours();
-        if (h < 12) return 'Sabah al-Khayr';
-        if (h < 18) return 'Masâ’ al-Khayr';
-        return 'Masâ’ al-Nûr';
+        if (h < 12) return t('goodMorning') || 'Sabah al-Khayr';
+        if (h < 18) return t('goodAfternoon') || 'Massa al-Khayr';
+        return t('goodEvening') || 'Massa an-Nour';
     })();
 
     const handleLogoutConfirm = () => {
@@ -67,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
                         </div>
                     </div>
 
-                    {/* Center: Greeting (Desktop) */}
+                    {/* Center: Greeting */}
                     <AnimatePresence mode="wait">
                         {activeProfile && (
                             <motion.div
@@ -103,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
                             )}
                         </button>
 
-                        {/* User Profile / Status */}
+                        {/* User Profile */}
                         {activeProfile && (
                             <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-3 py-1 md:py-1.5 pr-1 md:pr-1.5 rounded-xl md:rounded-2xl bg-bg-secondary/50 border border-border-main/30 backdrop-blur-md">
                                 <div className="hidden sm:flex flex-col items-end">
@@ -119,7 +119,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
                             </div>
                         )}
 
-                        {/* Exit */}
+                        {/* Logout */}
                         <button
                             onClick={() => setIsLogoutConfirmOpen(true)}
                             className="p-2 md:p-3 rounded-lg md:rounded-2xl bg-white/5 hover:bg-danger/10 text-text-main/20 hover:text-danger transition-all duration-300"
@@ -132,7 +132,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
                             isOpen={isLogoutConfirmOpen}
                             onClose={() => setIsLogoutConfirmOpen(false)}
                             onConfirm={handleLogoutConfirm}
-                            title={t('logout') || 'Déconnexion'}
+                            title={t('logout') || 'Deconnexion'}
                             message={t('confirmLogout') || 'Voulez-vous changer de profil ?'}
                             variant="warning"
                             confirmText={t('confirm') || 'Confirmer'}
@@ -142,6 +142,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
                 </div>
             </header>
 
+            {/* Logout animation overlay */}
             <AnimatePresence>
                 {isLoggingOut && (
                     <motion.div
@@ -151,11 +152,28 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
                         transition={{ duration: 0.5 }}
                         className="fixed inset-0 z-[99999] flex flex-col items-center justify-center p-4 bg-bg-main"
                     >
-                        <div className="absolute inset-0 dynamic-bg geometric-overlay pointer-events-none opacity-40" />
+                        {/* Arabic letter watermark */}
+                        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none" aria-hidden="true">
+                            {[
+                                { char: 'ن', top: '8%', left: '5%', size: '12rem', op: 0.08, rot: '-8deg' },
+                                { char: 'ب', top: '5%', left: '60%', size: '10rem', op: 0.06, rot: '12deg' },
+                                { char: 'و', top: '50%', left: '78%', size: '14rem', op: 0.09, rot: '-5deg' },
+                                { char: 'م', top: '68%', left: '55%', size: '11rem', op: 0.07, rot: '8deg' },
+                                { char: 'ق', top: '70%', left: '3%', size: '10rem', op: 0.06, rot: '-12deg' },
+                                { char: 'س', top: '35%', left: '28%', size: '13rem', op: 0.08, rot: '4deg' },
+                            ].map(({ char, top, left, size, op, rot }) => (
+                                <span key={char} style={{
+                                    position: 'absolute', top, left,
+                                    fontFamily: 'Amiri, serif', fontSize: size,
+                                    color: 'currentColor', opacity: op,
+                                    transform: `rotate(${rot})`, lineHeight: 1,
+                                }}>{char}</span>
+                            ))}
+                        </div>
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
-                            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
                             className="relative z-10 flex flex-col items-center gap-8 text-center"
                         >
                             <h1

@@ -13,14 +13,33 @@ const SplashScreen: React.FC = () => {
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #052e16 0%, #064e3b 40%, #065f46 70%, #047857 100%)' }}
     >
-      {/* Islamic Pattern */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.04]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='white' stroke-width='0.8'%3E%3Cpolygon points='40,5 55,20 75,20 60,35 67,55 40,45 13,55 20,35 5,20 25,20'/%3E%3Ccircle cx='40' cy='40' r='18'/%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundSize: '80px 80px',
-        }}
-      />
+      {/* Arabic Letter Watermark — 6 large scattered letters */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden select-none" aria-hidden="true">
+        {[
+          { char: 'ن', top: '8%', left: '5%', size: '9rem', op: 0.09, rot: '-8deg' },
+          { char: 'ب', top: '5%', left: '65%', size: '8rem', op: 0.07, rot: '12deg' },
+          { char: 'و', top: '45%', left: '75%', size: '11rem', op: 0.10, rot: '-5deg' },
+          { char: 'م', top: '70%', left: '60%', size: '9rem', op: 0.08, rot: '8deg' },
+          { char: 'ق', top: '72%', left: '3%', size: '8rem', op: 0.07, rot: '-12deg' },
+          { char: 'س', top: '38%', left: '30%', size: '10rem', op: 0.10, rot: '4deg' },
+        ].map(({ char, top, left, size, op, rot }) => (
+          <span
+            key={char}
+            style={{
+              position: 'absolute', top, left,
+              fontFamily: 'Amiri, serif',
+              fontSize: size,
+              color: 'white',
+              opacity: op,
+              transform: `rotate(${rot})`,
+              lineHeight: 1,
+              userSelect: 'none',
+            }}
+          >
+            {char}
+          </span>
+        ))}
+      </div>
 
       {/* Background green glow */}
       <div
