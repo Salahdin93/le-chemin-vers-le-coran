@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card';
 import ProfileEditorModal from '@/components/modals/ProfileEditorModal';
 import { Edit, Trash2, Plus } from 'lucide-react'; // Icônes pour un look plus propre
 import ConfirmModal from '../ui/ConfirmModal';
+import Avatar from '@/components/ui/Avatar';
 
 const ProfileCard = React.memo<{ profile: Profile; onSelect: () => void; onEdit: () => void; onDelete: () => void; t: any; }>(
     ({ profile, onSelect, onEdit, onDelete, t }) => {
@@ -17,8 +18,10 @@ const ProfileCard = React.memo<{ profile: Profile; onSelect: () => void; onEdit:
                     onClick={onSelect}
                     className="w-full p-8 text-center glass-card border-none hover:bg-white/10 shadow-premium transition-all duration-500 group-hover:scale-[1.02]"
                 >
-                    <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-500 drop-shadow-lg">
-                        {profile.gender === 'female' ? '🧕' : '🧔‍♂️'}
+                    <div className="mx-auto w-24 h-24 mb-6 transform group-hover:scale-110 transition-transform duration-500 drop-shadow-lg">
+                        <Avatar
+                            config={profile.avatar || { gender: profile.gender === 'female' ? 'female_hijab' : 'male_beard', skinTone: '#E0AC69' }}
+                        />
                     </div>
                     <h3 className="text-xl font-black text-white truncate mb-1">{profile.name}</h3>
                     {profile.password && (

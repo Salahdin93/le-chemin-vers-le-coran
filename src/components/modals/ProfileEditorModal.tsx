@@ -4,7 +4,10 @@ import { Profile, Theme, AccentColor } from '@/types';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import Avatar from '@/components/ui/Avatar';
 import { getInitialBadges } from '@/services/achievementLogic';
+
+const SKIN_TONES = ['#FFE0BD', '#F1C27D', '#E0AC69', '#8D5524', '#3D2415'];
 
 // Options pour les thèmes et couleurs
 const themeOptions: { value: Theme; label: string }[] = [
@@ -36,6 +39,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
   const { dispatch, t } = useStore();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [skinTone, setSkinTone] = useState<string>('#E0AC69');
   const [theme, setTheme] = useState<Theme>('light');
   const [accentColor, setAccentColor] = useState<AccentColor>('#2E7D32');
 
@@ -45,12 +49,14 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
     if (isEditing && profileToEdit) {
       setName(profileToEdit.name);
       setGender(profileToEdit.gender);
+      setSkinTone(profileToEdit.avatar?.skinTone || '#E0AC69');
       setTheme(profileToEdit.theme);
       setAccentColor(profileToEdit.accentColor);
     } else {
       // Réinitialiser pour la création
       setName('');
       setGender('male');
+      setSkinTone('#E0AC69');
       setTheme('light');
       setAccentColor('#2E7D32');
     }
@@ -63,13 +69,21 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
     if (isEditing && profileToEdit) {
       dispatch({
         type: 'UPDATE_PROFILE',
-        payload: { ...profileToEdit, name, gender, theme, accentColor },
+        payload: {
+          ...profileToEdit,
+          name,
+          gender,
+          avatar: { gender: gender === 'female' ? 'female_hijab' : 'male_beard', skinTone },
+          theme,
+          accentColor
+        },
       });
     } else {
       const newProfile: Profile = {
         id: `profile_${Date.now()}`,
         name: name.trim(),
         gender,
+        avatar: { gender: gender === 'female' ? 'female_hijab' : 'male_beard', skinTone },
         theme,
         accentColor,
         goals: {},
@@ -100,10 +114,29 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
         />
 
         <div>
-          <label className="block mb-2 font-semibold text-text-main text-left">{t('gender')}</label>
-          <div className="flex gap-4">
-            <Button type="button" variant={gender === 'male' ? 'primary' : 'ghost'} onClick={() => setGender('male')} className="flex-1">🧔‍♂️ Homme</Button>
-            <Button type="button" variant={gender === 'female' ? 'primary' : 'ghost'} onClick={() => setGender('female')} className="flex-1">🧕 Femme</Button>
+          <label className="block mb-2 font-semibold text-text-main text-left">{t('gender')} & Avatar</label>
+          <div className="flex gap-4 mb-4">
+            <Button type="button" variant={gender === 'male' ? 'primary' : 'ghost'} onClick={() => setGender('male')} className="flex-1 min-h-[100px] flex-col gap-2">
+              <div className="w-12 h-12"><Avatar config={{ gender: 'male_beard', skinTone }} /></div>
+              <span>Homme</span>
+            </Button>
+            <Button type="button" variant={gender === 'female' ? 'primary' : 'ghost'} onClick={() => setGender('female')} className="flex-1 min-h-[100px] flex-col gap-2">
+              <div className="w-12 h-12"><Avatar config={{ gender: 'female_hijab', skinTone }} /></div>
+              <span>Femme</span>
+            </Button>
+          </div>
+
+          <label className="block mb-2 font-semibold text-text-main text-sm text-left opacity-70">Teint de peau</label>
+          <div className="flex gap-3 justify-start">
+            {SKIN_TONES.map(tone => (
+              <button
+                key={tone}
+                type="button"
+                onClick={() => setSkinTone(tone)}
+                className={`w-8 h-8 rounded-full border-4 transition-all duration-300 hover:scale-110 ${skinTone === tone ? 'border-accent-color scale-110' : 'border-transparent opacity-80'}`}
+                style={{ backgroundColor: tone }}
+              />
+            ))}
           </div>
         </div>
 

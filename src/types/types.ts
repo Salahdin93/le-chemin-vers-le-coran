@@ -46,6 +46,11 @@ export type Language = 'fr' | 'en' | 'ar';
 export type Theme = 'light' | 'dark' | 'sepia' | 'chalkboard' | 'wood' | 'nightblue' | 'sand' | 'emerald' | 'sunrise' | 'leafy' | 'pearl' | 'midnight' | 'aube' | 'crepuscule' | 'oasis';
 export type AccentColor = string;
 export type Gender = 'male' | 'female';
+export type AvatarGender = 'male_beard' | 'female_hijab';
+export interface AvatarConfig {
+  gender: AvatarGender;
+  skinTone: string;
+}
 export type RevisionMode = 'sourate' | 'juzz' | 'hizb';
 export type ReadingStatus = 'done' | 'partial' | 'catchup' | 'not_read';
 export type RevisionStatus = 'revised' | 'to-review' | 'not_revised' | 'pending';
@@ -206,6 +211,7 @@ export interface Profile {
   id: string;
   name: string;
   gender: Gender;
+  avatar?: AvatarConfig;
   password?: string;
   theme: Theme;
   accentColor: AccentColor;
@@ -311,6 +317,7 @@ export interface RevisionPlanDay {
 export interface WizardData {
   name?: string;
   gender?: Gender;
+  avatar?: AvatarConfig;
   password?: string;
   passwordConfirm?: string;
   termsAccepted?: boolean;
