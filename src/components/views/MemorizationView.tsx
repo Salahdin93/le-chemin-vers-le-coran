@@ -18,6 +18,8 @@ import ConfirmModal from '../ui/ConfirmModal';
 
 type FormType = 'surahPart' | 'hizb' | 'juzz' | 'hadith' | null;
 
+type ModalDetailItem = { id?: string; name: string; level: MemorizationLevel; status?: MemorizationStatus };
+
 const StatusIndicator: React.FC<{ status: MemorizationStatus | HadithMemorizationStatus }> = ({ status }) => {
     const colors: Record<string, string> = {
         excellent: 'bg-success ring-success/20',
@@ -41,7 +43,7 @@ const MemorizationView: React.FC = () => {
     const [formType, setFormType] = useState<FormType>(null);
     const [selectedItemId, setSelectedItemId] = useState('');
     const [selectedLevel, setSelectedLevel] = useState<MemorizationLevel>('bon');
-    const [modalContent, setModalContent] = useState<{ title: string, items: { id?: string, name: string, level: MemorizationLevel, status?: MemorizationStatus }[], hizbNumber?: string } | null>(null)
+    const [modalContent, setModalContent] = useState<{ title: string, items: ModalDetailItem[], hizbNumber?: string } | null>(null)
     const [editItem, setEditItem] = useState<{ type: 'hizb' | 'juzz' | 'surahPart'; item: MemorizedHizb | MemorizedJuzz | MemorizedSurahPart } | null>(null)
     const [editLevel, setEditLevel] = useState<MemorizationLevel>('bon')
     const [editStatus, setEditStatus] = useState<MemorizationStatus>('bon')
@@ -50,9 +52,9 @@ const MemorizationView: React.FC = () => {
 
     const memorizations = activeProfile?.memorizations;
     if (!memorizations || !activeProfile) return null;
-    const juzzList = Array.isArray(juzzList) ? juzzList : [];
-    const hizbsList = Array.isArray(hizbsList) ? hizbsList : [];
-    const surahPartsList = Array.isArray(surahPartsList) ? surahPartsList : [];
+    const juzzList: MemorizedJuzz[] = Array.isArray(memorizations.juzz) ? memorizations.juzz : [];
+    const hizbsList: MemorizedHizb[] = Array.isArray(memorizations.hizbs) ? memorizations.hizbs : [];
+    const surahPartsList: MemorizedSurahPart[] = Array.isArray(memorizations.surahParts) ? memorizations.surahParts : [];
 
     const handleAddItem = () => {
         if (!selectedItemId || !formType || !activeProfile) return;
@@ -531,7 +533,7 @@ const MemorizationView: React.FC = () => {
                             <h3 className="text-3xl font-black tracking-tight text-gradient">{modalContent.title}</h3>
                         </header>
                         <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-4 no-scrollbar">
-                            {modalContent.items.map((item, index) => (
+                            {modalContent.items.map((item: ModalDetailItem, index: number) => (
                                 <div key={(item.id || item.name) + String(index)} className='flex flex-wrap justify-between items-center gap-3 p-5 rounded-2xl bg-bg-secondary/40 border border-border-main/30 group hover:bg-bg-secondary transition-colors'>
                                     <div className="flex items-center gap-4">
                                         <StatusIndicator status={item.status || 'bon'} />

@@ -590,12 +590,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_KAHF_NOTIFICATION_SHOWN': return { ...state, kahfNotificationShownThisSession: true };
     case 'SET_APP_LANGUAGE': return { ...state, settings: { ...state.settings, lang: action.payload } };
 
-    case 'UPDATE_SETTINGS': {
-      return {
-        ...state,
-        settings: { ...state.settings, ...action.payload }
-      };
-    }
     default: return state;
   }
 }
