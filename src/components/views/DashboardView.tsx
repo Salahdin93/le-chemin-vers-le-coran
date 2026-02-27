@@ -127,9 +127,7 @@ const DashboardView: React.FC = () => {
             setRatingSelector({ isOpen: true, type: 'hadith', index });
         } else {
             dispatch({ type: 'UPDATE_HADITH_REVISION_STATUS', payload: { dayIndex: index, status } });
-            const msg = (status === 'revised')
-                ? (Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik'))
-                : t('mayAllahEase');
+            const msg = t('mayAllahEase');
             dispatch({ type: 'SET_TOAST', payload: msg });
         }
     };
