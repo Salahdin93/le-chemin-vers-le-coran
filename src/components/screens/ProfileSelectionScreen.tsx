@@ -4,7 +4,6 @@ import { useStore } from '@/context/AppContext';
 import { Profile } from '@/types';
 import Button from '@/components/ui/Button';
 import { LOGO_URL_DARK } from '@/constants/ui';
-import Card from '@/components/ui/Card';
 import ProfileEditorModal from '@/components/modals/ProfileEditorModal';
 import { Edit, Trash2, Plus } from 'lucide-react'; // Icônes pour un look plus propre
 import ConfirmModal from '../ui/ConfirmModal';

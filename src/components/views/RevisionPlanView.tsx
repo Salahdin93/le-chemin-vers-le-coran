@@ -5,7 +5,7 @@ import { RevisionPlanDay, RevisionStatus } from '@/types';
 import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid, History, ChevronRight, Folder, Trophy, Star, RotateCcw } from 'lucide-react';
+import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid, History, Folder, Trophy, Star, RotateCcw } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 import Modal from '@/components/ui/Modal';
 import { HIZB_DATA } from '@/constants/quranData';
