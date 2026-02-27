@@ -5,7 +5,6 @@ import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
 import { getInitialBadges, checkRevisionMilestone, checkPerfectEvaluation, checkFirstMemorization, checkKhatmaMilestones, checkHadithMilestones } from '../services/achievementLogic';
 import { TRANSLATIONS } from '../translations';
-import { appStateSchema } from '../schemas/appStateSchema';
 import { dbService } from '../lib/dbService';
 import { supabase } from '../lib/supabase';
 import { generateUUID } from '../utils/uuid';
