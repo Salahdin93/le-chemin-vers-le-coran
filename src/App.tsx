@@ -30,17 +30,18 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    // Redirect to auth if no profile exists and user is not logged in.
+    // Compte obligatoire : rediriger vers auth si non connecté sur les écrans protégés
     const checkAuthAndRedirect = async () => {
-      if (!showSplash && state.profiles.length === 0 && (state.appScreen === 'profile-selection' || state.appScreen === 'welcome')) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
-        }
+      if (showSplash) return;
+      const protectedScreens = ['welcome', 'profile-selection', 'wizard', 'main'];
+      if (!protectedScreens.includes(state.appScreen)) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
       }
     };
     checkAuthAndRedirect();
-  }, [showSplash, state.appScreen, state.profiles.length, dispatch]);
+  }, [showSplash, state.appScreen, dispatch]);
 
   const renderScreen = () => {
     if (showSplash || state.appScreen === 'splash') {

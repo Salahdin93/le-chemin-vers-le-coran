@@ -589,89 +589,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return translation;
   }, [state.settings.lang]);
 
-  // Chargement initial
+  // Charger l'état depuis Supabase (utilisé au mount et après connexion)
+  const loadFromSupabase = useCallback(async () => {
+    try {
+      const remoteSettings = await dbService.getSettings();
+      const remoteProfiles = await dbService.getProfiles();
+      const newState = {
+        ...defaultState,
+        profiles: remoteProfiles,
+        settings: remoteSettings?.settings ? { ...defaultState.settings, ...remoteSettings.settings } : defaultState.settings,
+        activeProfileId: remoteSettings?.activeProfileId || (remoteProfiles[0]?.id || null),
+        appScreen: remoteProfiles.length > 0 ? 'main' : 'welcome'
+      };
+      dispatch({ type: 'INITIALIZE_STATE', payload: newState });
+    } catch (e) {
+      console.error('Failed to load from Supabase', e);
+      dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
+    }
+  }, [dispatch]);
+
+  // Chargement initial : compte obligatoire, tout depuis Supabase
   useEffect(() => {
     const loadState = async () => {
       try {
-        // 1. Tenter de charger depuis Supabase (prioritaire si connecté)
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const remoteSettings = await dbService.getSettings();
-          const remoteProfiles = await dbService.getProfiles();
-
-          if (remoteProfiles.length > 0 || remoteSettings) {
-            const newState = {
-              ...defaultState,
-              profiles: remoteProfiles,
-              settings: remoteSettings?.settings ? { ...state.settings, ...remoteSettings.settings } : state.settings,
-              activeProfileId: remoteSettings?.activeProfileId || (remoteProfiles[0]?.id || null)
-            };
-            dispatch({ type: 'INITIALIZE_STATE', payload: newState });
-            return;
-          } else {
-            // Si l'utilisateur est connecté mais n'a RIEN sur Supabase, on tente de sauver le local actuel vers Supabase
-            console.log('📤 Empty remote, syncing local state to Supabase...');
-            const savedStateJSON = localStorage.getItem('quranCompanionState_v7');
-            if (savedStateJSON) {
-              try {
-                const parsedState = JSON.parse(savedStateJSON);
-                await dbService.syncFullState(parsedState);
-              } catch (e) {
-                console.error("Failed to sync local state to empty remote", e);
-              }
-            }
-          }
+          await loadFromSupabase();
+          return;
         }
-
-        // 2. Fallback sur localStorage (legacy ou non connecté)
-        const savedStateJSON = localStorage.getItem('quranCompanionState_v7');
-        if (savedStateJSON) {
-          const parsedState = JSON.parse(savedStateJSON);
-          const validationResult = appStateSchema.safeParse(parsedState);
-          if (validationResult.success) {
-            dispatch({ type: 'INITIALIZE_STATE', payload: { ...defaultState, ...validationResult.data } });
-          } else {
-            console.warn("Invalid data found in localStorage. Resetting state.", validationResult.error);
-            localStorage.removeItem('quranCompanionState_v7');
-            dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
-          }
-        } else {
-          const browserLang = navigator.language.split('-')[0];
-          const initialLang = ['fr', 'en', 'ar'].includes(browserLang) ? browserLang as 'fr' : 'fr';
-          dispatch({ type: 'UPDATE_SETTINGS', payload: { lang: initialLang as any } });
-          dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
-        }
+        // Non connecté : pas de chargement local, aller vers langue puis auth
+        const storedLang = localStorage.getItem('quranCompanionLang') as 'fr' | 'en' | 'ar' | null;
+        const browserLang = navigator.language.split('-')[0];
+        const initialLang = (storedLang && ['fr', 'en', 'ar'].includes(storedLang))
+          ? storedLang
+          : (['fr', 'en', 'ar'].includes(browserLang) ? browserLang as 'fr' : 'fr');
+        dispatch({ type: 'UPDATE_SETTINGS', payload: { lang: initialLang as any } });
+        dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
       } catch (error) {
-        console.error("Failed to load or parse state", error);
+        console.error('Failed to load state', error);
         dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
       }
     };
-
     loadState();
-  }, []);
+  }, [loadFromSupabase]);
 
-  // Sauvegarde automatique optimisée (Supabase + localStorage)
+  // Réagir à la connexion / déconnexion : recharger depuis Supabase
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          await loadFromSupabase();
+        }
+      }
+      if (event === 'SIGNED_OUT') {
+        dispatch({ type: 'INITIALIZE_STATE', payload: { ...defaultState, profiles: [], activeProfileId: null } });
+        dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [loadFromSupabase, dispatch]);
+
+  // Sauvegarde uniquement sur Supabase (pas de persistance locale)
   useEffect(() => {
     if (state.appScreen === 'splash') return;
 
-    // 1. Sauvegarde LocalStorage immédiate
-    try {
-      const stateToSave = { ...state, notificationHistory: [] };
-      localStorage.setItem('quranCompanionState_v7', JSON.stringify(stateToSave));
-    } catch (error) {
-      console.error("Failed to save state to localStorage", error);
-    }
-
-    // 2. Synchronisation Supabase avec debounce adaptatif
-    // Délai court (500ms) si nouveau profil ajouté, sinon 3s
-    // Toujours synchroniser avec debounce (3 secondes)
-    // La synchronisation immédiate à l'ajout de profil est gérée par le délai
-    const delay = state.profiles.length !== prevProfilesCount.current ? 500 : 3000;
+    const isNewProfile = state.profiles.length !== prevProfilesCount.current;
     prevProfilesCount.current = state.profiles.length;
+    // Nouveau profil : sync immédiat. Sinon debounce 3s.
+    const delay = isNewProfile ? 0 : 3000;
     const timeoutId = setTimeout(async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        console.log('☁️ Syncing to Supabase...');
+        if (isNewProfile) console.log('☁️ Saving new profile to Supabase...');
         await dbService.syncFullState(state);
       }
     }, delay);
@@ -739,6 +728,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getSnapshot = useCallback(() => storeRef.current.state, []);
+
+  // Persister la langue pour l'écran auth (utilisateur non connecté)
+  useEffect(() => {
+    if (state.settings?.lang) {
+      localStorage.setItem('quranCompanionLang', state.settings.lang);
+    }
+  }, [state.settings?.lang]);
 
   const enhancedDispatch = (action: AppAction) => {
     dispatch(action);

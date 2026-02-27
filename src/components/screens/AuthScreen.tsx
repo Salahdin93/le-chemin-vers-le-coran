@@ -26,6 +26,8 @@ const AuthScreen: React.FC = () => {
                 const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
                 setSuccess('✅ Vérifiez votre email pour confirmer votre inscription');
+                // Redirection comme en sign in : onAuthStateChange rechargera l’état depuis Supabase
+                dispatch({ type: 'SET_APP_SCREEN', payload: 'splash' });
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
