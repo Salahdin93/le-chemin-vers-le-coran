@@ -3,8 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useStore } from '../../context/AppContext';
 import Input from '../ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowLeft, Loader2, UserPlus, LogIn, Sparkles } from 'lucide-react';
-import { LOGO_URL_DARK } from '@/constants/ui';
+import { Mail, Lock, Loader2, UserPlus, LogIn } from 'lucide-react';
 
 const AuthScreen: React.FC = () => {
     const { dispatch, t } = useStore();
@@ -59,7 +58,7 @@ const AuthScreen: React.FC = () => {
 
     return (
         <div
-            className="fixed inset-0 flex items-center justify-center p-6 overflow-hidden"
+            className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto"
             style={{ background: 'linear-gradient(160deg, #052e16 0%, #064e3b 35%, #065f46 60%, #047857 100%)' }}
         >
             {/* Background pattern */}
@@ -81,7 +80,7 @@ const AuthScreen: React.FC = () => {
                 className="max-w-md w-full"
             >
                 <div
-                    className="relative overflow-hidden"
+                    className="relative max-h-[90vh] overflow-y-auto my-4"
                     style={{
                         background: 'rgba(255,255,255,0.07)',
                         backdropFilter: 'blur(24px)',
@@ -91,77 +90,7 @@ const AuthScreen: React.FC = () => {
                         boxShadow: '0 30px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
                     }}
                 >
-                    {/* Top shine */}
                     <div className="absolute top-0 left-0 right-0 h-[1px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)' }} />
-
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <motion.div
-                            initial={{ scale: 0.7, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.2, duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
-                            className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center"
-                            style={{
-                                background: 'rgba(255,255,255,0.08)',
-                                border: '1px solid rgba(255,255,255,0.15)',
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.2), 0 0 40px rgba(52,211,153,0.2)',
-                            }}
-                        >
-                            <img src={LOGO_URL_DARK} alt="Logo" className="w-12 h-12 object-contain" />
-                        </motion.div>
-
-                        {/* Identity Context */}
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4" style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            < Sparkles size={12} className="text-amber-400" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100/60">
-                                Mon Compte Universel
-                            </span>
-                        </div>
-
-                        <h2
-                            className="text-3xl font-black font-cairo mb-2"
-                            style={{
-                                background: 'linear-gradient(135deg, #ffffff 0%, #d1fae5 100%)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                backgroundClip: 'text',
-                            }}
-                        >
-                            {isSignUp ? 'Créer un compte' : 'Mon Compte'}
-                        </h2>
-                        <p className="text-sm font-medium" style={{ color: 'rgba(167,243,208,0.6)' }}>
-                            {isSignUp
-                                ? 'Vos données sauvegardées en sécurité'
-                                : 'Connectez-vous pour accéder à vos données sauvegardées'}
-                        </p>
-                    </div>
-
-                    {/* ===== Bénéfices Compte ===== */}
-                    {!isSignUp && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.35 }}
-                            className="grid grid-cols-3 gap-2 mb-6"
-                        >
-                            {[
-                                { icon: '💾', label: 'Sauvegarde auto' },
-                                { icon: '📱', label: 'Multi-appareils' },
-                                { icon: '🔒', label: 'Sécurisé' },
-                            ].map((item) => (
-                                <div
-                                    key={item.label}
-                                    className="flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-center"
-                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
-                                >
-                                    <span className="text-base">{item.icon}</span>
-                                    <span className="text-[10px] font-bold uppercase" style={{ color: 'rgba(167,243,208,0.6)' }}>
-                                        {item.label}
-                                    </span>
-                                </div>
-                            ))}
-                        </motion.div>
-                    )}
 
                     {/* Form */}
                     <form onSubmit={handleAuth} className="space-y-4">
@@ -247,18 +176,6 @@ const AuthScreen: React.FC = () => {
                                 onMouseLeave={e => (e.currentTarget.style.color = 'rgba(110,231,183,0.5)')}
                             >
                                 {isSignUp ? 'Déjà un compte ? Se connecter' : 'Créer un nouveau compte'}
-                            </button>
-
-                            {/* Back */}
-                            <button
-                                type="button"
-                                onClick={() => dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' })}
-                                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-xl"
-                                style={{ color: 'rgba(167,243,208,0.35)' }}
-                                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(167,243,208,0.7)')}
-                                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(167,243,208,0.35)')}
-                            >
-                                <ArrowLeft size={14} /> {t('backNav') || 'Retour'}
                             </button>
 
                             <div className="relative my-6">
