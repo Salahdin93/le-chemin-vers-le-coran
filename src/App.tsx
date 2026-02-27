@@ -15,9 +15,10 @@ import SplashScreen from './components/screens/SplashScreen';
 import { AnimatePresence } from 'framer-motion';
 
 import AuthScreen from './components/screens/AuthScreen';
+import { supabase } from './lib/supabase';
 
 function AppContent() {
-  const { state } = useStore();
+  const { state, dispatch } = useStore();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -29,13 +30,17 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    // Let AppContext handle the initial state loading and screen routing.
-    // We only react to the state.appScreen which is initialized in AppContext's loadState.
-    if (!showSplash && state.appScreen === 'splash') {
-      // If still on splash after the timer, normally AppContext should have updated it.
-      // We can stay on splash or fallback to language if nothing happens.
-    }
-  }, [showSplash, state.appScreen]);
+    // Redirect to auth if no profile exists and user is not logged in.
+    const checkAuthAndRedirect = async () => {
+      if (!showSplash && state.profiles.length === 0 && (state.appScreen === 'profile-selection' || state.appScreen === 'welcome')) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
+        }
+      }
+    };
+    checkAuthAndRedirect();
+  }, [showSplash, state.appScreen, state.profiles.length, dispatch]);
 
   const renderScreen = () => {
     if (showSplash || state.appScreen === 'splash') {
