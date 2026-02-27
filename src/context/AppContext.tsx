@@ -637,29 +637,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [dispatch]);
 
-  // Chargement initial : compte obligatoire, tout depuis Supabase
+  // Chargement initial : compte obligatoire, tout depuis Supabase (avec timeout pour éviter blocage splash)
+  const INITIAL_LOAD_TIMEOUT_MS = 10_000;
+
   useEffect(() => {
+    let cancelled = false;
+
+    const goToLanguage = () => {
+      const storedLang = localStorage.getItem('quranCompanionLang') as 'fr' | 'en' | 'ar' | null;
+      const browserLang = navigator.language.split('-')[0];
+      const initialLang = (storedLang && ['fr', 'en', 'ar'].includes(storedLang))
+        ? storedLang
+        : (['fr', 'en', 'ar'].includes(browserLang) ? browserLang as 'fr' : 'fr');
+      dispatch({ type: 'UPDATE_SETTINGS', payload: { lang: initialLang as any } });
+      dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
+    };
+
     const loadState = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled) return;
+        clearTimeout(timeoutId);
         if (user) {
           await loadFromSupabase();
           return;
         }
-        // Non connecté : pas de chargement local, aller vers langue puis auth
-        const storedLang = localStorage.getItem('quranCompanionLang') as 'fr' | 'en' | 'ar' | null;
-        const browserLang = navigator.language.split('-')[0];
-        const initialLang = (storedLang && ['fr', 'en', 'ar'].includes(storedLang))
-          ? storedLang
-          : (['fr', 'en', 'ar'].includes(browserLang) ? browserLang as 'fr' : 'fr');
-        dispatch({ type: 'UPDATE_SETTINGS', payload: { lang: initialLang as any } });
-        dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
+        goToLanguage();
       } catch (error) {
+        if (cancelled) return;
+        clearTimeout(timeoutId);
         console.error('Failed to load state', error);
-        dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
+        goToLanguage();
       }
     };
+
+    const timeoutId = setTimeout(() => {
+      if (cancelled) return;
+      console.warn('Initial load timeout: switching to language screen');
+      goToLanguage();
+    }, INITIAL_LOAD_TIMEOUT_MS);
+
     loadState();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [loadFromSupabase]);
 
   // Réagir à la connexion / déconnexion : recharger depuis Supabase
