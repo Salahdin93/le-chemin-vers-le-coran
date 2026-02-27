@@ -34,6 +34,7 @@ export interface HadithRevisionPlanDay {
   date: Date;
   hadithIds: number[];
   status: 'pending' | 'done' | RevisionStatus;
+  quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir';
 }
 
 export interface HadithHistoryEntry {
@@ -43,7 +44,7 @@ export interface HadithHistoryEntry {
 }
 
 export type Language = 'fr' | 'en' | 'ar';
-export type Theme = 'light' | 'dark' | 'sepia' | 'chalkboard' | 'wood' | 'nightblue' | 'sand' | 'emerald' | 'sunrise' | 'leafy' | 'pearl' | 'midnight' | 'aube' | 'crepuscule' | 'oasis';
+export type Theme = 'light' | 'dark' | 'sepia' | 'chalkboard' | 'wood' | 'nightblue' | 'sand' | 'emerald' | 'sunrise' | 'leafy' | 'pearl' | 'midnight' | 'aube' | 'crepuscule' | 'oasis' | 'onboarding';
 export type AccentColor = string;
 export type Gender = 'male' | 'female';
 export type AvatarGender = 'male_beard' | 'female_hijab';
@@ -268,11 +269,17 @@ export interface CompletedHadithRevisionGoal {
 export type HadithRevisionHistoryEntry = HadithRevisionPlanDay;
 
 export interface ToReviewHistoryItem {
-  day: number;
-  units: RevisionUnit[];
+  type: 'quran' | 'hadith';
+  day?: number; // For quran
+  units?: RevisionUnit[]; // For quran
   date: string;
-  status: RevisionStatus;
-  difficulties: string[];
+  status?: RevisionStatus;
+  difficulties?: string[];
+  quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir';
+  details?: string; // For hadith or generic
+  items?: string[]; // For hadith
+  id?: string;
+  surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>;
 }
 
 export interface Progress {
@@ -311,7 +318,9 @@ export interface RevisionPlanDay {
   units: RevisionUnit[];
   status: RevisionStatus;
   difficulties: string[];
+  quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir';
   timeSpent?: number;
+  surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>;
 }
 
 export interface WizardData {
@@ -414,8 +423,8 @@ export type AppAction =
   | { type: 'RESET_PROGRESS' }
   | { type: 'UPDATE_PLANS'; payload: { reading: PlanDay[] | null; revision: RevisionPlanDay[] | null } }
   | { type: 'ADVANCE_DAY'; payload: { newHistory: ReadingHistory; newConsecutiveDays: number; recalculatedPlan: PlanDay[] } }
-  | { type: 'UPDATE_READING_HISTORY'; payload: { newHistory: ReadingHistory; recalculatedPlan: PlanDay[] } }
-  | { type: 'UPDATE_REVISION_STATUS'; payload: { revisionIndex: number; status: RevisionStatus; difficulties?: string[]; hizbNum?: number; timeSpent?: number; } }
+  | { type: 'UPDATE_READING_HISTORY'; payload: { newHistory: ReadingHistory; recalculatedPlan: PlanDay[]; timeSpent?: number } }
+  | { type: 'UPDATE_REVISION_STATUS'; payload: { revisionIndex: number; status: RevisionStatus; difficulties?: string[]; hizbNum?: number; timeSpent?: number; quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'; surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>; } }
   | { type: 'COMPLETE_GOAL'; payload: { type: 'reading'; goal: CompletedReadingGoal } | { type: 'revision'; goal: CompletedRevisionGoal } }
   | { type: 'UPDATE_PROFILE'; payload: Partial<Profile> & { id?: string } }
   | { type: 'ADD_MEMORIZATION'; payload: { type: 'surahPart' | 'hizb' | 'juzz', item: any } }
@@ -442,7 +451,7 @@ export type AppAction =
   | { type: 'UNLOCK_BADGE'; payload: BadgeId }
   | { type: 'UPDATE_HADITH_STATUS'; payload: { hadithId: number; status: HadithMemorizationStatus } }
   | { type: 'SET_HADITH_REVISION_PLAN'; payload: { goal: HadithRevisionGoal; } }
-  | { type: 'UPDATE_HADITH_REVISION_STATUS'; payload: { dayIndex: number; status: RevisionStatus } }
+  | { type: 'UPDATE_HADITH_REVISION_STATUS'; payload: { dayIndex: number; status: RevisionStatus; quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'; } }
   | { type: 'UPDATE_HADITH_PROGRESS'; payload: { hadithId: number; status: HadithMemorizationStatus; date: string } }
   | { type: 'SET_APP_LANGUAGE'; payload: Language }
   | { type: 'COMPLETE_HADITH_REVISION_GOAL'; payload: { goal: CompletedHadithRevisionGoal } };

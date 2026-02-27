@@ -8,7 +8,7 @@ import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLo
 import { TOTAL_PAGES, HIZB_DATA } from '@/constants/quranData';
 import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, CheckCircle2, Circle, ArrowRight, Star, BookOpen, Calendar, ChevronRight } from 'lucide-react';
+import { Clock, CheckCircle2, Circle, ArrowRight, Star, BookOpen, Calendar, ChevronRight, Folder, Trophy } from 'lucide-react';
 
 const cardVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -302,11 +302,31 @@ const ReadingPlanView: React.FC = () => {
                                     </div>
                                     <div className={clsx(
                                         "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
-                                        status === 'done' ? "bg-success shadow-lg shadow-success/20 text-white" : "bg-bg-main border border-border-main/50 text-text-main/20"
+                                        status === 'done' || status === 'partial' || status === 'catchup' ? "bg-success shadow-lg shadow-success/20 text-white" : "bg-bg-main border border-border-main/50 text-text-main/20"
                                     )}>
-                                        {status === 'done' ? <CheckCircle2 size={24} /> : isCurrent ? <Circle size={24} className="animate-pulse text-accent-color" /> : <Clock size={20} />}
+                                        {status === 'done' || status === 'partial' || status === 'catchup' ? <CheckCircle2 size={24} /> : isCurrent ? <Circle size={24} className="animate-pulse text-accent-color" /> : <Clock size={20} />}
                                     </div>
                                 </div>
+
+                                {(status === 'done' || status === 'partial' || status === 'catchup') && (
+                                    <div className="flex gap-2 -mt-2 mb-2">
+                                        <div className="px-3 py-1 rounded-full bg-success/20 border border-success/30 text-[9px] font-black uppercase tracking-widest text-success flex items-center gap-1.5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></div>
+                                            {t('pagesReadBadge').replace('{count}', String(state.progress.readingHistory[`day_${day.day}`]?.realPages || day.recalculatedPages))}
+                                        </div>
+                                        {state.progress.readingHistory[`day_${day.day}`]?.adjustment !== 0 && (
+                                            <div className={clsx(
+                                                "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border",
+                                                (state.progress.readingHistory[`day_${day.day}`]?.adjustment || 0) > 0
+                                                    ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400"
+                                                    : "bg-danger/20 border-danger/30 text-danger"
+                                            )}>
+                                                {(state.progress.readingHistory[`day_${day.day}`]?.adjustment || 0) > 0 ? '+' : ''}
+                                                {state.progress.readingHistory[`day_${day.day}`]?.adjustment} {t((state.progress.readingHistory[`day_${day.day}`]?.adjustment || 0) > 0 ? 'extraPages' : 'missingPages')}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="space-y-4 flex-1">
                                     <div className="p-4 rounded-2xl bg-bg-main/50 border border-border-main/30 flex items-center justify-between group-hover:bg-bg-main transition-colors">
@@ -425,6 +445,52 @@ const ReadingPlanView: React.FC = () => {
                     );
                 })}
             </div>
+
+            {/* Objectifs Atteints Section */}
+            <section className="mt-16 space-y-8">
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4 border-b border-border-main pb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner">
+                            <Folder size={24} fill="currentColor" opacity={0.2} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black tracking-tight">{t('completedGoals')}</h2>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t('readingHistoryTitle')}</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {state.progress.history.reading.length > 0 ? (
+                            state.progress.history.reading.map((goal, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    whileHover={{ scale: 1.02, translateY: -5 }}
+                                    className="premium-card group cursor-pointer border-border-main/50 hover:border-accent-color/50 transition-all"
+                                >
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-2 rounded-xl bg-accent-color/10 text-accent-color">
+                                            <Trophy size={20} />
+                                        </div>
+                                        <div className="text-[9px] font-black opacity-30 uppercase tracking-widest">
+                                            #{state.progress.history.reading.length - idx}
+                                        </div>
+                                    </div>
+                                    <h3 className="font-black text-lg mb-1">{t('readingGoalHistory', { index: state.progress.history.reading.length - idx, khatmas: goal.khatmas, duration: goal.duration })}</h3>
+                                    <p className="text-xs opacity-50 mb-4">{t('completedOn', { date: new Date(goal.completedAt).toLocaleDateString() })}</p>
+                                    <Button variant="ghost" size="sm" className="w-full rounded-xl text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-accent-color hover:text-white transition-colors">
+                                        {t('viewDetails') || 'Voir les détails'}
+                                    </Button>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-12 flex flex-col items-center justify-center text-center bg-bg-main/30 rounded-[2.5rem] border border-dashed border-border-main/50">
+                                <Folder size={48} className="text-border-main mb-4 opacity-50" />
+                                <p className="text-sm font-bold opacity-40">{t('noReadingHistory')}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
 
             <Modal isOpen={kahfModalOpen} onClose={() => setKahfModalOpen(false)}>
                 <HadithAlKahf />

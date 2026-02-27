@@ -27,6 +27,9 @@
     --text-secondary: #4b5563;
     --border-main: #d1d5db;
 
+    --premium-gradient: linear-gradient(160deg, #f0f4f8 0%, #d1d5db 100%);
+    --geom-opacity: 0.65;
+
     /* Refined Shadows */
     --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -39,6 +42,7 @@
     --glass-blur: 16px;
   }
 
+
   /* --- DARK THEME (Deep Aurora) --- */
   html.dark,
   html:not(.light):not(.sepia):not(.midnight):not(.chalkboard):not(.wood):not(.nightblue):not(.sand):not(.emerald):not(.sunrise):not(.leafy):not(.pearl):not(.rose):not(.onboarding):not(.crepuscule):not(.oasis) {
@@ -49,10 +53,15 @@
     --text-secondary: #94a3b8;
     --border-main: rgba(255, 255, 255, 0.08);
 
+    --premium-gradient: linear-gradient(160deg, #020617 0%, #0f172a 40%, #1e293b 100%);
+    --geom-opacity: 0.85;
+    --geom-intensity: 0.15;
+
     --glass-bg: rgba(15, 23, 42, 0.7);
     --glass-border: rgba(255, 255, 255, 0.05);
     --shadow-premium: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   }
+
 
   /* --- CUSTOM THEMES (Refined) --- */
   .rose,
@@ -65,7 +74,10 @@
     --accent-color: #d81b60;
     --warning: #fbc02d;
     --card-bg: #fff0f5;
+    --premium-gradient: linear-gradient(160deg, #4d001d 0%, #8c1044 35%, #d81b60 100%);
+    --geom-opacity: 0.32;
   }
+
 
   .onboarding,
   html.onboarding {
@@ -78,7 +90,10 @@
     --accent-color: #38BDF8;
     --glass-bg: rgba(22, 32, 50, 0.8);
     --glass-border: rgba(56, 189, 248, 0.15);
+    --premium-gradient: linear-gradient(160deg, #052e16 0%, #064e3b 35%, #065f46 60%, #047857 100%);
+    --geom-opacity: 0.5;
   }
+
 
   .sepia,
   html.sepia {
@@ -89,7 +104,10 @@
     --border-main: #dcd7c0;
     --accent-color: #268bd2;
     --warning: #b58900;
+    --premium-gradient: linear-gradient(160deg, #fdf6e3 0%, #eee8d5 100%);
+    --geom-opacity: 0.25;
   }
+
 
   .wood,
   html.wood {
@@ -100,7 +118,10 @@
     --border-main: #5d4037;
     --accent-color: #8d6e63;
     --warning: #ffb300;
+    --premium-gradient: linear-gradient(160deg, #3e2723 0%, #4e342e 50%, #5d4037 100%);
+    --geom-opacity: 0.28;
   }
+
 
   .nightblue,
   html.nightblue {
@@ -111,7 +132,10 @@
     --border-main: #1E293B;
     --accent-color: #3B82F6;
     --warning: #F59E0B;
+    --premium-gradient: linear-gradient(160deg, #060a16 0%, #0B1021 40%, #131A35 100%);
+    --geom-opacity: 0.28;
   }
+
 
   .sand,
   html.sand {
@@ -122,7 +146,10 @@
     --border-main: #e8dcc4;
     --accent-color: #cd853f;
     --warning: #d2691e;
+    --premium-gradient: linear-gradient(160deg, #f5f5dc 0%, #ece4cd 100%);
+    --geom-opacity: 0.25;
   }
+
 
   .emerald,
   html.emerald {
@@ -133,7 +160,10 @@
     --border-main: #047857;
     --accent-color: #10b981;
     --warning: #f59e0b;
+    --premium-gradient: linear-gradient(160deg, #022c22 0%, #064e3b 35%, #065f46 60%, #047857 100%);
+    --geom-opacity: 0.35;
   }
+
 
   .sunrise,
   html.sunrise {
@@ -144,7 +174,10 @@
     --border-main: #ffcc80;
     --accent-color: #ff9800;
     --warning: #fbc02d;
+    --premium-gradient: linear-gradient(160deg, #e65100 0%, #ff9800 50%, #fff3e0 100%);
+    --geom-opacity: 0.25;
   }
+
 
   .crepuscule,
   html.crepuscule {
@@ -155,7 +188,10 @@
     --border-main: #4b3074;
     --accent-color: #ff7f50;
     --warning: #ffd700;
+    --premium-gradient: linear-gradient(160deg, #1a0b2e 0%, #2e1a47 40%, #3b235e 100%);
+    --geom-opacity: 0.32;
   }
+
 
   .oasis,
   html.oasis {
@@ -166,7 +202,10 @@
     --border-main: #80deea;
     --accent-color: #00acc1;
     --warning: #ffea00;
+    --premium-gradient: linear-gradient(160deg, #b2ebf2 0%, #e0f7fa 100%);
+    --geom-opacity: 0.25;
   }
+
 
   .leafy,
   html.leafy {
@@ -177,7 +216,10 @@
     --border-main: #c5e1a5;
     --accent-color: #7cb342;
     --warning: #ffa000;
+    --premium-gradient: linear-gradient(160deg, #dcedc8 0%, #f1f8e9 100%);
+    --geom-opacity: 0.25;
   }
+
 
   .pearl,
   html.pearl {
@@ -188,7 +230,10 @@
     --border-main: #d3e4eb;
     --accent-color: #38aacc;
     --warning: #fbbf24;
+    --premium-gradient: linear-gradient(160deg, #eef7f9 0%, #f8fcfd 100%);
+    --geom-opacity: 0.2;
   }
+
 
   .midnight,
   html.midnight {
@@ -199,7 +244,10 @@
     --border-main: #1e1b4b;
     --accent-color: #6366f1;
     --warning: #fbbf24;
+    --premium-gradient: linear-gradient(160deg, #060913 0%, #0c1226 40%, #1e1b4b 100%);
+    --geom-opacity: 0.28;
   }
+
 
   /* ── Global Styles ── */
   *,
@@ -311,9 +359,34 @@
     mask-size: 250px 250px;
     background-color: var(--text-main);
     pointer-events: none;
-    z-index: -1;
-    opacity: 0.15;
+    z-index: 100;
+    opacity: var(--geom-opacity, 0.65);
+    mix-blend-mode: overlay;
   }
+
+  .premium-bg::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    opacity: calc(var(--geom-opacity, 0.4) * 0.8);
+    background-image: url("data:image/svg+xml,%3Csvg width='1000' height='1000' viewBox='0 0 1000 1000' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='100' y='200' font-family='Amiri, serif' font-size='200' fill='currentColor' transform='rotate(-15, 100, 200)'%3Eن%3C/text%3E%3Ctext x='700' y='150' font-family='Amiri, serif' font-size='180' fill='currentColor' transform='rotate(20, 700, 150)'%3Eب%3C/text%3E%3Ctext x='800' y='500' font-family='Amiri, serif' font-size='250' fill='currentColor' transform='rotate(-5, 800, 500)'%3Eو%3C/text%3E%3Ctext x='550' y='750' font-family='Amiri, serif' font-size='220' fill='currentColor' transform='rotate(10, 550, 750)'%3Eم%3C/text%3E%3Ctext x='150' y='800' font-family='Amiri, serif' font-size='190' fill='currentColor' transform='rotate(-20, 150, 800)'%3Eق%3C/text%3E%3Ctext x='300' y='400' font-family='Amiri, serif' font-size='230' fill='currentColor' transform='rotate(5, 300, 400)'%3Eس%3C/text%3E%3C/svg%3E");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .premium-bg {
+    background: var(--premium-gradient);
+    min-height: 100dvh;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+
 
   /* Interactive Elements */
   .hover-glow {
@@ -393,4 +466,16 @@
   border-color: var(--accent-color);
   outline: none;
   box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.text-accent-color {
+  color: var(--accent-color) !important;
+}
+
+.bg-accent-color {
+  background-color: var(--accent-color) !important;
+}
+
+.border-accent-color {
+  border-color: var(--accent-color) !important;
 }

@@ -244,8 +244,18 @@ function appReducer(state: AppState, action: AppAction): AppState {
         };
       }
 
-      // Mode création d'un nouveau profil complet (flow = 'full')
-      const newProgress = { ...defaultState.progress, startDate };
+      // Mode création d'un profil complet
+      const readingDay = wizardData.existingDaysRead ? wizardData.existingDaysRead + 1 : (wizardData.resumeDay || 1);
+      const revisionIndex = wizardData.resumeRevisionIndex || 0;
+      const hadithIndex = 0;
+
+      const newProgress = {
+        ...defaultState.progress,
+        startDate,
+        currentReadingDay: readingDay,
+        currentRevisionIndex: revisionIndex,
+        currentHadithRevisionIndex: hadithIndex
+      };
       const newProfile: Profile = {
         id: profileId,
         name: wizardData.name || 'Utilisateur',
@@ -253,6 +263,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         password: wizardData.password,
         theme: wizardData.theme || 'light',
         accentColor: wizardData.accentColor || '#2E7D32',
+        avatar: wizardData.avatar,
         goals: {
           reading: wizardData.wantsReading ? {
             duration: wizardData.duration!,
@@ -325,11 +336,38 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
     case 'UPDATE_HADITH_REVISION_STATUS': {
-      const { dayIndex, status } = action.payload;
+      const { dayIndex, status, quality } = action.payload;
       const newHadithPlan = state.plans.hadithRevision ? [...state.plans.hadithRevision] : [];
-      if (newHadithPlan[dayIndex]) { newHadithPlan[dayIndex].status = status; }
+      if (newHadithPlan[dayIndex]) {
+        newHadithPlan[dayIndex].status = status;
+        if (quality) newHadithPlan[dayIndex].quality = quality;
+      }
       const newCurrentIndex = (dayIndex === state.progress.currentHadithRevisionIndex && status !== 'pending') ? state.progress.currentHadithRevisionIndex + 1 : state.progress.currentHadithRevisionIndex;
-      return { ...state, plans: { ...state.plans, hadithRevision: newHadithPlan }, progress: { ...state.progress, currentHadithRevisionIndex: newCurrentIndex } };
+
+      let toReviewHistory = [...state.progress.history.toReview];
+      if (quality === 'a_revoir') {
+        const item = newHadithPlan[dayIndex];
+        const historyItem: ToReviewHistoryItem = {
+          type: 'hadith',
+          day: dayIndex + 1,
+          date: new Date().toISOString(),
+          units: [{ text: `Hadiths: ${item.hadithIds?.join(', ')}`, surahs: '' }],
+          difficulties: [],
+          status: 'to-review',
+          quality: quality
+        };
+        toReviewHistory = [historyItem, ...toReviewHistory];
+      }
+
+      return {
+        ...state,
+        plans: { ...state.plans, hadithRevision: newHadithPlan },
+        progress: {
+          ...state.progress,
+          currentHadithRevisionIndex: newCurrentIndex,
+          history: { ...state.progress.history, toReview: toReviewHistory }
+        }
+      };
     }
     case 'COMPLETE_HADITH_REVISION_GOAL': {
       const newHistory = [...state.progress.history.hadithRevisionHistory, action.payload.goal];
@@ -390,11 +428,26 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p), plans: { ...state.plans, reading: newRecalculatedPlan, originalReading: newOriginalPlan } };
     }
     case 'ADVANCE_DAY': return { ...state, progress: { ...state.progress, readingHistory: action.payload.newHistory, consecutiveDays: action.payload.newConsecutiveDays, currentReadingDay: state.progress.currentReadingDay + 1 }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
-    case 'UPDATE_READING_HISTORY': return { ...state, progress: { ...state.progress, readingHistory: action.payload.newHistory }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
+    case 'UPDATE_READING_HISTORY': {
+      const { newHistory, timeSpent } = action.payload;
+      const mergedHistory = { ...state.progress.readingHistory, ...newHistory };
+      if (timeSpent !== undefined) {
+        const dayKey = `day_${state.progress.currentReadingDay}`;
+        mergedHistory[dayKey] = { ...mergedHistory[dayKey], timeSpent: (mergedHistory[dayKey]?.timeSpent || 0) + timeSpent };
+      }
+      return { ...state, progress: { ...state.progress, readingHistory: mergedHistory }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
+    }
     case 'UPDATE_REVISION_STATUS': {
       if (!state.plans.revision) return state;
       const newRevisionPlan = [...state.plans.revision];
-      newRevisionPlan[action.payload.revisionIndex] = { ...newRevisionPlan[action.payload.revisionIndex], status: action.payload.status, difficulties: action.payload.difficulties || [], timeSpent: action.payload.timeSpent };
+      newRevisionPlan[action.payload.revisionIndex] = {
+        ...newRevisionPlan[action.payload.revisionIndex],
+        status: action.payload.status,
+        difficulties: action.payload.difficulties || [],
+        quality: action.payload.quality,
+        timeSpent: action.payload.timeSpent,
+        surahRatings: action.payload.surahRatings
+      };
       let newDifficulties = [...(activeProfile?.difficulties || [])];
       if (action.payload.difficulties && action.payload.difficulties.length > 0) {
         action.payload.difficulties.forEach(diff => {
@@ -404,13 +457,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
         });
       }
       let toReviewHistory = [...state.progress.history.toReview];
-      if (action.payload.status === 'to-review') {
+      if (action.payload.status === 'to-review' || action.payload.quality === 'a_revoir') {
         const historyItem: ToReviewHistoryItem = {
+          type: 'quran',
           day: action.payload.revisionIndex + 1,
           date: new Date().toISOString(),
           units: newRevisionPlan[action.payload.revisionIndex].units,
           difficulties: action.payload.difficulties || [],
-          status: 'to-review'
+          status: 'to-review',
+          quality: action.payload.quality,
+          surahRatings: action.payload.surahRatings
         };
         toReviewHistory = [historyItem, ...toReviewHistory];
       }
@@ -498,6 +554,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'CLEAR_NOTIFICATION_HISTORY': return { ...state, notificationHistory: [] };
     case 'SET_KAHF_NOTIFICATION_SHOWN': return { ...state, kahfNotificationShownThisSession: true };
     case 'SET_APP_LANGUAGE': return { ...state, settings: { ...state.settings, lang: action.payload } };
+
+    case 'UPDATE_SETTINGS': {
+      return {
+        ...state,
+        settings: { ...state.settings, ...action.payload }
+      };
+    }
     default: return state;
   }
 }
@@ -657,8 +720,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.settings.enableNotifications, state.settings.notificationTime, t]);
 
   useEffect(() => {
-    const theme: Theme = activeProfile?.theme || 'light';
-    const accentColor: AccentColor = activeProfile?.accentColor || '#2E7D32';
+    const theme: Theme = activeProfile?.theme || 'onboarding';
+    const accentColor: AccentColor = activeProfile?.accentColor || '#38BDF8';
     const lang = state.settings.lang;
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';

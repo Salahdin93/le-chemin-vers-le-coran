@@ -27,6 +27,21 @@ const StatusIndicator: React.FC<{ status: HadithMemorizationStatus }> = ({ statu
     );
 };
 
+const QualityBadge: React.FC<{ quality: string }> = ({ quality }) => {
+    if (!quality) return null;
+    const colors: Record<string, string> = {
+        'tres_bien': 'bg-success/20 text-success border border-success/30',
+        'bien': 'bg-accent-color/20 text-accent-color border border-accent-color/30',
+        'moyen': 'bg-warning/20 text-warning border border-warning/30',
+        'a_revoir': 'bg-danger/20 text-danger border border-danger/30',
+    };
+    return (
+        <div className={clsx("px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest", colors[quality] || 'bg-white/5')}>
+            {quality.replace('_', ' ')}
+        </div>
+    );
+};
+
 const HistoryView: React.FC = () => {
     const { state, t, activeProfile } = useStore();
     const [selectedGoal, setSelectedGoal] = useState<SelectedGoal | null>(null);
@@ -396,12 +411,15 @@ const HistoryView: React.FC = () => {
                                                 </div>
                                                 <h4 className="text-sm font-bold tracking-tight opacity-90">{day.units.map(u => u.text).join(' + ')}</h4>
                                             </div>
-                                            <div className={clsx(
-                                                "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest",
-                                                day.status === 'revised' ? "bg-success/10 text-success" :
-                                                    day.status === 'to-review' ? "bg-warning/10 text-warning" : "bg-bg-main text-text-main/20"
-                                            )}>
-                                                {day.status}
+                                            <div className="flex items-center gap-2">
+                                                <QualityBadge quality={day.quality || ''} />
+                                                <div className={clsx(
+                                                    "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest",
+                                                    day.status === 'revised' ? "bg-success/10 text-success" :
+                                                        day.status === 'to-review' ? "bg-warning/10 text-warning" : "bg-bg-main text-text-main/20"
+                                                )}>
+                                                    {day.status}
+                                                </div>
                                             </div>
                                         </div>
                                         {day.status === 'to-review' && day.difficulties.length > 0 && (

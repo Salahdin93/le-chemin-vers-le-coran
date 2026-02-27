@@ -58,7 +58,7 @@ function AppContent() {
   return (
     <>
       <AnimatePresence mode="wait">
-        <div key={state.appScreen}>
+        <div key={state.appScreen} className="geometric-overlay min-h-screen">
           {renderScreen()}
         </div>
       </AnimatePresence>

@@ -9,13 +9,13 @@ import { checkReadingProgress } from '@/services/progressLogic';
 import EndOfGoalModal from '@/components/ui/EndOfGoalModal';
 import Modal from '@/components/ui/Modal';
 import Timer from '@/components/ui/Timer';
-import { ReadingStatus, Hadith, HadithMemorizationStatus, PlanDay } from '@/types';
+import { ReadingStatus, Hadith, HadithMemorizationStatus, PlanDay, RevisionStatus } from '@/types';
 import { notificationService } from '@/components/ui/NotificationContainer';
 import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 import { HADITH_COLLECTION } from '@/constants/hadithData';
-import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, AlertCircle, Star, Calendar } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, AlertCircle, Star, Calendar, RotateCcw } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 
 const cardVariants: Variants = {
@@ -65,6 +65,7 @@ const DashboardView: React.FC = () => {
     const [isReadjustmentModalOpen, setIsReadjustmentModalOpen] = useState(false);
     const [hadithModalContent, setHadithModalContent] = useState<Hadith | null>(null);
     const [inputModalState, setInputModalState] = useState<{ isOpen: boolean; title: string; label: string; onSubmit: (value: string) => void; }>({ isOpen: false, title: '', label: '', onSubmit: () => { } });
+    const [ratingSelector, setRatingSelector] = useState<{ isOpen: boolean; type: 'quran' | 'hadith'; index: number; surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>; pendingRating?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir' } | null>(null);
 
     const [hadithMissionTitle, setHadithMissionTitle] = useState<string>('');
 
@@ -121,11 +122,13 @@ const DashboardView: React.FC = () => {
     const readingHistoryEntry = currentReading ? state.progress.readingHistory[`day_${currentReading.day}`] : null;
     const readingStatus = readingHistoryEntry?.status || 'not_read';
 
-    const handleRevisionStatusUpdate = (_revisionDay: any, status: any) => {
-        dispatch({
-            type: 'UPDATE_REVISION_STATUS',
-            payload: { revisionIndex: state.progress.currentRevisionIndex, status }
-        });
+    const handleHadithPlanStatusChange = (index: number, status: RevisionStatus) => {
+        if (status === 'revised') {
+            setRatingSelector({ isOpen: true, type: 'hadith', index });
+        } else {
+            dispatch({ type: 'UPDATE_HADITH_REVISION_STATUS', payload: { dayIndex: index, status } });
+            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+        }
     };
 
     const handleStatusChange = (day: PlanDay, status: ReadingStatus, isKahf: boolean = false, time?: number) => {
@@ -146,6 +149,57 @@ const DashboardView: React.FC = () => {
     const handleHadithStatusChange = (hadithId: number, status: HadithMemorizationStatus) => {
         dispatch({ type: 'UPDATE_HADITH_PROGRESS', payload: { hadithId, status, date: new Date().toISOString() } });
         dispatch({ type: 'SET_TOAST', payload: t('saved') });
+    };
+
+    const handleRevisionRating = (rating: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir') => {
+        if (!ratingSelector) return;
+        const { type, index, surahRatings = {} } = ratingSelector;
+
+        if (type === 'quran') {
+            const currentRevision = revisionPlan?.[index];
+            if (!currentRevision) return;
+
+            const allSurahs = currentRevision.units.flatMap(u => {
+                const hizbMatch = u.text.match(/Hizb (\d+)/);
+                if (hizbMatch) {
+                    const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
+                    const hizb = HIZB_DATA[hizbIndex];
+                    if (hizb && Array.isArray(hizb.surahs)) return hizb.surahs;
+                }
+                return (u.surahs || '').split(',').map(s => s.trim()).filter(Boolean);
+            });
+            const ratedSurahs = Object.keys(surahRatings);
+            const remainingSurahs = allSurahs.filter(s => !ratedSurahs.includes(s));
+            const currentSurah = remainingSurahs[0];
+
+            if (!currentSurah) return;
+
+            const newSurahRatings = { ...surahRatings, [currentSurah]: rating };
+            const newRatedCount = Object.keys(newSurahRatings).length;
+
+            if (newRatedCount === allSurahs.length) {
+                // Determine overall quality (lowest rating)
+                const ratings = Object.values(newSurahRatings);
+                let overallQuality: any = 'tres_bien';
+                if (ratings.includes('a_revoir')) overallQuality = 'a_revoir';
+                else if (ratings.includes('moyen')) overallQuality = 'moyen';
+                else if (ratings.includes('bien')) overallQuality = 'bien';
+
+                dispatch({
+                    type: 'UPDATE_REVISION_STATUS',
+                    payload: { revisionIndex: index, status: 'revised', quality: overallQuality, surahRatings: newSurahRatings }
+                });
+                setRatingSelector(null);
+            } else {
+                setRatingSelector({ ...ratingSelector, surahRatings: newSurahRatings });
+            }
+        } else {
+            dispatch({
+                type: 'UPDATE_HADITH_REVISION_STATUS',
+                payload: { dayIndex: index, status: 'revised', quality: rating }
+            });
+            setRatingSelector(null);
+        }
     };
 
     const handleAdvance = () => {
@@ -335,44 +389,41 @@ const DashboardView: React.FC = () => {
 
                                         {currentReading.isKahfDay && (
                                             <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
-                                                <div className="flex items-center justify-center gap-2 text-accent-color">
-                                                    <Star size={16} fill="currentColor" />
-                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sourate Al-Kahf (Vendredi)</span>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-emerald-400">
+                                                        <Sparkles size={16} className="text-emerald-400" />
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sourate Al-Kahf (Vendredi)</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setRatingSelector({ isOpen: true, type: 'quran', index: -1 })} // Reuse rating selector modal structure for Kahf merits or use a separate one
+                                                        className="text-[10px] font-black uppercase tracking-widest text-emerald-400/60 hover:text-emerald-400 underline underline-offset-4"
+                                                    >
+                                                        {t('view') || 'Voir'}
+                                                    </button>
                                                 </div>
                                                 <div className="grid grid-cols-3 gap-2">
-                                                    <button
-                                                        onClick={() => handleStatusChange(currentReading, 'done', true)}
-                                                        className={clsx(
-                                                            "py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border-2",
-                                                            state.progress.readingHistory[`day_${currentReading.day}`]?.kahfStatus === 'done'
-                                                                ? "bg-accent-color border-accent-color text-white"
-                                                                : "bg-white/5 border-white/10 hover:border-accent-color/50"
-                                                        )}
-                                                    >
-                                                        Lu
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleStatusChange(currentReading, 'partial', true)}
-                                                        className={clsx(
-                                                            "py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border-2",
-                                                            state.progress.readingHistory[`day_${currentReading.day}`]?.kahfStatus === 'partial'
-                                                                ? "bg-warning border-warning text-white"
-                                                                : "bg-white/5 border-white/10 hover:border-warning/50"
-                                                        )}
-                                                    >
-                                                        En partie
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleStatusChange(currentReading, 'not_read', true)}
-                                                        className={clsx(
-                                                            "py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border-2",
-                                                            state.progress.readingHistory[`day_${currentReading.day}`]?.kahfStatus === 'not_read'
-                                                                ? "bg-danger border-danger text-white"
-                                                                : "bg-white/5 border-white/10 hover:border-danger/50"
-                                                        )}
-                                                    >
-                                                        Non lu
-                                                    </button>
+                                                    {[
+                                                        { status: 'done', label: 'Lu', color: 'success' },
+                                                        { status: 'partial', label: 'En partie', color: 'warning' },
+                                                        { status: 'not_read', label: 'Non lu', color: 'danger' }
+                                                    ].map(({ status, label, color }) => {
+                                                        const currentKahfStatus = state.progress.readingHistory[`day_${currentReading.day}`]?.kahfStatus;
+                                                        const isActive = currentKahfStatus === status;
+                                                        return (
+                                                            <button
+                                                                key={status}
+                                                                onClick={() => handleStatusChange(currentReading, status as any, true)}
+                                                                className={clsx(
+                                                                    "py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border-2",
+                                                                    isActive
+                                                                        ? `bg-${color} border-${color} text-white shadow-lg shadow-${color}/20`
+                                                                        : "bg-white/5 border-white/10 hover:border-white/20 text-white/40"
+                                                                )}
+                                                            >
+                                                                {label}
+                                                            </button>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         )}
@@ -380,66 +431,59 @@ const DashboardView: React.FC = () => {
 
                                     <div className="space-y-6">
                                         <Timer onStop={(s) => handleStatusChange(currentReading, 'done', false, s)} />
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <Button
-                                                variant={readingStatus === 'done' ? 'success' : 'secondary'}
-                                                size="lg"
-                                                className={clsx(
-                                                    "h-28 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
-                                                    readingStatus === 'done' ? "shadow-premium scale-105 border-success bg-success text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
-                                                )}
-                                                onClick={() => handleStatusChange(currentReading, 'done')}
-                                            >
-                                                <div className="flex flex-col items-center text-center">
-                                                    <div className="flex flex-col items-center mb-1">
-                                                        <CheckCircle2 size={18} className="mb-1" />
-                                                        <span>{t('goalAchieved') || 'Lu'}</span>
-                                                    </div>
-                                                    <span className="text-[8px] opacity-80 leading-none">{currentReading.endPage - currentReading.startPage + 1} pages lues</span>
-                                                </div>
-                                            </Button>
-                                            <Button
-                                                variant={readingStatus === 'partial' ? 'warning' : 'secondary'}
-                                                size="lg"
-                                                className={clsx(
-                                                    "h-28 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
-                                                    readingStatus === 'partial' ? "shadow-premium scale-105 border-warning bg-warning text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
-                                                )}
-                                                onClick={() => handleStatusChange(currentReading, 'partial')}
-                                            >
-                                                <div className="flex flex-col items-center text-center">
-                                                    <AlertCircle size={18} className="mb-1" />
-                                                    <span>{t('partial') || 'Partiel'}</span>
-                                                </div>
-                                            </Button>
-                                            <Button
-                                                variant={readingStatus === 'not_read' ? 'danger' : 'secondary'}
-                                                size="lg"
-                                                className={clsx(
-                                                    "h-28 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
-                                                    readingStatus === 'not_read' ? "shadow-premium scale-105 border-danger bg-danger text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
-                                                )}
-                                                onClick={() => handleStatusChange(currentReading, 'not_read')}
-                                            >
-                                                <div className="flex flex-col items-center text-center">
-                                                    <EyeOff size={18} className="mb-1" />
-                                                    <span>{t('notReadStatus') || 'Non lu'}</span>
-                                                </div>
-                                            </Button>
-                                            <Button
-                                                variant={readingStatus === 'catchup' ? 'accent' : 'secondary'}
-                                                size="lg"
-                                                className={clsx(
-                                                    "h-28 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
-                                                    readingStatus === 'catchup' ? "shadow-2xl shadow-accent-color/40 scale-105 border-transparent bg-accent-color text-white opacity-100" : "bg-white/5 border-white/10 opacity-70"
-                                                )}
-                                                onClick={() => handleStatusChange(currentReading, 'catchup')}
-                                            >
-                                                <div className="flex flex-col items-center text-center">
-                                                    <Sparkles size={18} className="mb-1" />
-                                                    <span>{t('catchupStatus') || 'Supp.'}</span>
-                                                </div>
-                                            </Button>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                            {[
+                                                { status: 'done', icon: <CheckCircle2 size={18} />, label: t('goalAchieved') || 'Lu', color: 'success' },
+                                                { status: 'partial', icon: <AlertCircle size={18} />, label: t('partial') || 'Partiel', color: 'warning' },
+                                                { status: 'catchup', icon: <Sparkles size={18} />, label: t('catchupStatus') || 'Supp.', color: 'accent-color' },
+                                                { status: 'not_read', icon: < EyeOff size={18} />, label: t('notDone') || 'Pas fait', color: 'danger' }
+                                            ].map((btn) => {
+                                                const isActive = readingStatus === btn.status;
+                                                const currentEntry = state.progress.readingHistory[`day_${currentReading.day}`];
+                                                const actualPages = (currentEntry?.realPages || (btn.status === 'done' ? currentReading.recalculatedPages : 0));
+                                                const targetPages = currentReading.recalculatedPages;
+                                                const diff = actualPages - targetPages;
+
+                                                return (
+                                                    <Button
+                                                        key={btn.status}
+                                                        variant={isActive ? (btn.color as any) : 'secondary'}
+                                                        size="lg"
+                                                        className={clsx(
+                                                            "h-32 rounded-3xl px-2 md:px-4 text-[10px] md:text-xs font-black uppercase whitespace-normal leading-tight transition-all duration-300 border-2",
+                                                            isActive
+                                                                ? `shadow-premium scale-105 border-${btn.color} bg-${btn.color === 'accent-color' ? 'emerald-600' : btn.color} text-white opacity-100`
+                                                                : "bg-white/5 border-white/10 opacity-70"
+                                                        )}
+                                                        onClick={() => handleStatusChange(currentReading, btn.status as any)}
+                                                    >
+                                                        <div className="flex flex-col items-center text-center">
+                                                            <div className="flex flex-col items-center mb-1">
+                                                                {btn.icon}
+                                                                <span className="mt-1">{btn.label}</span>
+                                                            </div>
+                                                            {isActive && actualPages > 0 && (
+                                                                <motion.div
+                                                                    initial={{ scale: 0 }} animate={{ scale: 1 }}
+                                                                    className="mt-2 flex flex-col items-center gap-1"
+                                                                >
+                                                                    <span className="text-[10px] font-black bg-black/30 px-3 py-1 rounded-full text-white shadow-lg">
+                                                                        {actualPages} P.
+                                                                    </span>
+                                                                    {diff !== 0 && (
+                                                                        <span className={clsx(
+                                                                            "text-[8px] font-bold px-2 py-0.5 rounded-full ring-1 ring-white/20",
+                                                                            diff > 0 ? "bg-emerald-500/20 text-emerald-200" : "bg-rose-500/20 text-rose-200"
+                                                                        )}>
+                                                                            {diff > 0 ? `+${diff}` : diff}
+                                                                        </span>
+                                                                    )}
+                                                                </motion.div>
+                                                            )}
+                                                        </div>
+                                                    </Button>
+                                                );
+                                            })}
                                         </div>
                                         <Button variant="ghost" size="lg" className="w-full h-16 rounded-2xl text-[10px] font-black uppercase tracking-widest opacity-50 hover:opacity-100 hover:bg-bg-secondary" onClick={handleAdvance}>
                                             {t('nextDay') || 'Passer au jour suivant'} <ChevronRight size={18} className="ml-2" />
@@ -461,7 +505,20 @@ const DashboardView: React.FC = () => {
                                 <div className={`${missionBadgeBase} bg-warning text-slate-900 shadow-warning/20`}>
                                     {t('missionHadith')}
                                 </div>
-                                <div className="text-[10px] font-black uppercase tracking-widest text-white/80">{hadithMissionTitle}</div>
+                                <div className="flex items-center gap-4">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-white/80">{hadithMissionTitle}</div>
+                                    {hadithPlan?.[state.progress.currentHadithRevisionIndex]?.quality && (
+                                        <div className={clsx(
+                                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                                            hadithPlan[state.progress.currentHadithRevisionIndex].quality === 'tres_bien' ? 'bg-success/20 text-success border border-success/30' :
+                                                hadithPlan[state.progress.currentHadithRevisionIndex].quality === 'bien' ? 'bg-accent-color/20 text-accent-color border border-accent-color/30' :
+                                                    hadithPlan[state.progress.currentHadithRevisionIndex].quality === 'moyen' ? 'bg-warning/20 text-warning border border-warning/30' :
+                                                        'bg-danger/20 text-danger border border-danger/30'
+                                        )}>
+                                            {hadithPlan[state.progress.currentHadithRevisionIndex].quality.replace('_', ' ')}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {hadithDuJour ? (
@@ -495,8 +552,8 @@ const DashboardView: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-6 border-t border-white/5">
-                                        {(['lu', 'en_memorisation', 'a_reprendre', 'acquis'] as const).map(hStat => {
+                                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 pt-6 border-t border-white/5">
+                                        {(['lu', 'en_memorisation', 'a_reprendre', 'acquis', 'non_lu'] as const).map(hStat => {
                                             const currentHadithStatus = activeProfile?.hadithProgress?.[hadithDuJour.id];
                                             const isActive = currentHadithStatus === hStat;
                                             return (
@@ -504,17 +561,20 @@ const DashboardView: React.FC = () => {
                                                     key={hStat}
                                                     variant={isActive ? (hStat === 'lu' || hStat === 'acquis' ? 'success' : hStat === 'a_reprendre' ? 'warning' : 'accent') : 'secondary'}
                                                     className={clsx(
-                                                        "h-14 rounded-2xl border-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                                        "h-20 lg:h-16 rounded-2xl border-2 text-[8px] lg:text-[9px] px-1 font-black uppercase tracking-tight transition-all duration-300",
                                                         isActive
                                                             ? "shadow-premium scale-105 opacity-100 border-current"
                                                             : "bg-white/5 border-white/10 opacity-60 hover:opacity-100"
                                                     )}
-                                                    onClick={() => handleHadithStatusChange(hadithDuJour.id, hStat)}
+                                                    onClick={() => hStat === 'lu' ? handleHadithPlanStatusChange(state.progress.currentHadithRevisionIndex, 'revised') : handleHadithStatusChange(hadithDuJour.id, hStat)}
                                                 >
-                                                    {hStat === 'lu' ? t('read') :
-                                                        hStat === 'en_memorisation' ? t('statusEnMemorisation') :
-                                                            hStat === 'a_reprendre' ? t('statusARependre') :
-                                                                t('statusAcquis')}
+                                                    <div className="text-center leading-tight">
+                                                        {hStat === 'lu' ? t('read') :
+                                                            hStat === 'en_memorisation' ? (t('statusEnMemorisation') || 'En mémorisation') :
+                                                                hStat === 'a_reprendre' ? t('statusARependre') :
+                                                                    hStat === 'acquis' ? t('statusAcquis') :
+                                                                        t('notDone')}
+                                                    </div>
                                                 </Button>
                                             );
                                         })}
@@ -550,41 +610,101 @@ const DashboardView: React.FC = () => {
                                     <div className={`${missionBadgeBase} bg-blue-500 text-white shadow-blue-500/20`}>
                                         {t('missionRevision')}
                                     </div>
-                                    <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                                        {t('day')} {state.progress.currentRevisionIndex + 1}
+                                    <div className="flex flex-col gap-1 items-end">
+                                        <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                                            {t('day')} {state.progress.currentRevisionIndex + 1}
+                                        </div>
+                                        {state.plans.revision?.[state.progress.currentRevisionIndex + 1] && (
+                                            <div className="text-[8px] font-bold uppercase tracking-[0.1em] text-white/40 text-right">
+                                                <span className="opacity-40">{t('nextRevision')} :</span> <span className="text-accent-color">{state.plans.revision?.[state.progress.currentRevisionIndex + 1]?.units.map(u => u.text).join(', ')}</span>
+                                                <div className="mt-1 lowercase opacity-30 italic font-medium">
+                                                    {state.plans.revision?.[state.progress.currentRevisionIndex + 1]?.units.flatMap(u => {
+                                                        const hizbMatch = u.text.match(/Hizb (\d+)/);
+                                                        if (hizbMatch) {
+                                                            const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
+                                                            return HIZB_DATA[hizbIndex]?.surahs || [];
+                                                        }
+                                                        return u.surahs.split(',').map(s => s.trim());
+                                                    }).join(', ')}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    {currentRevision.units.map((unit, idx) => (
-                                        <div key={idx} className="p-4 rounded-2xl bg-bg-main/60 border border-border-main/40 text-left">
-                                            <div className="text-sm font-black">{unit.text}</div>
-                                            <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                                                {unit.surahs}
-                                            </div>
+                                <div className="flex flex-col gap-4">
+                                    <div
+                                        className="flex items-start justify-between cursor-pointer group/rev"
+                                        onClick={() => {
+                                            if (currentRevision.surahRatings && Object.keys(currentRevision.surahRatings).length > 0) {
+                                                setRatingSelector({ isOpen: true, type: 'quran', index: state.progress.currentRevisionIndex, surahRatings: currentRevision.surahRatings });
+                                            }
+                                        }}
+                                    >
+                                        <div className="flex flex-col gap-1 items-start">
+                                            {currentRevision.units.map((unit, idx) => (
+                                                <div key={idx} className="flex flex-col gap-0.5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-1.5 h-6 rounded-full bg-accent-color group-hover/rev:scale-y-125 transition-transform" />
+                                                        <div className="text-sm font-black text-white/90 group-hover/rev:text-accent-color transition-colors">{unit.text}</div>
+                                                    </div>
+                                                    <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest ml-4">
+                                                        {t('hizbConstituentSurahs').replace('{surahs}', unit.surahs)}
+                                                    </p>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+                                        {currentRevision.quality && (
+                                            <div className={clsx(
+                                                "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                                                currentRevision.quality === 'tres_bien' ? 'bg-success/20 text-success border border-success/30' :
+                                                    currentRevision.quality === 'bien' ? 'bg-accent-color/20 text-accent-color border border-accent-color/30' :
+                                                        currentRevision.quality === 'moyen' ? 'bg-warning/20 text-warning border border-warning/30' :
+                                                            'bg-danger/20 text-danger border border-danger/30'
+                                            )}>
+                                                {currentRevision.quality.replace('_', ' ')}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/5">
-                                    {(['revised', 'not_revised', 'to-review'] as const).map(revStat => {
-                                        const isActive = currentRevision.status === revStat;
-                                        return (
-                                            <Button
-                                                key={revStat}
-                                                variant={isActive ? (revStat === 'revised' ? 'success' : revStat === 'to-review' ? 'warning' : 'danger') : 'secondary'}
-                                                className={clsx(
-                                                    "h-14 rounded-2xl border-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                                                    isActive
-                                                        ? "shadow-premium scale-105 opacity-100 border-current"
-                                                        : "bg-white/5 border-white/10 opacity-60 hover:opacity-100 text-white/70"
-                                                )}
-                                                onClick={() => revStat === 'to-review' ? setIsReadjustmentModalOpen(true) : handleRevisionStatusUpdate(currentRevision, revStat)}
-                                            >
-                                                {revStat === 'revised' ? t('revised') : revStat === 'to-review' ? t('toReview') : t('not_revised')}
-                                            </Button>
-                                        );
-                                    })}
+                                    <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/5">
+                                        <Button
+                                            variant={currentRevision.status === 'revised' ? 'success' : 'secondary'}
+                                            className={clsx(
+                                                "h-14 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all",
+                                                currentRevision.status === 'revised' ? "shadow-lg shadow-success/20 ring-2 ring-success/50" : "bg-white/5 opacity-60 text-white/70"
+                                            )}
+                                            onClick={() => setRatingSelector({ isOpen: true, type: 'quran', index: state.progress.currentRevisionIndex })}
+                                        >
+                                            <CheckCircle2 size={16} /> {t('revised') || 'Révisé'}
+                                        </Button>
+                                        <Button
+                                            variant={currentRevision.status === 'to-review' ? 'warning' : 'secondary'}
+                                            className={clsx(
+                                                "h-14 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all",
+                                                currentRevision.status === 'to-review' ? "shadow-lg shadow-warning/20 ring-2 ring-warning/50" : "bg-white/5 opacity-60 text-white/70"
+                                            )}
+                                            onClick={() => dispatch({
+                                                type: 'UPDATE_REVISION_STATUS',
+                                                payload: { revisionIndex: state.progress.currentRevisionIndex, status: 'to-review' }
+                                            })}
+                                        >
+                                            <RotateCcw size={16} /> {t('toReview') || 'À revoir'}
+                                        </Button>
+                                        <Button
+                                            variant={currentRevision.status === 'not_revised' ? 'danger' : 'secondary'}
+                                            className={clsx(
+                                                "h-14 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all",
+                                                currentRevision.status === 'not_revised' ? "shadow-lg shadow-danger/20 ring-2 ring-danger/50" : "bg-white/5 opacity-60 text-white/70"
+                                            )}
+                                            onClick={() => dispatch({
+                                                type: 'UPDATE_REVISION_STATUS',
+                                                payload: { revisionIndex: state.progress.currentRevisionIndex, status: 'not_revised' }
+                                            })}
+                                        >
+                                            <EyeOff size={16} /> {t('notDone') || 'Pas fait'}
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </Card>
@@ -676,6 +796,121 @@ const DashboardView: React.FC = () => {
                     </Modal>
                 )}
             </AnimatePresence>
+
+            {/* Modal du sélecteur de note */}
+            <Modal
+                isOpen={!!ratingSelector?.isOpen}
+                onClose={() => setRatingSelector(null)}
+                className="max-w-sm"
+            >
+                {ratingSelector?.index === -1 ? (
+                    <div className="text-center space-y-6">
+                        <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                            <Sparkles className="text-emerald-400" size={32} />
+                        </div>
+                        <h3 className="text-xl font-black text-text-main">{t('kahfMeritsTitle')}</h3>
+                        <div className="p-6 rounded-2xl bg-bg-secondary border border-border-main italic text-sm text-text-main/80 leading-relaxed">
+                            "{t('kahfHadith')}"
+                            <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-emerald-400/60">{t('kahfHadithSource')}</p>
+                        </div>
+                        <Button
+                            variant="success"
+                            className="w-full h-14 rounded-2xl"
+                            onClick={() => setRatingSelector(null)}
+                        >
+                            {t('close')}
+                        </Button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="text-center mb-8">
+                            <div className="w-16 h-16 rounded-3xl bg-accent-color/20 flex items-center justify-center mx-auto mb-4">
+                                <Star className="text-accent-color" size={32} />
+                            </div>
+                            <h3 className="text-xl font-black text-text-main">
+                                {ratingSelector?.type === 'quran' ? (
+                                    <>
+                                        {t('rateYourRevision') || 'Notez votre révision'}
+                                        {(() => {
+                                            const currentRev = revisionPlan?.[ratingSelector.index];
+                                            if (!currentRev) return null;
+                                            const allSurahs = currentRev.units.flatMap(u => {
+                                                const hizbMatch = u.text.match(/Hizb (\d+)/);
+                                                if (hizbMatch) {
+                                                    const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
+                                                    const hizb = HIZB_DATA[hizbIndex];
+                                                    if (hizb && Array.isArray(hizb.surahs)) return hizb.surahs;
+                                                }
+                                                return (u.surahs || '').split(',').map(s => s.trim()).filter(Boolean);
+                                            });
+                                            const ratedCount = Object.keys(ratingSelector.surahRatings || {}).length;
+                                            const currentSurah = allSurahs[ratedCount];
+                                            return currentSurah ? <span className="block text-accent-color mt-1">{currentSurah}</span> : null;
+                                        })()}
+                                    </>
+                                ) : (
+                                    t('rateYourRevision') || 'Notez votre révision'
+                                )}
+                            </h3>
+                            <p className="text-sm text-text-secondary mt-1">{t('rateYourRevisionDesc') || 'Comment s’est passée cette session ?'}</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3">
+                            {[
+                                { id: 'tres_bien', label: t('veryGood') || 'Très bien', icon: '✨' },
+                                { id: 'bien', label: t('good') || 'Bien', icon: '👍' },
+                                { id: 'moyen', label: t('average') || 'Moyen', icon: '😐' },
+                                { id: 'a_revoir', label: t('toReview') || 'À réviser', icon: '🔄' },
+                            ].map((opt) => {
+                                const isSelected = ratingSelector?.pendingRating === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => ratingSelector && setRatingSelector({ ...ratingSelector, pendingRating: opt.id as any })}
+                                        className={clsx(
+                                            "flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300",
+                                            isSelected
+                                                ? "bg-accent-color/10 border-accent-color shadow-lg shadow-accent-color/20"
+                                                : "bg-bg-secondary border-border-main hover:border-accent-color/30 group"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <span className={clsx("text-2xl transition-transform", isSelected ? "scale-125" : "group-hover:scale-110")}>{opt.icon}</span>
+                                            <span className={clsx("font-black text-xs uppercase tracking-widest transition-colors", isSelected ? "text-text-main" : "text-text-secondary group-hover:text-text-main")}>
+                                                {opt.label}
+                                            </span>
+                                        </div>
+                                        {isSelected && <CheckCircle2 size={18} className="text-accent-color" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mt-8">
+                            <Button
+                                variant="ghost"
+                                className="h-14 rounded-2xl border-border-main text-text-secondary hover:text-text-main uppercase text-[10px] font-black tracking-widest"
+                                onClick={() => setRatingSelector(null)}
+                            >
+                                {t('cancel')}
+                            </Button>
+                            <Button
+                                variant="accent"
+                                disabled={!ratingSelector?.pendingRating}
+                                className="h-14 rounded-2xl shadow-xl shadow-accent-color/20 uppercase text-[10px] font-black tracking-widest"
+                                onClick={() => {
+                                    if (ratingSelector?.pendingRating) {
+                                        handleRevisionRating(ratingSelector.pendingRating);
+                                        setRatingSelector(prev => prev ? { ...prev, pendingRating: undefined } : null);
+                                    }
+                                }}
+                            >
+                                {t('validate')}
+                            </Button>
+                        </div>
+                    </>
+                )}
+            </Modal>
         </div>
     );
 };

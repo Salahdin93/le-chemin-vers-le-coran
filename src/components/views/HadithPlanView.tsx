@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Eye, EyeOff, CheckCircle2, Circle, Clock,
     Sparkles, Quote,
-    Search, Activity
+    Search, Activity, Folder, Trophy
 } from 'lucide-react';
 
 const HadithCard: React.FC<{ hadith: Hadith; status: HadithMemorizationStatus; index: number }> = ({ hadith, status, index }) => {
@@ -138,11 +138,11 @@ const HadithPlanView: React.FC = () => {
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
                     <div className="relative group flex-1 sm:w-80">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-text-main/20 group-hover:text-accent-color transition-colors" size={20} />
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-text-main/40 group-hover:text-accent-color transition-colors" size={20} />
                         <input
                             type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Rechercher un hadith..."
-                            className="w-full h-16 bg-bg-secondary/60 backdrop-blur-xl border-2 border-border-main/20 rounded-2xl pl-16 pr-8 text-sm font-bold text-text-main placeholder:text-text-main/30 focus:outline-none focus:border-accent-color transition-all shadow-xl"
+                            className="w-full h-16 bg-bg-secondary/90 backdrop-blur-xl border-2 border-border-main/30 rounded-2xl pl-16 pr-8 text-sm font-bold text-text-main placeholder:text-text-main/50 focus:outline-none focus:border-accent-color transition-all shadow-xl"
                         />
                     </div>
                     <div className="flex gap-2 p-1.5 bg-bg-secondary/40 backdrop-blur-xl rounded-2xl border-2 border-border-main/10 shadow-inner overflow-x-auto no-scrollbar">
@@ -176,6 +176,67 @@ const HadithPlanView: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Objectifs Atteints Section */}
+            <section className="mt-24 space-y-10">
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-center gap-4 border-b border-border-main pb-6">
+                        <div className="w-14 h-14 rounded-[2rem] bg-emerald-500/10 flex items-center justify-center text-emerald-400 shadow-inner group transition-all hover:scale-110">
+                            <Folder size={28} fill="currentColor" opacity={0.2} className="group-hover:rotate-12 transition-transform" />
+                        </div>
+                        <div>
+                            <h2 className="text-3xl font-black italic tracking-tighter">{t('completedGoals')}</h2>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 text-emerald-300/60">{t('hadithHistoryTitle')}</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {state.progress.history.hadithRevisionHistory && state.progress.history.hadithRevisionHistory.length > 0 ? (
+                            state.progress.history.hadithRevisionHistory.map((goal, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    whileHover={{ scale: 1.02, translateY: -5 }}
+                                    className="premium-card group cursor-pointer border-border-main/50 hover:border-accent-color/50 transition-all bg-white/5 backdrop-blur-xl relative overflow-hidden"
+                                >
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-accent-color/5 rounded-full -mr-12 -mt-12 blur-3xl" />
+
+                                    <div className="flex justify-between items-start mb-6 relative z-10">
+                                        <div className="w-10 h-10 rounded-xl bg-accent-color/10 flex items-center justify-center text-accent-color shadow-lg ring-1 ring-white/10 group-hover:scale-110 transition-transform">
+                                            <Trophy size={20} />
+                                        </div>
+                                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[8px] font-black opacity-40 uppercase tracking-widest">
+                                            #{state.progress.history.hadithRevisionHistory.length - idx}
+                                        </div>
+                                    </div>
+
+                                    <h3 className="font-black text-xl mb-2 text-white/90 group-hover:text-accent-color transition-colors leading-tight">
+                                        Objectif {state.progress.history.hadithRevisionHistory.length - idx} : {goal.count} hadiths en {goal.duration} jours
+                                    </h3>
+
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                        <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">
+                                            {t('completedOn', { date: new Date(goal.completedAt).toLocaleDateString() })}
+                                        </p>
+                                    </div>
+
+                                    <button className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.2em] group-hover:bg-accent-color group-hover:text-white group-hover:border-accent-color transition-all duration-500 shadow-premium">
+                                        {t('viewDetails') || 'Détails de l\'objectif'}
+                                    </button>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-slate-900/40 rounded-[3rem] border-2 border-dashed border-white/5 backdrop-blur-sm">
+                                <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 shadow-inner ring-1 ring-white/10">
+                                    <Folder size={40} className="text-white/10" />
+                                </div>
+                                <h3 className="text-white/60 font-black text-lg mb-2">{t('noHadithHistory') || 'Aucun historique de hadiths'}</h3>
+                                <p className="text-white/20 text-xs font-medium max-w-xs">{t('noHadithHistoryMessage') || 'Vos objectifs de hadiths complétés apparaîtront ici.'}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
         </div>
     );
 };

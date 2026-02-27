@@ -38,7 +38,7 @@ const Nav: React.FC = () => {
                                     {isActive && (
                                         <motion.div
                                             layoutId="nav-active-bg"
-                                            className="absolute inset-0 accent-gradient rounded-[1.5rem] -z-10 shadow-lg shadow-accent-color/25"
+                                            className="absolute inset-0 accent-gradient rounded-[1.5rem] -z-10 shadow-lg shadow-accent-color/25 border-2 border-white/20"
                                             transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                         />
                                     )}
@@ -59,10 +59,10 @@ const Nav: React.FC = () => {
             <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg">
                 <div className="relative group">
                     {/* Visual Cues for Scrollability */}
-                    <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none rounded-l-[2.5rem] opacity-50" />
-                    <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none rounded-r-[2.5rem] opacity-50" />
+                    <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-bg-main to-transparent z-10 pointer-events-none rounded-l-[2.5rem] opacity-50" />
+                    <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-bg-main to-transparent z-10 pointer-events-none rounded-r-[2.5rem] opacity-50" />
 
-                    <ul className="flex items-center gap-1 p-2 glass-card border border-white/10 bg-slate-950/95 backdrop-blur-3xl shadow-[0_25px_60px_rgba(0,0,0,0.8)] rounded-[2.5rem] overflow-x-auto no-scrollbar snap-x relative">
+                    <ul className="flex items-center gap-1 p-2 glass-card border border-border-main/20 bg-bg-secondary/95 backdrop-blur-3xl shadow-premium rounded-[2.5rem] overflow-x-auto no-scrollbar snap-x relative">
                         {navItems.map(item => {
                             const isActive = state.activeView === item.view;
                             return (

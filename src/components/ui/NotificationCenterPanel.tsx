@@ -24,54 +24,76 @@ const NotificationCenterPanel: React.FC<NotificationCenterPanelProps> = ({ isOpe
   const [selectedNotification, setSelectedNotification] = React.useState<any>(null);
 
   return (
-    <div className={clsx(
-      "fixed inset-y-0 right-0 z-[101] w-full max-w-sm bg-card-bg shadow-lg transform transition-transform duration-300 ease-in-out border-l border-border-main",
-      isOpen ? "translate-x-0" : "translate-x-full"
-    )}>
-      <div className="p-4 border-b border-border-main flex justify-between items-center">
-        <h3 className="text-lg font-bold">{t('notificationCenter')}</h3>
-        <Button size="sm" variant="ghost" onClick={onClose}>{t('back')}</Button>
-      </div>
-      <div className="p-4 h-[calc(100vh-120px)] overflow-y-auto">
-        {state.notificationHistory.length > 0 ? (
-          <ul className="space-y-3">
-            {state.notificationHistory.map(notif => (
-              <li
-                key={notif.id}
-                className={clsx("p-3 rounded-lg bg-bg-main relative group", notif.content ? "cursor-pointer hover:ring-2 hover:ring-accent-color transition-all" : "")}
-                onClick={() => { if (notif.content) setSelectedNotification(notif); }}
-              >
-                <p className="font-semibold">{notif.title}</p>
-                <p className="text-sm opacity-80">{typeof notif.message === 'string' ? notif.message : (notif.content ? t('clickToView') : '')}</p>
-                <button
-                  onClick={(e) => handleRemove(notif.id!, e)}
-                  className="absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-danger/20 hover:text-danger rounded-full"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      className="max-w-2xl w-full"
+    >
+      <div className="flex flex-col h-[70vh]">
+        <div className="p-4 border-b border-border-main flex justify-between items-center bg-card-bg rounded-t-2xl">
+          <h3 className="text-xl font-black tracking-tight">{t('notificationCenter')}</h3>
+          <Button size="sm" variant="ghost" onClick={onClose} className="rounded-xl">{t('back')}</Button>
+        </div>
+
+        <div className="flex-1 p-4 overflow-y-auto bg-bg-main/30 backdrop-blur-sm">
+          {state.notificationHistory.length > 0 ? (
+            <ul className="space-y-4">
+              {state.notificationHistory.map(notif => (
+                <li
+                  key={notif.id}
+                  className={clsx(
+                    "p-5 rounded-2xl bg-bg-secondary border border-border-main/50 relative group transition-all duration-300",
+                    notif.content ? "cursor-pointer hover:border-accent-color hover:shadow-lg hover:shadow-accent-color/5" : ""
+                  )}
+                  onClick={() => { if (notif.content) setSelectedNotification(notif); }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" /></svg>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-center opacity-70 mt-8">{t('noNotifications')}</p>
-        )}
-      </div>
-      <div className="p-4 border-t border-border-main">
-        <Button className="w-full" variant="danger" onClick={handleClear} disabled={state.notificationHistory.length === 0}>
-          {t('clearHistory')}
-        </Button>
+                  <p className="font-bold text-lg mb-1">{notif.title}</p>
+                  <p className="text-sm text-text-secondary">{typeof notif.message === 'string' ? notif.message : (notif.content ? t('clickToView') : '')}</p>
+                  <button
+                    onClick={(e) => handleRemove(notif.id!, e)}
+                    className="absolute top-2 right-2 p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-danger/10 hover:text-danger rounded-xl"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" /></svg>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center opacity-40">
+              <div className="text-4xl mb-4">🔔</div>
+              <p className="text-sm font-black uppercase tracking-widest">{t('noNotifications')}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-border-main bg-card-bg rounded-b-2xl">
+          <Button
+            className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-danger/10"
+            variant="danger"
+            onClick={handleClear}
+            disabled={state.notificationHistory.length === 0}
+          >
+            {t('clearHistory')}
+          </Button>
+        </div>
       </div>
 
       <Modal
         isOpen={!!selectedNotification}
         onClose={() => setSelectedNotification(null)}
+        className="max-w-lg w-full z-[2100]"
       >
-        <div className="p-2 md:p-6 bg-card-bg">
-          <h2 className="text-xl font-bold mb-4">{selectedNotification?.title || t('notification')}</h2>
-          {selectedNotification?.content}
+        <div className="p-6 bg-card-bg rounded-2xl">
+          <h2 className="text-2xl font-black mb-6 tracking-tight border-b border-border-main pb-4">{selectedNotification?.title || t('notification')}</h2>
+          <div className="text-text-main leading-relaxed">
+            {selectedNotification?.content}
+          </div>
+          <div className="mt-8 pt-4">
+            <Button className="w-full rounded-xl" onClick={() => setSelectedNotification(null)}>{t('close') || 'Fermer'}</Button>
+          </div>
         </div>
       </Modal>
-    </div>
+    </Modal>
   );
 };
 

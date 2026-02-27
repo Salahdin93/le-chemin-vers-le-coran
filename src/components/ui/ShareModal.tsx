@@ -12,7 +12,7 @@ const ShareModal: React.FC = () => {
 
     const handleShare = () => {
         if (!shareReading && !shareRevision) {
-            alert("Veuillez sélectionner au moins un élément à partager.");
+            dispatch({ type: 'SET_TOAST', payload: t('selectAtLeastOneItemToShare') || "Veuillez sélectionner au moins un élément à partager." });
             return;
         }
         shareViaWhatsApp(state, t, { shareReading, shareRevision });
@@ -23,13 +23,13 @@ const ShareModal: React.FC = () => {
         <Modal isOpen={state.isShareModalOpen} onClose={() => dispatch({ type: 'TOGGLE_SHARE_MODAL', payload: false })}>
             <h3 className="text-xl font-bold mb-6">Que souhaitez-vous partager ?</h3>
             <div className="space-y-4 mb-6">
-                <SimpleCheckbox 
+                <SimpleCheckbox
                     id="share-reading"
                     label="Suivi de lecture"
                     checked={shareReading}
                     onChange={(e) => setShareReading(e.target.checked)}
                 />
-                <SimpleCheckbox 
+                <SimpleCheckbox
                     id="share-revision"
                     label="Suivi de révision"
                     checked={shareRevision}

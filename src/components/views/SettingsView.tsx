@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 import {
     User, Lock, Brain, Target, Palette,
-    FileJson, ScrollText, ShieldAlert, BookOpen, RefreshCcw, Settings, Info, Globe
+    FileJson, ScrollText, ShieldAlert, BookOpen, RefreshCcw, Settings, Info, Globe, Calendar, FileText
 } from 'lucide-react';
 import { LOGO_URL_DARK } from '@/constants/ui';
 import ConfirmModal from '../ui/ConfirmModal';
@@ -18,7 +18,6 @@ import ConfirmModal from '../ui/ConfirmModal';
 const SettingsView: React.FC = () => {
     const { state, dispatch, t } = useStore();
     const activeProfile = useActiveProfileSelector();
-
 
     const [name, setName] = useState(activeProfile?.name || '');
     const [isPasswordFormVisible, setIsPasswordFormVisible] = useState(false);
@@ -40,17 +39,29 @@ const SettingsView: React.FC = () => {
 
     const handleChangePassword = (e: React.FormEvent) => {
         e.preventDefault();
-        if (currentPassword !== activeProfile?.password) { alert(t('wrongPassword')); return; }
-        if (newPassword.length < 4 || newPassword !== confirmNewPassword) { alert(t('passwordMismatch')); return; }
+        if (currentPassword !== activeProfile?.password) {
+            dispatch({ type: 'SET_TOAST', payload: t('wrongPassword') || 'Mot de passe actuel incorrect' });
+            return;
+        }
+        if (newPassword.length < 4) {
+            dispatch({ type: 'SET_TOAST', payload: t('passwordTooShort') || 'Le mot de passe doit faire au moins 4 caractères' });
+            return;
+        }
+        if (newPassword !== confirmNewPassword) {
+            dispatch({ type: 'SET_TOAST', payload: t('passwordMismatch') || 'Les mots de passe ne correspondent pas' });
+            return;
+        }
         dispatch({ type: 'UPDATE_PROFILE', payload: { password: newPassword } });
         setIsPasswordFormVisible(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
         dispatch({ type: 'SET_TOAST', payload: t('saved') });
     };
 
     if (!activeProfile) return <div className="p-8 text-center animate-pulse text-text-main/20 font-black uppercase tracking-[0.5em]">{t('loading')}...</div>;
 
     const sections = [
-
         {
             id: 'identity',
             title: t('personalInfo'),
@@ -59,8 +70,6 @@ const SettingsView: React.FC = () => {
             bg: 'bg-purple-500/10',
             content: (
                 <div className="space-y-6">
-
-
                     <Input
                         label={t('nameKunya')}
                         id="nameInput"
@@ -181,7 +190,7 @@ const SettingsView: React.FC = () => {
                             {THEMES.map(theme => (
                                 <button
                                     key={theme.id}
-                                    onClick={() => dispatch({ type: 'UPDATE_PROFILE', payload: { theme: theme.id as Theme } })}
+                                    onClick={() => dispatch({ type: 'UPDATE_PROFILE', payload: { theme: theme.id as Theme, id: activeProfile.id } })}
                                     className={clsx(
                                         "p-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2",
                                         activeProfile.theme === theme.id
@@ -207,7 +216,7 @@ const SettingsView: React.FC = () => {
                                             ? 'border-white ring-2 ring-accent-color shadow-lg'
                                             : 'border-transparent opacity-60 hover:opacity-100'
                                     )}
-                                    onClick={() => dispatch({ type: 'UPDATE_PROFILE', payload: { accentColor: color as AccentColor } })}
+                                    onClick={() => dispatch({ type: 'UPDATE_PROFILE', payload: { accentColor: color as AccentColor, id: activeProfile.id } })}
                                 />
                             ))}
                         </div>
@@ -222,37 +231,94 @@ const SettingsView: React.FC = () => {
             color: 'text-indigo-500',
             bg: 'bg-indigo-500/10',
             content: (
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-2">
-                        <Button variant="secondary" size="md" className="w-full justify-start gap-3 rounded-xl" onClick={exportUserData}>
-                            <FileJson size={16} className="text-indigo-500" />
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-3">
+                        <Button variant="secondary" size="md" className="w-full justify-start gap-3 rounded-2xl bg-bg-main/50 border-border-main/50 group hover:border-indigo-500/50 transition-all" onClick={() => {
+                            const success = exportUserData();
+                            if (!success) dispatch({ type: 'SET_TOAST', payload: t('noDataToExport') || 'Aucune donnée à sauvegarder.' });
+                            else dispatch({ type: 'SET_TOAST', payload: t('exportSuccess') || 'Exportation réussie !' });
+                        }}>
+                            <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 group-hover:scale-110 transition-transform">
+                                <FileJson size={18} />
+                            </div>
                             <span className="font-bold">{t('exportJSON') || 'Sauvegarder (.JSON)'}</span>
                         </Button>
-                        <Button as="label" variant="secondary" size="md" className="w-full justify-start gap-3 cursor-pointer rounded-xl">
-                            <RefreshCcw size={16} className="text-indigo-500" />
+                        <Button as="label" variant="secondary" size="md" className="w-full justify-start gap-3 cursor-pointer rounded-2xl bg-bg-main/50 border-border-main/50 group hover:border-indigo-500/50 transition-all">
+                            <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 group-hover:scale-110 transition-transform">
+                                <RefreshCcw size={18} />
+                            </div>
                             <span className="font-bold">{t('restoreData')}</span>
-                            <input type="file" accept=".json" className="hidden" onChange={(e) => importUserData(e, () => window.location.reload())} />
+                            <input
+                                type="file"
+                                accept=".json"
+                                className="hidden"
+                                onChange={(e) => importUserData(
+                                    e,
+                                    () => {
+                                        dispatch({ type: 'SET_TOAST', payload: "✅ Sauvegarde restaurée avec succès ! Redémarrage..." });
+                                        setTimeout(() => window.location.reload(), 1500);
+                                    },
+                                    (msg) => dispatch({ type: 'SET_TOAST', payload: `❌ ${msg}` })
+                                )}
+                            />
                         </Button>
                     </div>
 
-                    <div className="space-y-4 p-4 bg-bg-main/50 rounded-2xl border border-border-main/50">
-                        <div className="flex items-center gap-2 mb-2">
-                            <ScrollText size={14} className="text-indigo-500" />
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('pdfDateFilter') || 'Rapport PDF'}</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[8px] font-black uppercase tracking-widest opacity-30 ml-2">{t('startDateLabel')}</span>
-                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="h-9 w-full bg-bg-secondary text-text-main rounded-lg border border-border-main/50 px-3 text-[10px] font-bold focus:outline-none focus:border-accent-color transition-colors" />
+                    <div className="relative overflow-hidden p-6 rounded-[2rem] bg-slate-900 border border-white/10 shadow-2xl group/pdf">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent pointer-events-none" />
+                        <div className="relative z-10 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-indigo-500/20 rounded-xl text-indigo-400">
+                                        <FileText size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-black text-white uppercase tracking-widest">{t('pdfReport') || 'Rapport PDF'}</h4>
+                                        <p className="text-[9px] font-bold text-white/40 uppercase tracking-[0.2em]">{t('customFilter') || 'Filtre temporel premium'}</p>
+                                    </div>
+                                </div>
+                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                                    <Calendar size={14} className="text-white/20" />
+                                </div>
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[8px] font-black uppercase tracking-widest opacity-30 ml-2">{t('endDateLabel')}</span>
-                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="h-9 w-full bg-bg-secondary text-text-main rounded-lg border border-border-main/50 px-3 text-[10px] font-bold focus:outline-none focus:border-accent-color transition-colors" />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 ml-2">{t('startDateLabel')}</label>
+                                    <div className="relative">
+                                        <input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={e => setStartDate(e.target.value)}
+                                            className="w-full bg-white/5 text-white/90 rounded-2xl border border-white/10 px-4 h-12 text-[10px] font-bold focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all appearance-none"
+                                        />
+                                        <Calendar size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 ml-2">{t('endDateLabel')}</label>
+                                    <div className="relative">
+                                        <input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={e => setEndDate(e.target.value)}
+                                            className="w-full bg-white/5 text-white/90 rounded-2xl border border-white/10 px-4 h-12 text-[10px] font-bold focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all appearance-none"
+                                        />
+                                        <Calendar size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+                                    </div>
+                                </div>
                             </div>
+
+                            <Button
+                                variant="accent"
+                                size="lg"
+                                className="w-full h-14 rounded-2xl shadow-xl shadow-indigo-500/20 font-black text-[10px] uppercase tracking-[0.2em] bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 group/btn"
+                                onClick={() => generateProgressPDF(state, t, startDate, endDate)}
+                            >
+                                <ScrollText size={16} className="mr-3 group-hover/btn:rotate-12 transition-transform" />
+                                {t('exportPDF')}
+                            </Button>
                         </div>
-                        <Button variant="accent" size="sm" className="w-full rounded-xl shadow-lg shadow-accent-color/10" onClick={() => generateProgressPDF(state, t, startDate, endDate)}>
-                            {t('exportPDF')}
-                        </Button>
                     </div>
                 </div>
             )

@@ -54,6 +54,7 @@ const ProfileSelectionScreen: React.FC = () => {
     const { state, dispatch, t } = useStore();
     const [passwordPrompt, setPasswordPrompt] = useState<Profile | null>(null);
     const [passwordInput, setPasswordInput] = useState('');
+    const [error, setError] = useState<string | null>(null);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [profileToEdit, setProfileToEdit] = useState<Profile | null>(null);
     const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
@@ -61,6 +62,8 @@ const ProfileSelectionScreen: React.FC = () => {
     const logoSrc = LOGO_URL_DARK; // Use dark logo for better visibility on dark green
 
     const handleProfileSelect = (profile: Profile) => {
+        setError(null);
+        setPasswordInput('');
         if (profile.password) {
             setPasswordPrompt(profile);
         } else {
@@ -71,9 +74,10 @@ const ProfileSelectionScreen: React.FC = () => {
     const handlePasswordSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (passwordPrompt && passwordInput === passwordPrompt.password) {
+            setError(null);
             dispatch({ type: 'SET_ACTIVE_PROFILE', payload: passwordPrompt.id });
         } else {
-            alert(t('wrongPassword'));
+            setError(t('wrongPassword'));
             setPasswordInput('');
         }
     };
@@ -101,31 +105,72 @@ const ProfileSelectionScreen: React.FC = () => {
 
     if (passwordPrompt) {
         return (
-            <div className="fixed inset-0 bg-bg-main z-[100] flex flex-col items-center justify-center p-4">
-                <Card className="w-full max-w-sm">
-                    <form onSubmit={handlePasswordSubmit} className="p-6 space-y-4">
-                        <h2 className="text-xl font-bold text-center">{t('profileOf', { name: passwordPrompt.name })}</h2>
-                        <input
-                            type="password"
-                            value={passwordInput}
-                            onChange={(e) => setPasswordInput(e.target.value)}
-                            placeholder={t('enterPassword')}
-                            className="w-full p-2 border border-border-main rounded-md bg-bg-main"
-                            autoFocus
-                        />
-                        <div className="flex gap-2">
-                            <Button variant="ghost" type="button" onClick={() => setPasswordPrompt(null)} className="flex-1">{t('back')}</Button>
-                            <Button type="submit" className="flex-1">{t('enter')}</Button>
+            <div className="fixed inset-0 bg-bg-main z-[100] flex flex-col items-center justify-center p-6 premium-bg">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className="w-full max-w-sm glass-card p-8 bg-white/5 border-none shadow-premium relative overflow-hidden"
+                >
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] bg-gradient-to-r from-transparent via-accent-color/40 to-transparent" />
+
+                    <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                        <header className="text-center mb-8">
+                            <div className="text-3xl mb-4">🔐</div>
+                            <h2 className="text-xl font-black text-white tracking-tight">
+                                {t('profileOf', { name: passwordPrompt.name })}
+                            </h2>
+                            <p className="text-[10px] font-bold text-accent-color/40 uppercase tracking-[0.2em] mt-2">
+                                {t('enterPassword')}
+                            </p>
+                        </header>
+
+                        <div className="space-y-4">
+                            <input
+                                type="password"
+                                value={passwordInput}
+                                onChange={(e) => setPasswordInput(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full p-5 bg-black/20 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:border-accent-color/50 transition-all font-mono tracking-widest text-center"
+                                autoFocus
+                            />
+
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="p-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-center bg-danger/10 border border-danger/20 text-red-400"
+                                >
+                                    {error}
+                                </motion.div>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 pt-4">
+                            <Button
+                                variant="ghost"
+                                type="button"
+                                onClick={() => { setPasswordPrompt(null); setError(null); }}
+                                className="h-14 rounded-2xl border-white/5 text-white/40 hover:text-white transition-colors uppercase text-[10px] font-black tracking-widest"
+                            >
+                                {t('back')}
+                            </Button>
+                            <Button
+                                variant="accent"
+                                type="submit"
+                                className="h-14 rounded-2xl shadow-xl shadow-accent-color/10 uppercase text-[10px] font-black tracking-widest"
+                            >
+                                {t('enter')}
+                            </Button>
                         </div>
                     </form>
-                </Card>
+                </motion.div>
             </div>
         );
     }
 
     return (
         <>
-            <div className="min-h-screen dynamic-bg geometric-overlay flex flex-col items-center justify-center p-4 overflow-hidden" style={{ background: 'linear-gradient(160deg, #052e16 0%, #064e3b 35%, #065f46 60%, #047857 100%)', ...({ '--text-main': '#ffffff' } as React.CSSProperties) }}>
+            <div className="min-h-screen premium-bg flex flex-col items-center justify-center p-4 overflow-hidden">
                 {/* Background glows */}
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-color/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />

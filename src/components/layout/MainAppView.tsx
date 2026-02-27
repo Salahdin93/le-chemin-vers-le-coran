@@ -83,7 +83,7 @@ const MainAppView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen dynamic-bg geometric-overlay flex flex-col items-center selection:bg-accent-color selection:text-white">
+    <div className="min-h-screen premium-bg geometric-overlay flex flex-col items-center selection:bg-accent-color selection:text-white">
       <div className="w-full max-w-7xl px-4 md:px-8 flex flex-col">
         <Header onNotificationClick={() => setIsNotificationPanelOpen(true)} />
         <Nav />

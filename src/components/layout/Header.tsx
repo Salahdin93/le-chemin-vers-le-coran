@@ -152,24 +152,6 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
                         transition={{ duration: 0.5 }}
                         className="fixed inset-0 z-[99999] flex flex-col items-center justify-center p-4 bg-bg-main"
                     >
-                        {/* Arabic letter watermark */}
-                        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none" aria-hidden="true">
-                            {[
-                                { char: 'ن', top: '8%', left: '5%', size: '12rem', op: 0.08, rot: '-8deg' },
-                                { char: 'ب', top: '5%', left: '60%', size: '10rem', op: 0.06, rot: '12deg' },
-                                { char: 'و', top: '50%', left: '78%', size: '14rem', op: 0.09, rot: '-5deg' },
-                                { char: 'م', top: '68%', left: '55%', size: '11rem', op: 0.07, rot: '8deg' },
-                                { char: 'ق', top: '70%', left: '3%', size: '10rem', op: 0.06, rot: '-12deg' },
-                                { char: 'س', top: '35%', left: '28%', size: '13rem', op: 0.08, rot: '4deg' },
-                            ].map(({ char, top, left, size, op, rot }) => (
-                                <span key={char} style={{
-                                    position: 'absolute', top, left,
-                                    fontFamily: 'Amiri, serif', fontSize: size,
-                                    color: 'currentColor', opacity: op,
-                                    transform: `rotate(${rot})`, lineHeight: 1,
-                                }}>{char}</span>
-                            ))}
-                        </div>
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}

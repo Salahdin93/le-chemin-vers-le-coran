@@ -164,8 +164,7 @@ export const generateProgressPDF = (
 export const exportUserData = () => {
     const dataToSave = localStorage.getItem('quranCompanionState_v7');
     if (!dataToSave) {
-        alert('Aucune donnée à sauvegarder.');
-        return;
+        return false;
     }
     const blob = new Blob([dataToSave], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -178,7 +177,7 @@ export const exportUserData = () => {
     URL.revokeObjectURL(url);
 };
 
-export const importUserData = (event: React.ChangeEvent<HTMLInputElement>, onSuccess: () => void) => {
+export const importUserData = (event: React.ChangeEvent<HTMLInputElement>, onSuccess: () => void, onError: (msg: string) => void) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -188,11 +187,10 @@ export const importUserData = (event: React.ChangeEvent<HTMLInputElement>, onSuc
             const importedData = e.target?.result as string;
             JSON.parse(importedData);
             localStorage.setItem('quranCompanionState_v7', importedData);
-            alert("✅ Sauvegarde restaurée avec succès ! L'application va redémarrer.");
             onSuccess();
         } catch (error) {
             console.error("Erreur lors de la restauration : ", error);
-            alert("❌ Erreur: Le fichier est peut-être invalide.");
+            onError("Erreur: Le fichier est peut-être invalide.");
         }
     };
     reader.readAsText(file);

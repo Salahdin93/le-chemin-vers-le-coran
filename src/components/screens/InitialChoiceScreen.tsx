@@ -52,17 +52,8 @@ const InitialChoiceScreen: React.FC = () => {
 
     return (
         <div
-            className="fixed inset-0 z-[10001] flex items-center justify-center p-6 overflow-hidden"
-            style={{ background: 'linear-gradient(160deg, #052e16 0%, #064e3b 35%, #065f46 60%, #047857 100%)' }}
+            className="fixed inset-0 z-[10001] flex items-center justify-center p-6 overflow-hidden premium-bg"
         >
-            {/* Geometric Pattern Overlay */}
-            <div
-                className="absolute inset-0 pointer-events-none opacity-[0.04]"
-                style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='white' stroke-width='0.8'%3E%3Cpolygon points='40,5 55,20 75,20 60,35 67,55 40,45 13,55 20,35 5,20 25,20'/%3E%3Ccircle cx='40' cy='40' r='18'/%3E%3C/g%3E%3C/svg%3E")`,
-                    backgroundSize: '80px 80px',
-                }}
-            />
 
             <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 30 }}
