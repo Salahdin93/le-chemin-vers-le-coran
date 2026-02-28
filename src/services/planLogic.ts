@@ -187,7 +187,7 @@ export const generateRevisionPlan = (
         }).filter(Boolean) as RevisionUnit[];
     } else {
         units = weightedSelection.map(hizbId => {
-            const hizbIndex = Number(hizbId) - 1;
+            const hizbIndex = Number(hizbId);
             const hizbData = HIZB_DATA[hizbIndex];
             return hizbData ? { text: `${t('hizb')} ${hizbData.name}`, surahs: hizbData.details } : null;
         }).filter(Boolean) as RevisionUnit[];

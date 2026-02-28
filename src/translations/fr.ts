@@ -128,6 +128,7 @@ export const fr = {
     "toReviewHistory": "Historique des unités à reprendre",
     "noToReviewHistory": "Aucune unité marquée pour une révision ultérieure.",
     "overallProgress": "Progression Générale",
+    "estimatedEndDate": "Fin estimée",
     "consecutiveDays": "Jours Consécutifs",
     "pagesRead": "Pages Lues",
     "daysLeft": "Jours Restants",

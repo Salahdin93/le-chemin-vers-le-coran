@@ -56,6 +56,13 @@ const GlobalProgressCard: React.FC = () => {
     const totalPagesRead = Object.values(state.progress.readingHistory).reduce((sum, day) => sum + (day.realPages || 0), 0);
     const totalPagesToRead = readingGoal.khatmas * TOTAL_PAGES;
     const percentage = totalPagesToRead > 0 ? Math.round((totalPagesRead / totalPagesToRead) * 100) : 0;
+    const pagesRemaining = Math.max(0, totalPagesToRead - totalPagesRead);
+    const daysElapsed = Math.max(1, state.progress.currentReadingDay - 1);
+    const avgPagesPerDay = totalPagesRead / daysElapsed;
+    const estimatedDaysRemaining = avgPagesPerDay > 0 ? Math.ceil(pagesRemaining / avgPagesPerDay) : readingGoal.duration - state.progress.currentReadingDay;
+    const estimatedEndDate = percentage < 100
+        ? new Date(Date.now() + estimatedDaysRemaining * 24 * 60 * 60 * 1000)
+        : null;
 
     return (
         <div className="premium-card !bg-slate-900 border-none text-white shadow-2xl relative overflow-hidden group">
@@ -99,6 +106,15 @@ const GlobalProgressCard: React.FC = () => {
                     </span>
                 </div>
             </div>
+            {estimatedEndDate && percentage < 100 && (
+                <div className="flex items-center gap-2 px-8 pb-8 pt-2 border-t border-white/5 mt-2">
+                    <Calendar size={18} className="text-accent-color opacity-80" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30">{t('estimatedEndDate') || 'Fin estimée'}</span>
+                    <span className="text-lg font-black text-accent-color">
+                        {estimatedEndDate.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }

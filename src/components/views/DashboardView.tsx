@@ -316,43 +316,30 @@ const DashboardView: React.FC = () => {
                     </motion.div>
                 )}
 
-                <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
-                    <Card className="!bg-slate-900 border-white/5 shadow-2xl overflow-visible text-white p-8 group transition-all hover-glow">
-                        <div className="flex justify-between items-start mb-8">
-                            <ProgressRing
-                                percent={hasHadithReadingPlan && hadithPlan ? Math.floor((state.progress.currentHadithRevisionIndex / hadithPlan.length) * 100) : hadithPercent}
-                                color="text-warning"
-                                icon={<Sparkles size={24} />}
-                                label={hasHadithReadingPlan ? (t('hadithReadingGoal') || 'Objectif lecture hadiths') : t('hadithGoal')}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 mt-4 py-6 border-t border-white/5">
-                            {hasHadithReadingPlan && hadithPlan ? (
-                                <>
-                                    <div>
-                                        <span className="block text-2xl font-black text-warning">{state.progress.currentHadithRevisionIndex}</span>
-                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysCompleted') || 'Jours effectués'}</span>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="block text-2xl font-black text-white">{hadithPlan.length - state.progress.currentHadithRevisionIndex}</span>
-                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysLeft') || 'Jours restants'}</span>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div>
-                                        <span className="block text-2xl font-black text-warning">{masteredHadiths}</span>
-                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('mastered') || 'Hadiths acquis'}</span>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="block text-2xl font-black text-white">{HADITH_COLLECTION.length - masteredHadiths}</span>
-                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('remaining') || 'Reste à apprendre'}</span>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </Card>
-                </motion.div>
+                {!hasHadithReadingPlan && (
+                    <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
+                        <Card className="!bg-slate-900 border-white/5 shadow-2xl overflow-visible text-white p-8 group transition-all hover-glow">
+                            <div className="flex justify-between items-start mb-8">
+                                <ProgressRing
+                                    percent={hadithPercent}
+                                    color="text-warning"
+                                    icon={<Sparkles size={24} />}
+                                    label={t('hadithGoal')}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-4 py-6 border-t border-white/5">
+                                <div>
+                                    <span className="block text-2xl font-black text-warning">{masteredHadiths}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('mastered') || 'Hadiths acquis'}</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="block text-2xl font-black text-white">{HADITH_COLLECTION.length - masteredHadiths}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('remaining') || 'Reste à apprendre'}</span>
+                                </div>
+                            </div>
+                        </Card>
+                    </motion.div>
+                )}
 
                 {isRevisionActive && (
                     <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>

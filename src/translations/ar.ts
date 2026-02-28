@@ -128,6 +128,7 @@ export const ar = {
     "toReviewHistory": "سجل الوحدات التي تحتاج إلى مراجعة",
     "noToReviewHistory": "لا توجد وحدات محددة للمراجعة لاحقًا.",
     "overallProgress": "التقدم العام",
+    "estimatedEndDate": "التاريخ المتوقع للانتهاء",
     "consecutiveDays": "أيام متتالية",
     "pagesRead": "صفحة مقروءة",
     "daysLeft": "أيام متبقية",

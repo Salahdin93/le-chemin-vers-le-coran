@@ -125,6 +125,7 @@ export const en = {
     "toReviewHistory": "History of units to review",
     "noToReviewHistory": "No units marked for later review.",
     "overallProgress": "Overall Progress",
+    "estimatedEndDate": "Estimated end date",
     "consecutiveDays": "Consecutive Days",
     "pagesRead": "Pages Read",
     "daysLeft": "Days Left",
