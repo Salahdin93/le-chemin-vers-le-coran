@@ -108,7 +108,7 @@ export const en = {
     "revisionSelection": "Revision Planning",
     "appearance": "Appearance",
     "toggleTheme": "Light/Dark Theme",
-    "light": "Light", "dark": "Dark", "sepia": "Sepia", "chalkboard": "Chalkboard", "wood": "Wood", "nightblue": "Night Blue", "sand": "Sand", "emerald": "Emerald", "sunrise": "Sunrise", "crepuscule": "Dusk", "oasis": "Oasis", "leafy": "Leafy", "pearl": "Pearl", "midnight": "Midnight",
+    "light": "Light", "dark": "Dark", "rose": "Rose", "onboarding": "Discovery", "sepia": "Sepia", "chalkboard": "Chalkboard", "wood": "Wood", "nightblue": "Night Blue", "sand": "Sand", "emerald": "Emerald", "sunrise": "Sunrise", "crepuscule": "Dusk", "oasis": "Oasis", "leafy": "Leafy", "pearl": "Pearl", "midnight": "Midnight",
     "security": "Security",
     "password": "Password",
     "createPassword": "Choose a password",

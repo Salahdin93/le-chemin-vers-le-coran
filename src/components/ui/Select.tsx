@@ -29,7 +29,7 @@ const Select: React.FC<SelectProps> = ({ label, id, className, wrapperClassName,
         className={clsx(
           'w-full px-4 py-3 rounded-xl border transition-colors duration-300 focus:outline-none focus:ring-2',
           isWizard
-            ? 'bg-white/10 border-white/15 text-white focus:border-emerald-400/50 focus:ring-emerald-400/10'
+            ? 'bg-white/10 border-white/15 text-white focus:border-emerald-400/50 focus:ring-emerald-400/10 [&_option]:bg-gray-100 [&_option]:text-gray-900'
             : 'bg-bg-main text-text-main border-border-main focus:border-primary focus:ring-primary/50',
           className
         )}

@@ -1,9 +1,36 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { WizardData } from '@/types';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import { SimpleCheckbox } from '@/components/ui/Checkbox';
 import { motion } from 'framer-motion';
+
+const TOTAL_PAGES = 604;
+
+/** Calcule les pages/jour cible pour la reprise (durée, khatmas, Al-Kahf). */
+function getTargetPagesPerDayResume(
+    duration: number,
+    khatmas: number,
+    pagesRead: number,
+    kahfOption: boolean,
+    kahfPages: number
+): number {
+    const totalToRead = TOTAL_PAGES * khatmas;
+    const remaining = Math.max(0, totalToRead - pagesRead);
+    let pagesForNormalDays = remaining;
+    let fridaysCount = 0;
+    if (kahfOption && (kahfPages ?? 0) > 0) {
+        const start = new Date();
+        for (let i = 0; i < duration; i++) {
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+            if (d.getDay() === 5) fridaysCount++;
+        }
+        pagesForNormalDays = Math.max(0, remaining - fridaysCount * (kahfPages ?? 0));
+    }
+    const normalDaysCount = duration - fridaysCount;
+    return normalDaysCount > 0 ? Math.round(pagesForNormalDays / normalDaysCount) : 0;
+}
 
 interface StepProps {
     formData: Partial<WizardData>;
@@ -16,6 +43,11 @@ const StepReadingGoals: React.FC<StepProps> = ({ formData, updateData, t }) => {
     const daysRead = formData.existingDaysRead || 0;
     const pagesRead = formData.existingPagesRead || 0;
     const avgPagesPerDay = daysRead > 0 ? Math.round(pagesRead / daysRead) : 0;
+    const duration = formData.duration ?? 30;
+    const khatmas = formData.khatmas ?? 1;
+    const kahfOption = !!formData.kahfOption;
+    const kahfPages = formData.kahfPages ?? 0;
+    const targetPagesPerDay = useMemo(() => getTargetPagesPerDayResume(duration, khatmas, pagesRead, kahfOption, kahfPages), [duration, khatmas, pagesRead, kahfOption, kahfPages]);
 
     useEffect(() => {
         if (isResume) {
@@ -83,27 +115,25 @@ const StepReadingGoals: React.FC<StepProps> = ({ formData, updateData, t }) => {
                     </div>
                     {daysRead > 0 && pagesRead > 0 && (
                         <div
-                            className="p-4 rounded-2xl grid grid-cols-3 gap-3"
-                            style={{
-                                background: 'rgba(52,211,153,0.08)',
-                                border: '1px solid rgba(52,211,153,0.2)',
-                            }}
+                            className="p-4 rounded-2xl grid grid-cols-3 gap-3 bg-emerald-500/10 border border-emerald-400/30"
                         >
                             <div className="text-center">
                                 <p className="text-2xl font-black text-white">{daysRead}</p>
-                                <p className="text-[10px] font-black uppercase tracking-widest mt-1 text-white/50">
+                                <p className="text-[10px] font-black uppercase tracking-widest mt-1 text-white/70">
                                     {t('daysReadLabel')}
                                 </p>
                             </div>
-                            <div className="text-center" style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+                            <div className="text-center border-l border-r border-white/20">
                                 <p className="text-2xl font-black text-white">{pagesRead}</p>
-                                <p className="text-[10px] font-black uppercase tracking-widest mt-1 text-white/50">
+                                <p className="text-[10px] font-black uppercase tracking-widest mt-1 text-white/70">
                                     {t('pagesReadLabel')}
                                 </p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-black text-emerald-300">{avgPagesPerDay}</p>
-                                <p className="text-[10px] font-black uppercase tracking-widest mt-1 text-white/50">
+                                <p className="text-2xl font-black text-emerald-300">
+                                    {isResume && duration > 0 ? targetPagesPerDay : avgPagesPerDay}
+                                </p>
+                                <p className="text-[10px] font-black uppercase tracking-widest mt-1 text-white/70">
                                     {t('pagesPerDayLabel')}
                                 </p>
                             </div>

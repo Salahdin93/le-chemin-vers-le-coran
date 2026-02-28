@@ -111,7 +111,7 @@ export const fr = {
     "revisionSelection": "Planification de la Révision",
     "appearance": "Apparence",
     "toggleTheme": "Thème clair/sombre",
-    "light": "Clair", "dark": "Sombre", "sepia": "Sépia", "chalkboard": "Ardoise", "wood": "Bois", "nightblue": "Bleu nuit", "sand": "Sable", "emerald": "Émeraude", "sunrise": "Aube", "crepuscule": "Crépuscule", "oasis": "Oasis", "leafy": "Feuille", "pearl": "Perle", "midnight": "Minuit",
+    "light": "Clair", "dark": "Sombre", "rose": "Rose", "onboarding": "Découverte", "sepia": "Sépia", "chalkboard": "Ardoise", "wood": "Bois", "nightblue": "Bleu nuit", "sand": "Sable", "emerald": "Émeraude", "sunrise": "Aube", "crepuscule": "Crépuscule", "oasis": "Oasis", "leafy": "Feuille", "pearl": "Perle", "midnight": "Minuit",
     "security": "Sécurité",
     "password": "Mot de passe",
     "createPassword": "Choisissez un mot de passe",

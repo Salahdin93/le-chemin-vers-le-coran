@@ -35,13 +35,15 @@ function AppContent() {
       if (showSplash) return;
       const protectedScreens = ['welcome', 'profile-selection', 'wizard', 'main', 'language'];
       if (!protectedScreens.includes(state.appScreen)) return;
+      // Après réinitialisation totale : rester sur welcome (Bienvenue / Ajouter un profil), ne pas renvoyer vers auth
+      if (state.appScreen === 'welcome' && state.profiles.length === 0) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
       }
     };
     checkAuthAndRedirect();
-  }, [showSplash, state.appScreen, dispatch]);
+  }, [showSplash, state.appScreen, state.profiles.length, dispatch]);
 
   const renderScreen = () => {
     if (showSplash || state.appScreen === 'splash') {

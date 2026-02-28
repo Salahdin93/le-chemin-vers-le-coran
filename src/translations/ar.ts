@@ -111,7 +111,7 @@ export const ar = {
     "revisionSelection": "تخطيط المراجعة",
     "appearance": "المظهر",
     "toggleTheme": "سمة فاتحة/داكنة",
-    "light": "فاتح", "dark": "داكن", "sepia": "بني داكن", "chalkboard": "سبورة", "wood": "خشبي", "nightblue": "أزرق ليلي", "sand": "رملي", "emerald": "زمردي", "sunrise": "شروق", "crepuscule": "غسق", "oasis": "واحة", "leafy": "ورقي", "pearl": "لؤلؤي", "midnight": "منتصف الليل",
+    "light": "فاتح", "dark": "داكن", "rose": "وردي", "onboarding": "اكتشاف", "sepia": "بني داكن", "chalkboard": "سبورة", "wood": "خشبي", "nightblue": "أزرق ليلي", "sand": "رملي", "emerald": "زمردي", "sunrise": "شروق", "crepuscule": "غسق", "oasis": "واحة", "leafy": "ورقي", "pearl": "لؤلؤي", "midnight": "منتصف الليل",
     "security": "الأمان",
     "password": "كلمة المرور",
     "createPassword": "اختر كلمة مرور",
