@@ -33,7 +33,7 @@ export const getCompletionMessages = (memorizations: Memorizations): CompletionI
                 const hasFull = memorizedPartIds.has(part.id);
                 const partsForFullSurah = MEMORIZATION_SURAH_OPTIONS.filter(p => p.originalSurahId === part.originalSurahId && !p.isFull);
                 const hasAllParts = partsForFullSurah.every(p => memorizedPartIds.has(p.id));
-                if (!hasFull && !hasAllParts) neededPartIds.add('missing');
+                if (!hasFull && (partsForFullSurah.length === 0 || !hasAllParts)) neededPartIds.add('missing');
                 else neededPartIds.add(part.id);
             } else {
                 const fullSurahOption = MEMORIZATION_SURAH_OPTIONS.find(p => p.originalSurahId === part.originalSurahId && p.isFull);
@@ -79,7 +79,7 @@ export const applyGroupingForItem = (current: Memorizations, kind: 'hizb' | 'juz
                 const hasFull = memorizedPartIds.has(part.id);
                 const partsForFullSurah = MEMORIZATION_SURAH_OPTIONS.filter(p => p.originalSurahId === part.originalSurahId && !p.isFull);
                 const hasAllParts = partsForFullSurah.every(p => memorizedPartIds.has(p.id));
-                if (!hasFull && !hasAllParts) neededPartIds.add('missing');
+                if (!hasFull && (partsForFullSurah.length === 0 || !hasAllParts)) neededPartIds.add('missing');
                 else neededPartIds.add(part.id);
             } else {
                 const fullSurahOption = MEMORIZATION_SURAH_OPTIONS.find(p => p.originalSurahId === part.originalSurahId && p.isFull);
@@ -156,7 +156,7 @@ export const checkAndGroupMemorizations = (currentMemorizations: Memorizations):
                 const partsForFullSurah = MEMORIZATION_SURAH_OPTIONS.filter(p => p.originalSurahId === part.originalSurahId && !p.isFull);
                 const hasAllParts = partsForFullSurah.every(p => memorizedPartIds.has(p.id));
 
-                if (!hasFull && !hasAllParts) {
+                if (!hasFull && (partsForFullSurah.length === 0 || !hasAllParts)) {
                     neededPartIds.add('missing');
                 } else {
                     neededPartIds.add(part.id);
