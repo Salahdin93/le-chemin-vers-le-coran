@@ -434,15 +434,20 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'RESET_APP': {
       localStorage.removeItem('quranCompanionState_v7');
-      return { ...defaultState, appScreen: 'language' };
+      return { ...defaultState, profiles: [], activeProfileId: null, appScreen: 'welcome' };
     }
     case 'RESET_PROGRESS': {
-      if (!activeProfile || !state.progress.startDate) return state;
-      const freshProgress = { ...defaultState.progress, startDate: new Date().toISOString().split('T')[0], history: state.progress.history };
-      const tFn = (key: string) => (TRANSLATIONS[state.settings.lang] as Record<string, string>)[key] || key;
-      const readingPlan = activeProfile.goals.reading ? generateReadingPlan(activeProfile.goals.reading, freshProgress.startDate) : null;
-      const revisionPlan = activeProfile.goals.revision ? generateRevisionPlan(activeProfile.goals.revision, freshProgress.startDate, 1, tFn, activeProfile.memorizations) : null;
-      return { ...state, progress: freshProgress, plans: { ...state.plans, reading: readingPlan, originalReading: readingPlan, revision: revisionPlan, hadithRevision: null } };
+      if (!activeProfile) return state;
+      const freshProgress = { ...defaultState.progress, startDate: null, history: state.progress.history };
+      const clearedGoals = { ...activeProfile.goals, reading: undefined, revision: undefined, hadithRevision: undefined };
+      const updatedProfile = { ...activeProfile, goals: clearedGoals };
+      const updatedProfiles = state.profiles.map(p => (p.id === activeProfile.id ? updatedProfile : p));
+      return {
+        ...state,
+        profiles: updatedProfiles,
+        progress: freshProgress,
+        plans: { reading: null, revision: null, hadithRevision: null, originalReading: null }
+      };
     }
     case 'UPDATE_PLANS': return { ...state, plans: { ...state.plans, reading: action.payload.reading, revision: action.payload.revision } };
     case 'ADJUST_PACE': {
@@ -658,7 +663,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         profiles: remoteProfiles,
         settings: remoteSettings?.settings ? { ...defaultState.settings, ...remoteSettings.settings } : defaultState.settings,
         activeProfileId: remoteSettings?.activeProfileId || (remoteProfiles[0]?.id || null),
-        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : 'language'
+        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : 'welcome'
       };
       dispatch({ type: 'INITIALIZE_STATE', payload: newState });
     } catch (e) {

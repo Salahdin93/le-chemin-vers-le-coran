@@ -103,6 +103,34 @@ export const dbService = {
     },
 
     /**
+     * Supprime tous les profils et réinitialise les paramètres de l'utilisateur connecté (réinitialisation totale).
+     */
+    async deleteAllProfilesForCurrentUser(): Promise<boolean> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+
+        const { error: profilesError } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('user_id', user.id);
+
+        if (profilesError) {
+            console.error('Erreur lors de la suppression des profils:', profilesError);
+            return false;
+        }
+
+        const { error: settingsError } = await supabase
+            .from('user_settings')
+            .update({ active_profile_id: null, updated_at: new Date().toISOString() })
+            .eq('user_id', user.id);
+
+        if (settingsError && settingsError.code !== 'PGRST116') {
+            console.error('Erreur lors de la réinitialisation des paramètres:', settingsError);
+        }
+        return true;
+    },
+
+    /**
      * Récupère les paramètres de l'utilisateur.
      */
     async getSettings(): Promise<{ settings: Partial<Settings>, activeProfileId: string | null } | null> {

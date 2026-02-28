@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { LOGO_URL_DARK } from '@/constants/ui';
 import ConfirmModal from '../ui/ConfirmModal';
+import { dbService } from '@/lib/dbService';
+import { supabase } from '@/lib/supabase';
 
 const SettingsView: React.FC = () => {
     const { state, dispatch, t } = useStore();
@@ -27,6 +29,7 @@ const SettingsView: React.FC = () => {
     const [endDate, setEndDate] = useState('');
     const [isResetProgressOpen, setIsResetProgressOpen] = useState(false);
     const [isResetAppOpen, setIsResetAppOpen] = useState(false);
+    const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
 
     const handleNameChange = (newName: string) => {
         setName(newName);
@@ -443,6 +446,13 @@ const SettingsView: React.FC = () => {
                             >
                                 {t('resetEverything') || 'Réinitialisation Totale'}
                             </Button>
+                            <Button
+                                variant="danger"
+                                className="shadow-xl shadow-danger/20 bg-danger/80 text-white rounded-2xl px-8 h-12 text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 border-2 border-danger"
+                                onClick={() => setIsDeleteAccountOpen(true)}
+                            >
+                                {t('deleteAccount') || 'Supprimer le compte'}
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -450,9 +460,9 @@ const SettingsView: React.FC = () => {
                 <ConfirmModal
                     isOpen={isResetProgressOpen}
                     onClose={() => setIsResetProgressOpen(false)}
-                    onConfirm={() => dispatch({ type: 'RESET_PROGRESS' })}
+                    onConfirm={() => { dispatch({ type: 'RESET_PROGRESS' }); setIsResetProgressOpen(false); }}
                     title={t('confirmResetProgressTitle') || 'Réinitialiser le progrès'}
-                    message={t('confirmResetProgress') || 'Cette action est irréversible. Toutes vos sessions de lecture et révision seront effacées.'}
+                    message={t('confirmResetProgress') || 'Progression et objectifs (lecture, révision) seront effacés. Aucun plan ne restera configuré.'}
                     variant="danger"
                     confirmText={t('resetProgressConfirm') || 'Réinitialiser'}
                 />
@@ -460,11 +470,32 @@ const SettingsView: React.FC = () => {
                 <ConfirmModal
                     isOpen={isResetAppOpen}
                     onClose={() => setIsResetAppOpen(false)}
-                    onConfirm={() => dispatch({ type: 'RESET_APP' })}
+                    onConfirm={async () => {
+                        const ok = await dbService.deleteAllProfilesForCurrentUser();
+                        if (ok) {
+                            dispatch({ type: 'RESET_APP' });
+                            setIsResetAppOpen(false);
+                        }
+                    }}
                     title={t('resetEverything') || 'Réinitialisation Totale'}
-                    message={t('confirmReset') || 'Voulez-vous vraiment TOUT réinitialiser ? Cette action supprimera tous vos profils et données localement.'}
+                    message={t('confirmResetTotal') || t('confirmReset') || 'Voulez-vous vraiment tout réinitialiser ? Tous vos profils et données seront supprimés. Vous resterez connecté et pourrez créer un nouveau profil.'}
                     variant="danger"
                     confirmText={t('confirmResetBtn') || 'TOUT SUPPRIMER'}
+                />
+
+                <ConfirmModal
+                    isOpen={isDeleteAccountOpen}
+                    onClose={() => setIsDeleteAccountOpen(false)}
+                    onConfirm={async () => {
+                        await dbService.deleteAllProfilesForCurrentUser();
+                        await supabase.auth.signOut();
+                        dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
+                        setIsDeleteAccountOpen(false);
+                    }}
+                    title={t('deleteAccount') || 'Supprimer le compte'}
+                    message={t('confirmDeleteAccount') || 'Cette action supprimera définitivement votre compte (Google/email), tous vos profils et données. Vous devrez recréer un compte pour utiliser l\'application.'}
+                    variant="danger"
+                    confirmText={t('confirmDeleteAccountBtn') || 'Supprimer le compte'}
                 />
             </motion.section>
 
