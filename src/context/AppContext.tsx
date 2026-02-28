@@ -367,6 +367,49 @@ function appReducer(state: AppState, action: AppAction): AppState {
         progress: { ...state.progress, currentHadithRevisionIndex: 0 }
       };
     }
+    case 'ADD_TO_REVISION_PLAN': {
+      if (!activeProfile?.goals.revision || !state.plans.revision) return state;
+      const revGoal = activeProfile.goals.revision;
+      const existingSelection = revGoal.selection || [];
+      const addedIds = action.payload.addedIds.filter((id: string) => !existingSelection.includes(id));
+      if (addedIds.length === 0) return state;
+      const mergedSelection = [...existingSelection, ...addedIds];
+      const tFn = (key: string) => TRANSLATIONS[state.settings.lang]?.[key] ?? key;
+      const currentReadingDay = state.progress.currentReadingDay || 1;
+      const newPlan = generateRevisionPlan(
+        { ...revGoal, selection: mergedSelection },
+        state.progress.startDate || new Date().toISOString(),
+        currentReadingDay,
+        tFn,
+        activeProfile.memorizations || { surahParts: [], hizbs: [], juzz: [] }
+      );
+      const currentIdx = state.progress.currentRevisionIndex;
+      const mergedPlan = [...state.plans.revision.slice(0, currentIdx), ...newPlan.slice(currentIdx)];
+      const updatedProfile = { ...activeProfile, goals: { ...activeProfile.goals, revision: { ...revGoal, selection: mergedSelection } } };
+      return {
+        ...state,
+        profiles: state.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p),
+        plans: { ...state.plans, revision: mergedPlan }
+      };
+    }
+    case 'ADD_HADITHS_TO_REVISION_PLAN': {
+      if (!activeProfile?.goals.hadithRevision || !state.plans.hadithRevision) return state;
+      const hadithGoal = activeProfile.goals.hadithRevision;
+      const existingIds = hadithGoal.selectedHadiths || [];
+      const addedIds = action.payload.hadithIds.filter((id: number) => !existingIds.includes(id));
+      if (addedIds.length === 0) return state;
+      const mergedHadiths = [...existingIds, ...addedIds];
+      const newGoal = { ...hadithGoal, selectedHadiths: mergedHadiths };
+      const newPlan = generateHadithRevisionPlan(newGoal, state.progress.startDate || new Date().toISOString());
+      const currentIdx = state.progress.currentHadithRevisionIndex;
+      const mergedPlan = [...state.plans.hadithRevision.slice(0, currentIdx), ...newPlan.slice(currentIdx)];
+      const updatedProfile = { ...activeProfile, goals: { ...activeProfile.goals, hadithRevision: newGoal } };
+      return {
+        ...state,
+        profiles: state.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p),
+        plans: { ...state.plans, hadithRevision: mergedPlan }
+      };
+    }
     case 'UPDATE_HADITH_REVISION_STATUS': {
       const { dayIndex, status, quality } = action.payload;
       const newHadithPlan = state.plans.hadithRevision ? [...state.plans.hadithRevision] : [];

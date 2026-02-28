@@ -73,7 +73,7 @@ const MemorizationView: React.FC = () => {
                 }
             }
         } else if (formType === 'hizb') {
-            const hizbData = HIZB_DATA[Number(selectedItemId)];
+            const hizbData = HIZB_DATA.find(h => h.name === selectedItemId);
             if (hizbData) {
                 const hizbNum = Number(hizbData.name);
                 const surahPartsInHizb = MEMORIZATION_SURAH_OPTIONS.filter(opt => opt.hizbs.includes(hizbNum));
@@ -82,13 +82,22 @@ const MemorizationView: React.FC = () => {
                 payload = { type: 'hizb', item: itemToAdd };
             }
         } else if (formType === 'juzz') {
-            const juzzData = JUZ_DATA.find(j => j.id === Number(selectedItemId));
-            if (juzzData) {
-                const hizb1Num = ((juzzData.id - 1) * 2 + 1).toString();
-                const hizb2Num = ((juzzData.id - 1) * 2 + 2).toString();
-                const hizb1Details = HIZB_DATA.find(h => h.name === hizb1Num)?.details || '';
-                const hizb2Details = HIZB_DATA.find(h => h.name === hizb2Num)?.details || '';
-                const itemToAdd: MemorizedJuzz = { number: juzzData.id, level: selectedLevel, status, componentHizbs: [{ number: hizb1Num, details: hizb1Details, level: selectedLevel, status }, { number: hizb2Num, details: hizb2Details, level: selectedLevel, status }] };
+            const juzzId = Number(selectedItemId);
+            const juzzData = JUZ_DATA.find(j => j.id === juzzId);
+            if (juzzData && juzzData.id >= 1 && juzzData.id <= 30) {
+                const hizb1Num = String((juzzData.id - 1) * 2 + 1);
+                const hizb2Num = String((juzzData.id - 1) * 2 + 2);
+                const hizb1 = HIZB_DATA.find(h => h.name === hizb1Num);
+                const hizb2 = HIZB_DATA.find(h => h.name === hizb2Num);
+                const itemToAdd: MemorizedJuzz = {
+                    number: juzzData.id,
+                    level: selectedLevel,
+                    status,
+                    componentHizbs: [
+                        { number: hizb1Num, details: hizb1?.details ?? '', level: selectedLevel, status },
+                        { number: hizb2Num, details: hizb2?.details ?? '', level: selectedLevel, status }
+                    ]
+                };
                 payload = { type: 'juzz', item: itemToAdd };
             }
         } else if (formType === 'hadith') {
@@ -167,7 +176,7 @@ const MemorizationView: React.FC = () => {
         if (!formType) return null;
         let options: { value: string, label: string }[] = [];
         if (formType === 'surahPart') options = MEMORIZATION_SURAH_OPTIONS.map(opt => ({ value: opt.id, label: opt.name }));
-        else if (formType === 'hizb') options = HIZB_DATA.map((h, i) => ({ value: i.toString(), label: `${t('hizb')} ${h.name} - ${h.details}` }));
+        else if (formType === 'hizb') options = HIZB_DATA.map((h) => ({ value: h.name, label: `${t('hizb')} ${h.name} - ${h.details}` }));
         else if (formType === 'juzz') options = JUZ_DATA.map(j => ({ value: j.id.toString(), label: `${t('juzz')} ${j.id}` }));
         else if (formType === 'hadith') options = HADITH_COLLECTION.map(h => ({ value: h.id.toString(), label: `${t('hadith')} n°${h.id}` }));
 

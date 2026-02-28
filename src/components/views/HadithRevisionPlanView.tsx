@@ -7,8 +7,10 @@ import { motion } from 'framer-motion';
 import {
     Edit, Calendar, CheckCircle2, Clock,
     AlertCircle, Sparkles,
-    Trophy, History, ArrowRight, Activity, ChevronRight, RotateCcw, EyeOff
+    Trophy, History, ArrowRight, Activity, ChevronRight, RotateCcw, EyeOff, Plus
 } from 'lucide-react';
+import Modal from '../ui/Modal';
+import { HADITH_COLLECTION } from '../../constants/hadithData';
 
 const cardVariants = {
     hidden: { opacity: 0, scale: 0.95, y: 20 },
@@ -25,6 +27,8 @@ const cardVariants = {
 const HadithRevisionPlanView: React.FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
     const [ratingSelector, setRatingSelector] = useState<{ isOpen: boolean; index: number } | null>(null);
+    const [addHadithsModalOpen, setAddHadithsModalOpen] = useState(false);
+    const [addHadithsSelectedIds, setAddHadithsSelectedIds] = useState<number[]>([]);
 
     const revisionPlan = state.plans.hadithRevision;
     const revisionGoal = activeProfile?.goals.hadithRevision;
@@ -87,16 +91,79 @@ const HadithRevisionPlanView: React.FC = () => {
                 </div>
 
                 {revisionPlan && revisionPlan.length > 0 && (
-                    <Button
-                        variant="secondary"
-                        onClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'hadith-revision-settings-view' })}
-                        className="rounded-2xl h-16 px-8 uppercase text-[10px] font-black tracking-widest bg-bg-secondary/50 border-border-main/20 shadow-premium group transition-all"
-                    >
-                        <Edit size={16} className="mr-3 text-accent-color group-hover:scale-110 transition-transform" />
-                        {t('editPlan')}
-                    </Button>
+                    <div className="flex flex-wrap gap-3">
+                        <Button
+                            variant="secondary"
+                            onClick={() => { setAddHadithsSelectedIds([]); setAddHadithsModalOpen(true); }}
+                            className="rounded-2xl h-16 px-6 uppercase text-[10px] font-black tracking-widest border-border-main/50"
+                        >
+                            <Plus size={16} className="mr-2" />
+                            {t('addHadithsToPlan')}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'hadith-revision-settings-view' })}
+                            className="rounded-2xl h-16 px-8 uppercase text-[10px] font-black tracking-widest bg-bg-secondary/50 border-border-main/20 shadow-premium group transition-all"
+                        >
+                            <Edit size={16} className="mr-3 text-accent-color group-hover:scale-110 transition-transform" />
+                            {t('editPlan')}
+                        </Button>
+                    </div>
                 )}
             </header>
+
+            {/* Modal Ajouter des hadiths au plan */}
+            <Modal isOpen={addHadithsModalOpen} onClose={() => setAddHadithsModalOpen(false)}>
+                {(() => {
+                    const existingIds = revisionGoal?.selectedHadiths || [];
+                    const availableHadiths = HADITH_COLLECTION.filter(h => !existingIds.includes(h.id));
+                    const toggle = (id: number) => setAddHadithsSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+                    return (
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-black text-text-main">{t('addHadithsToPlan')}</h3>
+                            <p className="text-text-secondary text-sm">{t('addHadithsToPlanHelp')}</p>
+                            {availableHadiths.length === 0 ? (
+                                <p className="text-text-secondary text-sm">{t('addToRevisionPlanNoMore')}</p>
+                            ) : (
+                                <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3 max-h-80 overflow-y-auto p-2 border border-border-main rounded-xl custom-scrollbar">
+                                    {availableHadiths.map(hadith => (
+                                        <button
+                                            key={hadith.id}
+                                            type="button"
+                                            onClick={() => toggle(hadith.id)}
+                                            className={clsx(
+                                                'aspect-square rounded-xl border-2 flex items-center justify-center font-black text-sm transition-all',
+                                                addHadithsSelectedIds.includes(hadith.id)
+                                                    ? 'bg-accent-color border-accent-color text-white'
+                                                    : 'bg-bg-secondary/50 border-border-main hover:border-accent-color/50'
+                                            )}
+                                        >
+                                            {hadith.id}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <div className="flex justify-end gap-3">
+                                <Button variant="secondary" onClick={() => setAddHadithsModalOpen(false)}>{t('cancel')}</Button>
+                                <Button
+                                    variant="accent"
+                                    onClick={() => {
+                                        if (addHadithsSelectedIds.length > 0) {
+                                            dispatch({ type: 'ADD_HADITHS_TO_REVISION_PLAN', payload: { hadithIds: addHadithsSelectedIds } });
+                                            setAddHadithsModalOpen(false);
+                                            setAddHadithsSelectedIds([]);
+                                            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+                                        }
+                                    }}
+                                    disabled={addHadithsSelectedIds.length === 0}
+                                >
+                                    {t('addLabel')}
+                                </Button>
+                            </div>
+                        </div>
+                    );
+                })()}
+            </Modal>
 
             {!revisionPlan || revisionPlan.length === 0 ? (
                 <div className="py-32 text-center premium-card border-none bg-bg-secondary/30 rounded-[3rem] flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden">

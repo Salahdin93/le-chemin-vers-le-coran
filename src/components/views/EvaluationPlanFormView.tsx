@@ -16,6 +16,25 @@ const EvaluationPlanFormView: React.FC = () => {
     const { editingEvaluationPlanId } = state;
     const activeProfile = state.profiles.find(p => p.id === state.activeProfileId);
 
+    const memorizedSurahIds = useMemo(() => {
+        if (!activeProfile?.memorizations?.surahParts?.length) return new Set<number>();
+        return new Set(activeProfile.memorizations.surahParts.map(p => {
+            const idStr = String((p as { id?: string }).id ?? '');
+            const num = parseInt(idStr.split('-')[0], 10);
+            return isNaN(num) ? parseInt(idStr, 10) : num;
+        }).filter(Boolean));
+    }, [activeProfile?.memorizations?.surahParts]);
+    const memorizedHizbNames = useMemo(() =>
+        new Set((activeProfile?.memorizations?.hizbs ?? []).map(h => h.number)),
+        [activeProfile?.memorizations?.hizbs]);
+    const memorizedJuzzIds = useMemo(() =>
+        new Set((activeProfile?.memorizations?.juzz ?? []).map(j => j.number)),
+        [activeProfile?.memorizations?.juzz]);
+    const memorizedHadithIds = useMemo(() => {
+        const hp = activeProfile?.hadithProgress ?? {};
+        return new Set(Object.entries(hp).filter(([, status]) => status === 'acquis' || status === 'en_memorisation').map(([id]) => Number(id)));
+    }, [activeProfile?.hadithProgress]);
+
     const [formData, setFormData] = useState<PlanFormData>({});
     const [openBoosters, setOpenBoosters] = useState<Partial<Record<EvaluationContentType, boolean>>>({});
 
@@ -49,11 +68,11 @@ const EvaluationPlanFormView: React.FC = () => {
     }, [editingEvaluationPlanId, activeProfile?.evaluationPlans]);
 
     const fullContentPool = useMemo(() => ({
-        surahPart: FULL_SURAH_LIST.map(s => ({ id: s.id, name: s.name })),
-        hizb: HIZB_DATA.map(h => ({ id: parseInt(h.name, 10), name: `${t('hizb')} ${h.name} : ${h.details}` })),
-        juzz: JUZ_DATA.map(j => ({ id: j.id, name: `${t('juzz')} ${j.id}` })),
-        hadith: HADITH_COLLECTION.map(h => ({ id: h.id, name: `${t('hadith')} ${h.id}` })),
-    }), [t]);
+        surahPart: FULL_SURAH_LIST.filter(s => memorizedSurahIds.has(s.id)).map(s => ({ id: s.id, name: s.name })),
+        hizb: HIZB_DATA.filter(h => memorizedHizbNames.has(h.name)).map(h => ({ id: parseInt(h.name, 10), name: `${t('hizb')} ${h.name} : ${h.details}` })),
+        juzz: JUZ_DATA.filter(j => memorizedJuzzIds.has(j.id)).map(j => ({ id: j.id, name: `${t('juzz')} ${j.id}` })),
+        hadith: HADITH_COLLECTION.filter(h => memorizedHadithIds.has(h.id)).map(h => ({ id: h.id, name: `${t('hadith')} ${h.id}` })),
+    }), [t, memorizedSurahIds, memorizedHizbNames, memorizedJuzzIds, memorizedHadithIds]);
 
     const contentTypeOptions: { value: EvaluationContentType, label: string }[] = [
         { value: 'surahPart', label: t('revModeSurah') },

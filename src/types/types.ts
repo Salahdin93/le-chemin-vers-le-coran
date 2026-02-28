@@ -457,6 +457,8 @@ export type AppAction =
   | { type: 'UNLOCK_BADGE'; payload: BadgeId }
   | { type: 'UPDATE_HADITH_STATUS'; payload: { hadithId: number; status: HadithMemorizationStatus } }
   | { type: 'SET_HADITH_REVISION_PLAN'; payload: { goal: HadithRevisionGoal; } }
+  | { type: 'ADD_TO_REVISION_PLAN'; payload: { addedIds: string[] } }
+  | { type: 'ADD_HADITHS_TO_REVISION_PLAN'; payload: { hadithIds: number[] } }
   | { type: 'UPDATE_HADITH_REVISION_STATUS'; payload: { dayIndex: number; status: RevisionStatus; quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'; } }
   | { type: 'UPDATE_HADITH_PROGRESS'; payload: { hadithId: number; status: HadithMemorizationStatus; date: string } }
   | { type: 'SET_APP_LANGUAGE'; payload: Language }

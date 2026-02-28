@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import Card from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
-import { RevisionPlanDay, RevisionStatus } from '@/types';
+import { RevisionPlanDay, RevisionStatus, RevisionMode } from '@/types';
 import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid, History, Folder, Trophy, Star, RotateCcw } from 'lucide-react';
+import { Brain, AlertCircle, CheckCircle2, Circle, Clock, LayoutGrid, History, Folder, Trophy, Star, RotateCcw, Plus } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 import Modal from '@/components/ui/Modal';
-import { HIZB_DATA } from '@/constants/quranData';
+import { HIZB_DATA, JUZ_DATA, FULL_SURAH_LIST } from '@/constants/quranData';
 
 const cardVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -23,9 +23,17 @@ const cardVariants = {
     })
 };
 
+const getItemsForRevisionMode = (mode: RevisionMode, t: (k: string) => string) => {
+    if (mode === 'hizb') return HIZB_DATA.map((h, i) => ({ id: i.toString(), name: `${t('hizb')} ${h.name}`, details: h.details }));
+    if (mode === 'juzz') return JUZ_DATA.map(j => ({ id: j.id.toString(), name: `${t('juzz')} ${j.id}`, details: undefined as string | undefined }));
+    return FULL_SURAH_LIST.map(s => ({ id: s.id.toString(), name: `${s.id}. ${s.name}`, details: undefined as string | undefined }));
+};
+
 const RevisionPlanView: React.FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
     const [filter, setFilter] = useState<RevisionStatus | 'all'>('all');
+    const [addToPlanModalOpen, setAddToPlanModalOpen] = useState(false);
+    const [addToPlanSelectedIds, setAddToPlanSelectedIds] = useState<string[]>([]);
     const [reviewModalDay, setReviewModalDay] = useState<RevisionPlanDay | null>(null);
     const [summaryModalDay, setSummaryModalDay] = useState<RevisionPlanDay | null>(null);
     const [ratingSelector, setRatingSelector] = useState<{
@@ -209,8 +217,71 @@ const RevisionPlanView: React.FC = () => {
                             {t('daysCompleted')}
                         </span>
                     </div>
+                    <Button
+                        variant="secondary"
+                        onClick={() => { setAddToPlanSelectedIds([]); setAddToPlanModalOpen(true); }}
+                        className="rounded-2xl h-12 px-6 uppercase text-[10px] font-black tracking-widest border-border-main/50"
+                    >
+                        <Plus size={18} className="mr-2" />
+                        {t('addToRevisionPlan')}
+                    </Button>
                 </div>
             </header>
+
+            {/* Modal Ajouter au plan */}
+            <Modal isOpen={addToPlanModalOpen} onClose={() => setAddToPlanModalOpen(false)}>
+                {(() => {
+                    const revGoal = activeProfile?.goals.revision;
+                    const mode = revGoal?.revisionMode || 'hizb';
+                    const existingSelection = revGoal?.selection || [];
+                    const items = getItemsForRevisionMode(mode, t).filter(item => !existingSelection.includes(item.id));
+                    const toggle = (id: string) => setAddToPlanSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+                    return (
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-black text-text-main">{t('addToRevisionPlan')}</h3>
+                            <p className="text-text-secondary text-sm">{t('addToRevisionPlanHelp')}</p>
+                            {items.length === 0 ? (
+                                <p className="text-text-secondary text-sm">{t('addToRevisionPlanNoMore')}</p>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-2 border border-border-main rounded-xl custom-scrollbar">
+                                    {items.map(item => (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => toggle(item.id)}
+                                            className={clsx(
+                                                'p-2 text-[11px] text-center border rounded-lg cursor-pointer transition-all duration-200',
+                                                addToPlanSelectedIds.includes(item.id)
+                                                    ? 'bg-accent-color text-white border-accent-color'
+                                                    : 'border-border-main bg-bg-secondary/50 hover:bg-bg-main'
+                                            )}
+                                        >
+                                            <p className="font-black uppercase tracking-wider">{item.name}</p>
+                                            {item.details && <p className="opacity-70 text-[9px] mt-0.5 truncate">{item.details}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            <div className="flex justify-end gap-3">
+                                <Button variant="secondary" onClick={() => setAddToPlanModalOpen(false)}>{t('cancel')}</Button>
+                                <Button
+                                    variant="accent"
+                                    onClick={() => {
+                                        if (addToPlanSelectedIds.length > 0) {
+                                            dispatch({ type: 'ADD_TO_REVISION_PLAN', payload: { addedIds: addToPlanSelectedIds } });
+                                            setAddToPlanModalOpen(false);
+                                            setAddToPlanSelectedIds([]);
+                                            dispatch({ type: 'SET_TOAST', payload: t('saved') });
+                                        }
+                                    }}
+                                    disabled={addToPlanSelectedIds.length === 0}
+                                >
+                                    {t('addLabel')}
+                                </Button>
+                            </div>
+                        </div>
+                    );
+                })()}
+            </Modal>
 
             {/* Hadith Section */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7, ease: [0.23, 1, 0.32, 1] as any }}>

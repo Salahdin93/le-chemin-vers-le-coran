@@ -42,10 +42,21 @@ export const SURAH_NAMES_HIZB_MAP: string[][] = HIZB_DATA.map(hizb => {
     return Array.from(surahSet);
 });
 
+function normalizeSurahNameForMatch(name: string): string {
+    return name.replace(/'/g, '').replace(/\u2019/g, '').trim();
+}
+
+function hizbSurahMatchesFullSurah(hizbSurahStr: string, fullSurahName: string): boolean {
+    const partBeforeParen = hizbSurahStr.replace(/\s*\([\d\s\-]+\)\s*$/, '').trim();
+    const normPart = normalizeSurahNameForMatch(partBeforeParen);
+    const normFull = normalizeSurahNameForMatch(fullSurahName);
+    return normPart === normFull || normPart.startsWith(normFull) || normFull.startsWith(normPart);
+}
+
 export const MEMORIZATION_SURAH_OPTIONS = FULL_SURAH_LIST.map(surah => {
     const parts: { id: string, name: string, hizbs: number[], isFull: boolean, originalSurahId: number }[] = [];
     const hizbsContainingSurah = HIZB_DATA.map((hizb, index) => ({...hizb, hizbNum: index + 1}))
-                                        .filter(hizb => hizb.surahs.some(s => s.startsWith(surah.name)));
+                                        .filter(hizb => hizb.surahs.some(s => hizbSurahMatchesFullSurah(s, surah.name)));
     
     if (hizbsContainingSurah.length > 1) {
         hizbsContainingSurah.forEach(hizb => {
