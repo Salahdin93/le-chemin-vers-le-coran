@@ -471,11 +471,13 @@ const SettingsView: React.FC = () => {
                     isOpen={isResetAppOpen}
                     onClose={() => setIsResetAppOpen(false)}
                     onConfirm={async () => {
-                        const ok = await dbService.deleteAllProfilesForCurrentUser();
-                        if (ok) {
-                            dispatch({ type: 'RESET_APP' });
-                            setIsResetAppOpen(false);
+                        try {
+                            await dbService.deleteAllProfilesForCurrentUser();
+                        } catch (e) {
+                            console.error('deleteAllProfilesForCurrentUser', e);
                         }
+                        dispatch({ type: 'RESET_APP' });
+                        setIsResetAppOpen(false);
                     }}
                     title={t('resetEverything') || 'Réinitialisation Totale'}
                     message={t('confirmResetTotal') || t('confirmReset') || 'Voulez-vous vraiment tout réinitialiser ? Tous vos profils et données seront supprimés. Vous resterez connecté et pourrez créer un nouveau profil.'}

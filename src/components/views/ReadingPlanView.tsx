@@ -279,6 +279,7 @@ const ReadingPlanView: React.FC = () => {
                     const status = state.progress.readingHistory[`day_${day.day}`]?.status || 'not_read';
                     const isCurrent = day.day === state.progress.currentReadingDay;
                     const isEditing = editingDay === day.day;
+                    const displayDayNum = (state.progress.existingDaysRead ?? 0) + day.day;
                     const dayDate = getDateForDay(day.day, state.progress.startDate);
                     const isFriday = dayDate?.getDay() === 5;
                     const showKahf = day.isKahfDay && isFriday;
@@ -310,7 +311,7 @@ const ReadingPlanView: React.FC = () => {
                                         <div className="flex items-center gap-2 mb-1">
                                             <Calendar size={12} className="text-accent-color opacity-50" />
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color">
-                                                {t('day')} {day.day}
+                                                {t('day')} {displayDayNum}
                                                 {state.progress.startDate && (
                                                     <span className="ml-2 font-black text-text-main group-hover:text-accent-color transition-colors">
                                                         — {getDateForDay(day.day, state.progress.startDate)?.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
