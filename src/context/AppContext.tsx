@@ -154,6 +154,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       // Calculer pagesPerDay avant de générer le plan
       const totalPages = 604;
       const calculatedPagesPerDay = wizardData.duration ? Math.ceil((totalPages * (wizardData.khatmas || 1)) / wizardData.duration) : wizardData.pagesPerDay || 1;
+      // En "reprise" lecture, garder la date de début existante pour que le plan reste aligné
+      const readingStartDate = (wizardFlow === 'reading' && wizardData.readingGoalMode === 'resume' && state.progress.startDate)
+        ? state.progress.startDate
+        : startDate;
 
       const readingPlan = wizardData.wantsReading ? generateReadingPlan({
         duration: wizardData.duration!,
@@ -161,7 +165,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         kahfOption: wizardData.kahfOption!,
         kahfPages: wizardData.kahfPages!,
         pagesPerDay: calculatedPagesPerDay
-      }, startDate) : null;
+      }, readingStartDate) : null;
 
       const revisionPlan = wizardData.wantsRevision ? generateRevisionPlan({
         selection: wizardData.revisionSelection!,
@@ -222,9 +226,19 @@ function appReducer(state: AppState, action: AppAction): AppState {
           }
         };
 
-        const newProgress = wizardMode === 'new'
-          ? { ...defaultState.progress, startDate }
-          : state.progress; // Conserver la progression en mode reprise
+        // Ne jamais réinitialiser la progression quand on ne change que l'objectif de révision
+        // En "reprise" lecture, fusionner l'historique et le jour courant
+        const newProgress = wizardFlow === 'revision'
+          ? state.progress
+          : wizardFlow === 'reading' && wizardData.readingGoalMode === 'resume' && (wizardData.resumeDay != null || wizardData.resumeReadingHistory)
+            ? {
+                ...state.progress,
+                currentReadingDay: wizardData.resumeDay ?? state.progress.currentReadingDay,
+                readingHistory: { ...state.progress.readingHistory, ...(wizardData.resumeReadingHistory || {}) }
+              }
+            : wizardMode === 'new'
+              ? { ...defaultState.progress, startDate }
+              : state.progress;
 
         const newPlans = {
           reading: wizardData.wantsReading ? readingPlan : (wizardFlow === 'revision' ? state.plans.reading : null),

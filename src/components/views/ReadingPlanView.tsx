@@ -277,6 +277,9 @@ const ReadingPlanView: React.FC = () => {
                     const status = state.progress.readingHistory[`day_${day.day}`]?.status || 'not_read';
                     const isCurrent = day.day === state.progress.currentReadingDay;
                     const isEditing = editingDay === day.day;
+                    const dayDate = getDateForDay(day.day, state.progress.startDate);
+                    const isFriday = dayDate?.getDay() === 5;
+                    const showKahf = day.isKahfDay && isFriday;
                     const hizbDetails = getHizbDetailsFromPage(day.startPage);
                     const endHizbDetails = getHizbDetailsFromPage(day.endPage);
                     const hizbInfo = HIZB_DATA[hizbDetails.hizbNum - 1];
@@ -291,7 +294,7 @@ const ReadingPlanView: React.FC = () => {
                                 )}
                                 onClick={() => !isCurrent && setEditingDay(isEditing ? null : day.day)}
                             >
-                                {day.isKahfDay && (
+                                {showKahf && (
                                     <div
                                         onClick={(e) => { e.stopPropagation(); setKahfModalOpen(true); }}
                                         className="absolute top-0 right-0 p-3 bg-accent-color text-white rounded-bl-2xl cursor-pointer hover:scale-110 active:scale-95 transition-transform"
@@ -367,7 +370,7 @@ const ReadingPlanView: React.FC = () => {
                                         </span>
                                     </div>
 
-                                    {day.isKahfDay && (
+                                    {showKahf && (
                                         <div className="mt-4 p-4 bg-accent-color/5 border border-accent-color/20 rounded-2xl space-y-4">
                                             <div className="flex items-center gap-2 text-accent-color">
                                                 <Star size={14} fill="currentColor" />
