@@ -122,7 +122,8 @@ const GlobalProgressCard: React.FC = () => {
 
 const getDateForDay = (day: number, startDateStr: string | null) => {
     if (!startDateStr) return null;
-    const date = new Date(startDateStr);
+    const [y, m, d] = startDateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
     date.setDate(date.getDate() + (day - 1));
     return date;
 };

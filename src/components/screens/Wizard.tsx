@@ -115,7 +115,21 @@ const Wizard: FC = () => {
 
     const handleFinish = () => {
         if (!isStepValid) return;
-        const startDate = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const toLocalDateString = (d: Date) =>
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const today = toLocalDateString(now);
+        const existingDays = formData.wantsResumeExistingProgram && (formData.existingDaysRead ?? 0) > 0
+            ? (formData.existingDaysRead ?? 0)
+            : 0;
+        let startDate: string;
+        if (existingDays > 0) {
+            const start = new Date(now);
+            start.setDate(start.getDate() - existingDays);
+            startDate = toLocalDateString(start);
+        } else {
+            startDate = today;
+        }
         // En mode modification (reading/revision), on réutilise l'id du profil actif
         const profileId = (flow === 'reading' || flow === 'revision')
             ? (activeProfile?.id || generateUUID())
