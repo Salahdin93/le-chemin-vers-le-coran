@@ -1,6 +1,6 @@
 import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useRef, useSyncExternalStore } from 'react';
 import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan, ToReviewHistoryItem, ReadingHistory } from '../types/types';
-import { generateReadingPlan, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan, generateHadithReadingPlan } from '../services/planLogic';
+import { generateReadingPlan, generateReadingPlanResume, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan, generateHadithReadingPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
 import { getInitialBadges, checkRevisionMilestone, checkPerfectEvaluation, checkFirstMemorization, checkKhatmaMilestones, checkHadithMilestones } from '../services/achievementLogic';
@@ -159,13 +159,28 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ? state.progress.startDate
         : startDate;
 
-      const readingPlan = wizardData.wantsReading ? generateReadingPlan({
-        duration: wizardData.duration!,
-        khatmas: wizardData.khatmas!,
-        kahfOption: wizardData.kahfOption!,
-        kahfPages: wizardData.kahfPages!,
-        pagesPerDay: calculatedPagesPerDay
-      }, readingStartDate) : null;
+      const isResumeNewProfile = wizardData.wantsResumeExistingProgram === true && wizardData.existingPagesRead != null && wizardData.existingDaysRead != null && wizardData.wantsReading;
+      const readingPlan = wizardData.wantsReading
+        ? isResumeNewProfile
+          ? generateReadingPlanResume(
+              {
+                duration: wizardData.duration!,
+                khatmas: wizardData.khatmas!,
+                kahfOption: wizardData.kahfOption!,
+                kahfPages: wizardData.kahfPages!,
+                pagesPerDay: calculatedPagesPerDay
+              },
+              startDate,
+              { existingPagesRead: wizardData.existingPagesRead! }
+            )
+          : generateReadingPlan({
+              duration: wizardData.duration!,
+              khatmas: wizardData.khatmas!,
+              kahfOption: wizardData.kahfOption!,
+              kahfPages: wizardData.kahfPages!,
+              pagesPerDay: calculatedPagesPerDay
+            }, readingStartDate)
+        : null;
 
       const revisionPlan = wizardData.wantsRevision ? generateRevisionPlan({
         selection: wizardData.revisionSelection!,
@@ -260,23 +275,25 @@ function appReducer(state: AppState, action: AppAction): AppState {
         };
       }
 
-      // Mode création d'un profil complet
-      const readingDay = wizardData.existingDaysRead ? wizardData.existingDaysRead + 1 : (wizardData.resumeDay || 1);
+      // Mode création d'un profil complet (reprise : jour 1 = premier jour du plan restant)
+      const readingDay = isResumeNewProfile ? 1 : (wizardData.existingDaysRead ? wizardData.existingDaysRead + 1 : (wizardData.resumeDay || 1));
       const revisionIndex = wizardData.resumeRevisionIndex || 0;
       const hadithIndex = 0;
 
-      // Préremplir readingHistory avec les pages déjà lues (reprise de programme)
+      // Préremplir readingHistory (en reprise nouveau profil, on ne met pas les jours passés dans l'historique pour éviter d'écraser le plan jour 1..N)
       let initialReadingHistory: ReadingHistory = {};
-      if (wizardData.resumeReadingHistory && Object.keys(wizardData.resumeReadingHistory).length > 0) {
-        initialReadingHistory = wizardData.resumeReadingHistory as ReadingHistory;
-      } else if (wizardData.existingDaysRead && wizardData.existingDaysRead > 0 && (wizardData.existingPagesRead ?? 0) > 0) {
-        const days = wizardData.existingDaysRead;
-        const totalPages = wizardData.existingPagesRead ?? 0;
-        const avgPerDay = Math.floor(totalPages / days);
-        const remainder = totalPages - (avgPerDay * days);
-        for (let d = 1; d <= days; d++) {
-          const realPages = d === days ? avgPerDay + remainder : avgPerDay;
-          initialReadingHistory[`day_${d}`] = { status: 'done', realPages, adjustment: 0 };
+      if (!isResumeNewProfile) {
+        if (wizardData.resumeReadingHistory && Object.keys(wizardData.resumeReadingHistory).length > 0) {
+          initialReadingHistory = wizardData.resumeReadingHistory as ReadingHistory;
+        } else if (wizardData.existingDaysRead && wizardData.existingDaysRead > 0 && (wizardData.existingPagesRead ?? 0) > 0) {
+          const days = wizardData.existingDaysRead;
+          const totalPages = wizardData.existingPagesRead ?? 0;
+          const avgPerDay = Math.floor(totalPages / days);
+          const remainder = totalPages - (avgPerDay * days);
+          for (let d = 1; d <= days; d++) {
+            const realPages = d === days ? avgPerDay + remainder : avgPerDay;
+            initialReadingHistory[`day_${d}`] = { status: 'done', realPages, adjustment: 0 };
+          }
         }
       }
 
@@ -286,7 +303,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
         currentReadingDay: readingDay,
         currentRevisionIndex: revisionIndex,
         currentHadithRevisionIndex: hadithIndex,
-        readingHistory: initialReadingHistory
+        readingHistory: initialReadingHistory,
+        ...(isResumeNewProfile && wizardData.existingPagesRead != null && wizardData.existingDaysRead != null
+          ? { existingPagesRead: wizardData.existingPagesRead, existingDaysRead: wizardData.existingDaysRead }
+          : {})
       };
       const newProfile: Profile = {
         id: profileId,
@@ -707,8 +727,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         profiles: remoteProfiles,
         settings: remoteSettings?.settings ? { ...defaultState.settings, ...remoteSettings.settings } : defaultState.settings,
         activeProfileId: remoteSettings?.activeProfileId || (remoteProfiles[0]?.id || null),
-        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : noProfiles ? 'wizard' : 'welcome',
-        wizard: noProfiles ? { isOpen: true, type: 'full', mode: 'new' } : defaultState.wizard
+        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : noProfiles ? 'language' : 'welcome',
+        wizard: noProfiles ? defaultState.wizard : defaultState.wizard
       };
       dispatch({ type: 'INITIALIZE_STATE', payload: newState });
     } catch (e) {

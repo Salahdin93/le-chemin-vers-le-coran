@@ -112,10 +112,15 @@ const StepReadingGoals: React.FC<StepProps> = ({ formData, updateData, t }) => {
                 </motion.div>
             )}
 
-            {/* Objectifs : durée, khatmas, Al-Kahf */}
+            {/* Objectifs : durée (en reprise = jours restants pour terminer), khatmas, Al-Kahf */}
             <div className="space-y-4">
+                {isResume && (
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                        {t('durationDaysRemainingHelp')}
+                    </p>
+                )}
                 <Select
-                    label={t('duration')}
+                    label={isResume ? t('durationDaysRemaining') : t('duration')}
                     value={formData.duration || 30}
                     onChange={(e) => updateData({ duration: parseInt(e.target.value) })}
                     variant="wizard"

@@ -290,6 +290,10 @@ export interface Progress {
   readingHistory: ReadingHistory;
   currentRevisionIndex: number;
   currentHadithRevisionIndex: number;
+  /** Pages already read before starting the current (resume) plan; used for display. */
+  existingPagesRead?: number;
+  /** Days already spent reading before the current (resume) plan; used for display. */
+  existingDaysRead?: number;
   history: {
     reading: CompletedReadingGoal[];
     revision: CompletedRevisionGoal[];

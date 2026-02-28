@@ -14,6 +14,124 @@ const getLowestLevel = (levels: MemorizationLevel[]): MemorizationLevel => {
     return lowestLevel;
 };
 
+export type CompletionItem = { kind: 'hizb'; id: number } | { kind: 'juzz'; id: number };
+
+/** Returns completion items (hizb/juzz ready to group) without modifying state. */
+export const getCompletionMessages = (memorizations: Memorizations): CompletionItem[] => {
+    const items: CompletionItem[] = [];
+    const memorizedPartIds = new Set(memorizations.surahParts.map((p: MemorizedSurahPart) => p.id));
+
+    for (let i = 0; i < HIZB_DATA.length; i++) {
+        const hizb = HIZB_DATA[i];
+        const hizbNum = i + 1;
+        if (memorizations.hizbs.some((h: MemorizedHizb) => h.number === hizb.name)) continue;
+
+        const allPartsInHizb = MEMORIZATION_SURAH_OPTIONS.filter(option => option.hizbs.includes(hizbNum));
+        const neededPartIds = new Set<string>();
+        allPartsInHizb.forEach(part => {
+            if (part.isFull) {
+                const hasFull = memorizedPartIds.has(part.id);
+                const partsForFullSurah = MEMORIZATION_SURAH_OPTIONS.filter(p => p.originalSurahId === part.originalSurahId && !p.isFull);
+                const hasAllParts = partsForFullSurah.every(p => memorizedPartIds.has(p.id));
+                if (!hasFull && !hasAllParts) neededPartIds.add('missing');
+                else neededPartIds.add(part.id);
+            } else {
+                const fullSurahOption = MEMORIZATION_SURAH_OPTIONS.find(p => p.originalSurahId === part.originalSurahId && p.isFull);
+                if (!memorizedPartIds.has(part.id) && !(fullSurahOption && memorizedPartIds.has(fullSurahOption.id))) neededPartIds.add('missing');
+                else neededPartIds.add(part.id);
+            }
+        });
+        if (neededPartIds.has('missing')) continue;
+
+        const componentPartsInState = memorizations.surahParts.filter((p: MemorizedSurahPart) => {
+            const option = MEMORIZATION_SURAH_OPTIONS.find(opt => opt.id === p.id);
+            return option && option.hizbs.includes(hizbNum);
+        });
+        if (componentPartsInState.length > 0) items.push({ kind: 'hizb', id: hizbNum });
+    }
+
+    for (let i = 1; i <= 30; i++) {
+        if (memorizations.juzz.some((j: MemorizedJuzz) => j.number === i)) continue;
+        const hizb1Num = ((i - 1) * 2 + 1).toString();
+        const hizb2Num = ((i - 1) * 2 + 2).toString();
+        const hizb1 = memorizations.hizbs.find((h: MemorizedHizb) => h.number === hizb1Num);
+        const hizb2 = memorizations.hizbs.find((h: MemorizedHizb) => h.number === hizb2Num);
+        if (hizb1 && hizb2) items.push({ kind: 'juzz', id: i });
+    }
+
+    return items;
+};
+
+/** Apply grouping for a single hizb or juzz. Returns new memorizations (does not mutate). */
+export const applyGroupingForItem = (current: Memorizations, kind: 'hizb' | 'juzz', id: number): Memorizations => {
+    const updated = JSON.parse(JSON.stringify(current));
+    const memorizedPartIds = new Set(updated.surahParts.map((p: MemorizedSurahPart) => p.id));
+
+    if (kind === 'hizb') {
+        const hizb = HIZB_DATA[id - 1];
+        if (!hizb || updated.hizbs.some((h: MemorizedHizb) => h.number === hizb.name)) return current;
+
+        const hizbNum = id;
+        const allPartsInHizb = MEMORIZATION_SURAH_OPTIONS.filter(option => option.hizbs.includes(hizbNum));
+        const neededPartIds = new Set<string>();
+        allPartsInHizb.forEach(part => {
+            if (part.isFull) {
+                const hasFull = memorizedPartIds.has(part.id);
+                const partsForFullSurah = MEMORIZATION_SURAH_OPTIONS.filter(p => p.originalSurahId === part.originalSurahId && !p.isFull);
+                const hasAllParts = partsForFullSurah.every(p => memorizedPartIds.has(p.id));
+                if (!hasFull && !hasAllParts) neededPartIds.add('missing');
+                else neededPartIds.add(part.id);
+            } else {
+                const fullSurahOption = MEMORIZATION_SURAH_OPTIONS.find(p => p.originalSurahId === part.originalSurahId && p.isFull);
+                if (!memorizedPartIds.has(part.id) && !(fullSurahOption && memorizedPartIds.has(fullSurahOption.id))) neededPartIds.add('missing');
+                else neededPartIds.add(part.id);
+            }
+        });
+        if (neededPartIds.has('missing')) return current;
+
+        const componentPartsInState = updated.surahParts.filter((p: MemorizedSurahPart) => {
+            const option = MEMORIZATION_SURAH_OPTIONS.find(opt => opt.id === p.id);
+            return option && option.hizbs.includes(hizbNum);
+        });
+        if (componentPartsInState.length === 0) return current;
+
+        const hizbLevel = getLowestLevel(componentPartsInState.map((p: MemorizedSurahPart) => p.level));
+        updated.hizbs.push({
+            number: hizb.name,
+            details: hizb.details,
+            level: hizbLevel,
+            status: hizbLevel as any,
+            componentSurahParts: componentPartsInState,
+        });
+        const idsToRemove = new Set(componentPartsInState.map((p: MemorizedSurahPart) => p.id));
+        updated.surahParts = updated.surahParts.filter((p: MemorizedSurahPart) => !idsToRemove.has(p.id));
+    } else {
+        if (id < 1 || id > 30) return current;
+        if (updated.juzz.some((j: MemorizedJuzz) => j.number === id)) return current;
+        const hizb1Num = ((id - 1) * 2 + 1).toString();
+        const hizb2Num = ((id - 1) * 2 + 2).toString();
+        const hizb1 = updated.hizbs.find((h: MemorizedHizb) => h.number === hizb1Num);
+        const hizb2 = updated.hizbs.find((h: MemorizedHizb) => h.number === hizb2Num);
+        if (!hizb1 || !hizb2) return current;
+
+        const juzzLevel = getLowestLevel([hizb1.level, hizb2.level]);
+        updated.juzz.push({
+            number: id,
+            level: juzzLevel,
+            status: juzzLevel as any,
+            componentHizbs: [
+                { number: hizb1.number, details: hizb1.details, level: hizb1.level, status: hizb1.status },
+                { number: hizb2.number, details: hizb2.details, level: hizb2.level, status: hizb2.status }
+            ]
+        });
+        updated.hizbs = updated.hizbs.filter((h: MemorizedHizb) => h.number !== hizb1Num && h.number !== hizb2Num);
+    }
+
+    updated.hizbs.sort((a: MemorizedHizb, b: MemorizedHizb) => Number(a.number) - Number(b.number));
+    updated.juzz.sort((a: MemorizedJuzz, b: MemorizedJuzz) => a.number - b.number);
+    return updated;
+};
+
 export const checkAndGroupMemorizations = (currentMemorizations: Memorizations): { updatedMemorizations: Memorizations, groupedItems: string[] } => {
     const updatedMemorizations: Memorizations = JSON.parse(JSON.stringify(currentMemorizations));
     const memorizedPartIds = new Set(updatedMemorizations.surahParts.map((p: MemorizedSurahPart) => p.id));
@@ -73,7 +191,7 @@ export const checkAndGroupMemorizations = (currentMemorizations: Memorizations):
             componentSurahParts: componentPartsInState,
         });
 
-        const idsToRemove = new Set(componentPartsInState.map(p => p.id));
+        const idsToRemove = new Set(componentPartsInState.map((p: MemorizedSurahPart) => p.id));
         updatedMemorizations.surahParts = updatedMemorizations.surahParts.filter((p: MemorizedSurahPart) => !idsToRemove.has(p.id));
     }
 

@@ -77,6 +77,58 @@ export const generateReadingPlan = (readingGoal: ReadingGoal, startDateString: s
     return plan;
 };
 
+/** Plan for resume: remaining pages spread over `duration` days starting at page existingPagesRead+1. */
+export const generateReadingPlanResume = (
+    readingGoal: ReadingGoal,
+    startDateString: string,
+    options: { existingPagesRead: number }
+): PlanDay[] => {
+    const { duration, khatmas, kahfOption, kahfPages } = readingGoal;
+    const startDate = new Date(startDateString);
+    const totalPagesToRead = TOTAL_PAGES * khatmas;
+    const remainingPages = Math.max(0, totalPagesToRead - options.existingPagesRead);
+    let pagesForNormalDays = remainingPages;
+    let fridaysCount = 0;
+    if (kahfOption && (kahfPages ?? 0) > 0) {
+        for (let i = 0; i < duration; i++) {
+            const tempDate = new Date(startDate);
+            tempDate.setDate(startDate.getDate() + i);
+            if (tempDate.getDay() === 5) fridaysCount++;
+        }
+        pagesForNormalDays = Math.max(0, remainingPages - fridaysCount * (kahfPages ?? 0));
+    }
+    const normalDaysCount = duration - fridaysCount;
+    const pagesPerNormalDay = normalDaysCount > 0 ? Math.floor(pagesForNormalDays / normalDaysCount) : 0;
+    let extraPages = normalDaysCount > 0 ? pagesForNormalDays % normalDaysCount : 0;
+    const plan: PlanDay[] = [];
+    let currentPage = options.existingPagesRead + 1;
+    for (let day = 1; day <= duration; day++) {
+        let pagesToday: number;
+        let isKahfDay = false;
+        const tempDate = new Date(startDate);
+        tempDate.setDate(startDate.getDate() + day - 1);
+        if (kahfOption && tempDate.getDay() === 5) {
+            pagesToday = Math.min(kahfPages ?? 0, remainingPages);
+            isKahfDay = true;
+        } else {
+            pagesToday = pagesPerNormalDay + (extraPages > 0 ? 1 : 0);
+            if (extraPages > 0) extraPages--;
+        }
+        const startPage = currentPage;
+        const endPage = startPage + pagesToday - 1;
+        plan.push({
+            day,
+            startPage: startPage > TOTAL_PAGES ? (startPage % TOTAL_PAGES || TOTAL_PAGES) : startPage,
+            endPage: endPage > TOTAL_PAGES ? (endPage % TOTAL_PAGES || TOTAL_PAGES) : endPage,
+            pages: pagesToday,
+            recalculatedPages: pagesToday,
+            isKahfDay,
+        });
+        currentPage = endPage + 1;
+    }
+    return plan;
+};
+
 export const recalculateFuturePlan = (
     originalPlan: PlanDay[],
     readingHistory: ReadingHistory,

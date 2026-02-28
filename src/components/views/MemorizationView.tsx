@@ -5,7 +5,7 @@ import Select from '@/components/ui/Select';
 import { MemorizationLevel, MemorizedHizb, MemorizedJuzz, MemorizedSurahPart, Juzz, Hizb, SurahPart, MemorizationStatus, HadithMemorizationStatus, Hadith } from '@/types';
 import { HIZB_DATA, JUZ_DATA, MEMORIZATION_SURAH_OPTIONS } from '@/constants/quranData';
 import { HADITH_COLLECTION } from '@/constants/hadithData';
-import { checkAndGroupMemorizations } from '@/services/memorizationLogic';
+import { getCompletionMessages, applyGroupingForItem } from '@/services/memorizationLogic';
 import Modal from '@/components/ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,7 +41,7 @@ const StatusIndicator: React.FC<{ status: MemorizationStatus | HadithMemorizatio
 const MemorizationView: React.FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
     const [formType, setFormType] = useState<FormType>(null);
-    const [selectedItemId, setSelectedItemId] = useState('');
+    const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
     const [selectedLevel, setSelectedLevel] = useState<MemorizationLevel>('bon');
     const [modalContent, setModalContent] = useState<{ title: string, items: ModalDetailItem[], hizbNumber?: string } | null>(null)
     const [editItem, setEditItem] = useState<{ type: 'hizb' | 'juzz' | 'surahPart'; item: MemorizedHizb | MemorizedJuzz | MemorizedSurahPart } | null>(null)
@@ -56,71 +56,79 @@ const MemorizationView: React.FC = () => {
     const hizbsList: MemorizedHizb[] = Array.isArray(memorizations.hizbs) ? memorizations.hizbs : [];
     const surahPartsList: MemorizedSurahPart[] = Array.isArray(memorizations.surahParts) ? memorizations.surahParts : [];
 
-    const handleAddItem = () => {
-        if (!selectedItemId || !formType || !activeProfile) return;
+    const toggleSelectedId = (id: string) => {
+        setSelectedItemIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
 
-        let payload: any;
+    const handleAddItem = () => {
+        if (selectedItemIds.length === 0 || !formType || !activeProfile) return;
+
         let tempMemorizations = JSON.parse(JSON.stringify(activeProfile.memorizations));
         const status: MemorizationStatus = selectedLevel === 'moyen' ? 'moyen' : selectedLevel;
 
-        if (formType === 'surahPart') {
-            const surahOption = MEMORIZATION_SURAH_OPTIONS.find(opt => opt.id === selectedItemId);
-            if (surahOption) {
-                const itemToAdd: MemorizedSurahPart = { id: surahOption.id, name: surahOption.name, level: selectedLevel, status, originalSurahId: surahOption.originalSurahId };
-                payload = { type: 'surahPart', item: itemToAdd };
-                if (!tempMemorizations.surahParts.find((s: MemorizedSurahPart) => s.id === itemToAdd.id)) {
+        for (const selectedItemId of selectedItemIds) {
+            if (formType === 'surahPart') {
+                const surahOption = MEMORIZATION_SURAH_OPTIONS.find(opt => opt.id === selectedItemId);
+                if (surahOption && !tempMemorizations.surahParts.find((s: MemorizedSurahPart) => s.id === surahOption.id)) {
+                    const itemToAdd: MemorizedSurahPart = { id: surahOption.id, name: surahOption.name, level: selectedLevel, status, originalSurahId: surahOption.originalSurahId };
+                    dispatch({ type: 'ADD_MEMORIZATION', payload: { type: 'surahPart', item: itemToAdd } });
                     tempMemorizations.surahParts.push(itemToAdd);
                 }
-            }
-        } else if (formType === 'hizb') {
-            const hizbData = HIZB_DATA.find(h => h.name === selectedItemId);
-            if (hizbData) {
-                const hizbNum = Number(hizbData.name);
-                const surahPartsInHizb = MEMORIZATION_SURAH_OPTIONS.filter(opt => opt.hizbs.includes(hizbNum));
-                const componentSurahParts: MemorizedSurahPart[] = surahPartsInHizb.map(p => ({ id: p.id, name: p.name, level: selectedLevel, status, originalSurahId: p.originalSurahId }));
-                const itemToAdd: MemorizedHizb = { number: hizbData.name, details: hizbData.details, level: selectedLevel, status, componentSurahParts };
-                payload = { type: 'hizb', item: itemToAdd };
-            }
-        } else if (formType === 'juzz') {
-            const juzzId = Number(selectedItemId);
-            const juzzData = JUZ_DATA.find(j => j.id === juzzId);
-            if (juzzData && juzzData.id >= 1 && juzzData.id <= 30) {
-                const hizb1Num = String((juzzData.id - 1) * 2 + 1);
-                const hizb2Num = String((juzzData.id - 1) * 2 + 2);
-                const hizb1 = HIZB_DATA.find(h => h.name === hizb1Num);
-                const hizb2 = HIZB_DATA.find(h => h.name === hizb2Num);
-                const itemToAdd: MemorizedJuzz = {
-                    number: juzzData.id,
-                    level: selectedLevel,
-                    status,
-                    componentHizbs: [
-                        { number: hizb1Num, details: hizb1?.details ?? '', level: selectedLevel, status },
-                        { number: hizb2Num, details: hizb2?.details ?? '', level: selectedLevel, status }
-                    ]
-                };
-                payload = { type: 'juzz', item: itemToAdd };
-            }
-        } else if (formType === 'hadith') {
-            const hadithId = parseInt(selectedItemId);
-            if (!isNaN(hadithId)) {
-                const hStat = selectedLevel === 'excellent' ? 'acquis' : (selectedLevel === 'bon' ? 'en_memorisation' : 'a_reprendre');
-                dispatch({ type: 'UPDATE_HADITH_PROGRESS', payload: { hadithId, status: hStat, date: new Date().toISOString() } });
-                dispatch({ type: 'SET_TOAST', payload: t('saved') });
+            } else if (formType === 'hizb') {
+                const hizbData = HIZB_DATA.find(h => h.name === selectedItemId);
+                if (hizbData && !tempMemorizations.hizbs.find((h: MemorizedHizb) => h.number === hizbData.name)) {
+                    const hizbNum = Number(hizbData.name);
+                    const surahPartsInHizb = MEMORIZATION_SURAH_OPTIONS.filter(opt => opt.hizbs.includes(hizbNum));
+                    const componentSurahParts: MemorizedSurahPart[] = surahPartsInHizb.map(p => ({ id: p.id, name: p.name, level: selectedLevel, status, originalSurahId: p.originalSurahId }));
+                    const itemToAdd: MemorizedHizb = { number: hizbData.name, details: hizbData.details, level: selectedLevel, status, componentSurahParts };
+                    dispatch({ type: 'ADD_MEMORIZATION', payload: { type: 'hizb', item: itemToAdd } });
+                    tempMemorizations.hizbs.push(itemToAdd);
+                }
+            } else if (formType === 'juzz') {
+                const juzzId = Number(selectedItemId);
+                const juzzData = JUZ_DATA.find(j => j.id === juzzId);
+                if (juzzData && juzzData.id >= 1 && juzzData.id <= 30 && !tempMemorizations.juzz.find((j: MemorizedJuzz) => j.number === juzzData.id)) {
+                    const hizb1Num = String((juzzData.id - 1) * 2 + 1);
+                    const hizb2Num = String((juzzData.id - 1) * 2 + 2);
+                    const hizb1 = HIZB_DATA.find(h => h.name === hizb1Num);
+                    const hizb2 = HIZB_DATA.find(h => h.name === hizb2Num);
+                    const itemToAdd: MemorizedJuzz = {
+                        number: juzzData.id,
+                        level: selectedLevel,
+                        status,
+                        componentHizbs: [
+                            { number: hizb1Num, details: hizb1?.details ?? '', level: selectedLevel, status },
+                            { number: hizb2Num, details: hizb2?.details ?? '', level: selectedLevel, status }
+                        ]
+                    };
+                    dispatch({ type: 'ADD_MEMORIZATION', payload: { type: 'juzz', item: itemToAdd } });
+                    tempMemorizations.juzz.push(itemToAdd);
+                }
+            } else if (formType === 'hadith') {
+                const hadithId = parseInt(selectedItemId, 10);
+                if (!isNaN(hadithId)) {
+                    const hStat = selectedLevel === 'excellent' ? 'acquis' : (selectedLevel === 'bon' ? 'en_memorisation' : 'a_reprendre');
+                    dispatch({ type: 'UPDATE_HADITH_PROGRESS', payload: { hadithId, status: hStat, date: new Date().toISOString() } });
+                }
             }
         }
 
-        if (payload) {
-            dispatch({ type: 'ADD_MEMORIZATION', payload });
-            const { updatedMemorizations, groupedItems } = checkAndGroupMemorizations(tempMemorizations);
-            if (groupedItems.length > 0) {
-                dispatch({ type: 'UPDATE_MEMORIZATIONS', payload: updatedMemorizations });
-                dispatch({ type: 'SET_TOAST', payload: `Félicitations ! ${groupedItems.join(', ')} complété(s) !` });
-            }
-        }
+        const completionItems = getCompletionMessages(tempMemorizations);
+        const toastMsg = completionItems.length > 0
+          ? (completionItems[0].kind === 'hizb' ? t('hizbCompleted').replace('{n}', String(completionItems[0].id)) : t('juzzCompleted').replace('{n}', String(completionItems[0].id)))
+          : t('saved');
+        dispatch({ type: 'SET_TOAST', payload: toastMsg });
 
         setFormType(null);
-        setSelectedItemId('');
+        setSelectedItemIds([]);
         setSelectedLevel('bon');
+    };
+
+    const completionItems = getCompletionMessages(memorizations);
+    const handleCreateGroup = (kind: 'hizb' | 'juzz', id: number) => {
+        const next = applyGroupingForItem(memorizations, kind, id);
+        dispatch({ type: 'UPDATE_MEMORIZATIONS', payload: next });
+        dispatch({ type: 'SET_TOAST', payload: kind === 'hizb' ? t('hizbCreated') : t('juzzCreated') });
     };
 
     const handleRemoveItem = (type: 'juzz' | 'hizb' | 'surahPart', item: Juzz | Hizb | SurahPart) => {
@@ -192,29 +200,31 @@ const MemorizationView: React.FC = () => {
                         <button onClick={() => setFormType(null)} className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Annuler</button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">{t('selection')}</label>
-                            <Select className="h-14 rounded-2xl bg-bg-secondary border-2 border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" onChange={e => setSelectedItemId(e.target.value)} defaultValue={selectedItemId}>
-                                <option value="" disabled>{t('selectItem')}</option>
-                                {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                            </Select>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">{t('selection')} {selectedItemIds.length > 0 && `(${selectedItemIds.length})`}</label>
+                        <div className="max-h-64 overflow-y-auto p-2 rounded-2xl bg-bg-secondary border-2 border-border-main/50 grid grid-cols-1 sm:grid-cols-2 gap-2 custom-scrollbar">
+                            {options.map(o => (
+                                <label key={o.value} className={clsx('flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border', selectedItemIds.includes(o.value) ? 'bg-accent-color/10 border-accent-color/40' : 'bg-bg-main/50 border-border-main/30 hover:border-border-main')}>
+                                    <input type="checkbox" checked={selectedItemIds.includes(o.value)} onChange={() => toggleSelectedId(o.value)} className="rounded border-border-main text-accent-color focus:ring-accent-color/20" />
+                                    <span className="text-sm font-bold truncate">{o.label}</span>
+                                </label>
+                            ))}
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">{t('level')}</label>
-                            <Select className="h-14 rounded-2xl bg-bg-secondary border-2 border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)} defaultValue={selectedLevel}>
-                                <option value="bon">{levels.bon}</option>
-                                <option value="excellent">{levels.excellent}</option>
-                                <option value="moyen">{levels.moyen}</option>
-                            </Select>
-                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">{t('level')}</label>
+                        <Select className="h-14 rounded-2xl bg-bg-secondary border-2 border-border-main/50 text-sm font-bold w-full focus:ring-accent-color/20" value={selectedLevel} onChange={e => setSelectedLevel(e.target.value as MemorizationLevel)}>
+                            <option value="bon">{levels.bon}</option>
+                            <option value="excellent">{levels.excellent}</option>
+                            <option value="moyen">{levels.moyen}</option>
+                        </Select>
                     </div>
 
                     <Button
                         variant="accent"
                         onClick={handleAddItem}
                         className="w-full h-14 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-accent-color/20"
-                        disabled={!selectedItemId}
+                        disabled={selectedItemIds.length === 0}
                     >
                         {t('confirmAddition')}
                     </Button>
@@ -247,6 +257,24 @@ const MemorizationView: React.FC = () => {
                     </div>
                 )}
             </header>
+
+            {completionItems.length > 0 && (
+                <div className="p-6 rounded-2xl bg-accent-color/5 border border-accent-color/20 space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-accent-color/80">{t('completedSection')}</p>
+                    <div className="flex flex-wrap gap-3">
+                        {completionItems.map(item => (
+                            <div key={`${item.kind}-${item.id}`} className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-text-main">
+                                    {item.kind === 'hizb' ? t('hizbCompleted').replace('{n}', String(item.id)) : t('juzzCompleted').replace('{n}', String(item.id))}
+                                </span>
+                                <Button variant="secondary" size="sm" className="rounded-xl text-[10px] font-black uppercase" onClick={() => handleCreateGroup(item.kind, item.id)}>
+                                    {item.kind === 'hizb' ? `${t('createHizb')} ${item.id}` : `${t('createJuzz')} ${item.id}`}
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <AnimatePresence mode="wait">
                 {formType && renderForm()}

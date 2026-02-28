@@ -53,11 +53,12 @@ const GlobalProgressCard: React.FC = () => {
     const readingGoal = activeProfile?.goals.reading;
     if (!readingGoal || !state.progress.startDate) return null;
 
-    const totalPagesRead = Object.values(state.progress.readingHistory).reduce((sum, day) => sum + (day.realPages || 0), 0);
+    const historyPages = Object.values(state.progress.readingHistory).reduce((sum, day) => sum + (day.realPages || 0), 0);
+    const totalPagesRead = (state.progress.existingPagesRead ?? 0) + historyPages;
     const totalPagesToRead = readingGoal.khatmas * TOTAL_PAGES;
     const percentage = totalPagesToRead > 0 ? Math.round((totalPagesRead / totalPagesToRead) * 100) : 0;
     const pagesRemaining = Math.max(0, totalPagesToRead - totalPagesRead);
-    const daysElapsed = Math.max(1, state.progress.currentReadingDay - 1);
+    const daysElapsed = Math.max(1, (state.progress.existingDaysRead ?? 0) + Math.max(0, state.progress.currentReadingDay - 1));
     const avgPagesPerDay = totalPagesRead / daysElapsed;
     const estimatedDaysRemaining = avgPagesPerDay > 0 ? Math.ceil(pagesRemaining / avgPagesPerDay) : readingGoal.duration - state.progress.currentReadingDay;
     const estimatedEndDate = percentage < 100

@@ -5,11 +5,15 @@ import { Language } from '@/types';
 import Button from '@/components/ui/Button';
 
 const LanguageScreen: React.FC = () => {
-  const { dispatch } = useStore();
+  const { state, dispatch } = useStore();
 
   const handleSelectLanguage = (lang: Language) => {
     dispatch({ type: 'UPDATE_SETTINGS', payload: { lang } });
-    dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' });
+    if (state.profiles.length === 0) {
+      dispatch({ type: 'START_WIZARD', payload: { type: 'full', mode: 'new' } });
+    } else {
+      dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' });
+    }
   };
 
   return (
