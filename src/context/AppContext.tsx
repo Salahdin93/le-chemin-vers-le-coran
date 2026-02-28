@@ -658,12 +658,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const remoteSettings = await dbService.getSettings();
       const remoteProfiles = await dbService.getProfiles();
+      const noProfiles = remoteProfiles.length === 0;
       const newState = {
         ...defaultState,
         profiles: remoteProfiles,
         settings: remoteSettings?.settings ? { ...defaultState.settings, ...remoteSettings.settings } : defaultState.settings,
         activeProfileId: remoteSettings?.activeProfileId || (remoteProfiles[0]?.id || null),
-        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : 'welcome'
+        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : noProfiles ? 'wizard' : 'welcome',
+        wizard: noProfiles ? { isOpen: true, type: 'full', mode: 'new' } : defaultState.wizard
       };
       dispatch({ type: 'INITIALIZE_STATE', payload: newState });
     } catch (e) {

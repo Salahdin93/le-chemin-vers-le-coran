@@ -18,7 +18,6 @@ import StepResumeStart from './wizard/StepResumeStart';
 import StepReadingHistory from './wizard/StepReadingHistory';
 import StepResumeRevision from './wizard/StepResumeRevision';
 import StepRevisionHistory from './wizard/StepRevisionHistory';
-import StepResumeExisting from './wizard/StepResumeExisting';
 import StepJourneyConfig from './wizard/StepJourneyConfig';
 import StepHadithPlan from './wizard/StepHadithPlan';
 import StepHadithSelection from './wizard/StepHadithSelection';
@@ -72,9 +71,8 @@ const Wizard: FC = () => {
         { id: 'readingHistory', titleKey: 'history', component: StepReadingHistory, condition: mode === 'resume' && wantsReading && (formData.resumeDay ?? 1) > 1 },
         { id: 'profileInfo', titleKey: 'profileInfo', component: StepProfileInfo, condition: flow === 'full', requiredFields: ['name'] },
         { id: 'journeyConfig', titleKey: 'journeyConfig', component: StepJourneyConfig, condition: flow === 'full', requiredFields: ['wantsResumeExistingProgram'] },
-        { id: 'resumeExisting', titleKey: 'resumeExistingReading', component: StepResumeExisting, condition: flow === 'full' && formData.wantsResumeExistingProgram === true, requiredFields: ['resumeExistingReading'] },
         { id: 'initialChoice', titleKey: 'planChoice', component: StepInitialChoice, condition: flow === 'full' },
-        { id: 'readingGoals', titleKey: 'readingGoals', component: StepReadingGoals, condition: wantsReading && !formData.resumeExistingReading },
+        { id: 'readingGoals', titleKey: 'readingGoals', component: StepReadingGoals, condition: wantsReading },
         { id: 'revisionPlan', titleKey: 'revisionPlan', component: StepRevisionPlan, condition: wantsRevision },
         { id: 'revisionSelection', titleKey: 'revisionSelection', component: StepRevisionSelection, condition: wantsRevision, requiredFields: ['revisionSelection'] },
         { id: 'hadithPlan', titleKey: 'hadithPlan', component: StepHadithPlan, condition: flow === 'full' && !!formData.wantsHadith },
@@ -84,7 +82,7 @@ const Wizard: FC = () => {
         { id: 'appearance', titleKey: 'appearance', component: StepAppearance, condition: flow === 'full' },
         { id: 'security', titleKey: 'security', component: StepSecurity, condition: flow === 'full' },
         { id: 'terms', titleKey: 'termsOfUse', component: StepTerms, condition: flow === 'full', requiredFields: ['termsAccepted'] },
-    ], [mode, flow, wantsReading, wantsRevision, formData.wantsHadith, formData.wantsReading, formData.resumeDay, formData.revisionSelection?.length, formData.resumeRevisionIndex, formData.resumeExistingReading, formData.wantsResumeExistingProgram, formData.hadithType]);
+    ], [mode, flow, wantsReading, wantsRevision, formData.wantsHadith, formData.wantsReading, formData.resumeDay, formData.revisionSelection?.length, formData.resumeRevisionIndex, formData.wantsResumeExistingProgram, formData.hadithType]);
 
     const activeSteps = useMemo(() => stepsConfig.filter(s => s.condition), [stepsConfig]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
