@@ -22,8 +22,6 @@ import StepResumeExisting from './wizard/StepResumeExisting';
 import StepJourneyConfig from './wizard/StepJourneyConfig';
 import StepHadithPlan from './wizard/StepHadithPlan';
 import StepHadithSelection from './wizard/StepHadithSelection';
-import StepReadingGoalChoice from './wizard/StepReadingGoalChoice';
-
 const Wizard: FC = () => {
     const { state, dispatch, t, activeProfile } = useStore();
     const { mode, type: flow } = state.wizard;
@@ -70,14 +68,13 @@ const Wizard: FC = () => {
     const updateData = (data: Partial<WizardData>) => setFormData(prev => ({ ...prev, ...data }));
 
     const stepsConfig = useMemo(() => [
-        { id: 'readingGoalChoice', titleKey: 'readingGoalChoicePrompt', component: StepReadingGoalChoice, condition: flow === 'reading', requiredFields: ['readingGoalMode'] },
-        { id: 'resumeStart', titleKey: 'resumeDayPrompt', component: StepResumeStart, condition: mode === 'resume' || (flow === 'reading' && formData.readingGoalMode === 'resume') },
-        { id: 'readingHistory', titleKey: 'history', component: StepReadingHistory, condition: (mode === 'resume' && wantsReading && (formData.resumeDay ?? 1) > 1) || (flow === 'reading' && formData.readingGoalMode === 'resume' && (formData.resumeDay ?? 1) > 1) },
+        { id: 'resumeStart', titleKey: 'resumeDayPrompt', component: StepResumeStart, condition: mode === 'resume' },
+        { id: 'readingHistory', titleKey: 'history', component: StepReadingHistory, condition: mode === 'resume' && wantsReading && (formData.resumeDay ?? 1) > 1 },
         { id: 'profileInfo', titleKey: 'profileInfo', component: StepProfileInfo, condition: flow === 'full', requiredFields: ['name'] },
         { id: 'journeyConfig', titleKey: 'journeyConfig', component: StepJourneyConfig, condition: flow === 'full', requiredFields: ['wantsResumeExistingProgram'] },
         { id: 'resumeExisting', titleKey: 'resumeExistingReading', component: StepResumeExisting, condition: flow === 'full' && formData.wantsResumeExistingProgram === true, requiredFields: ['resumeExistingReading'] },
         { id: 'initialChoice', titleKey: 'planChoice', component: StepInitialChoice, condition: flow === 'full' },
-        { id: 'readingGoals', titleKey: 'readingGoals', component: StepReadingGoals, condition: wantsReading && !formData.resumeExistingReading && (flow !== 'reading' || formData.readingGoalMode !== undefined) },
+        { id: 'readingGoals', titleKey: 'readingGoals', component: StepReadingGoals, condition: wantsReading && !formData.resumeExistingReading },
         { id: 'revisionPlan', titleKey: 'revisionPlan', component: StepRevisionPlan, condition: wantsRevision },
         { id: 'revisionSelection', titleKey: 'revisionSelection', component: StepRevisionSelection, condition: wantsRevision, requiredFields: ['revisionSelection'] },
         { id: 'hadithPlan', titleKey: 'hadithPlan', component: StepHadithPlan, condition: flow === 'full' && !!formData.wantsHadith },
@@ -87,7 +84,7 @@ const Wizard: FC = () => {
         { id: 'appearance', titleKey: 'appearance', component: StepAppearance, condition: flow === 'full' },
         { id: 'security', titleKey: 'security', component: StepSecurity, condition: flow === 'full' },
         { id: 'terms', titleKey: 'termsOfUse', component: StepTerms, condition: flow === 'full', requiredFields: ['termsAccepted'] },
-    ], [mode, flow, wantsReading, wantsRevision, formData.wantsHadith, formData.wantsReading, formData.resumeDay, formData.revisionSelection?.length, formData.resumeRevisionIndex, formData.resumeExistingReading, formData.wantsResumeExistingProgram, formData.hadithType, formData.readingGoalMode]);
+    ], [mode, flow, wantsReading, wantsRevision, formData.wantsHadith, formData.wantsReading, formData.resumeDay, formData.revisionSelection?.length, formData.resumeRevisionIndex, formData.resumeExistingReading, formData.wantsResumeExistingProgram, formData.hadithType]);
 
     const activeSteps = useMemo(() => stepsConfig.filter(s => s.condition), [stepsConfig]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
