@@ -360,6 +360,8 @@ export interface WizardData {
   hadithFrequency?: RevisionFrequency;
   prioritizeHadithWeaknesses?: boolean;
   hadithSelection?: number[]; // list of hadith numbers (1-40 or 1-100)
+  // Configuration du voyage: true = Reprendre, false = Commencer nouveau
+  wantsResumeExistingProgram?: boolean;
   // Resume an existing reading when creating new profile
   resumeExistingReading?: boolean;
   existingDaysRead?: number;

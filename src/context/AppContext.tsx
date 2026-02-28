@@ -628,7 +628,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         profiles: remoteProfiles,
         settings: remoteSettings?.settings ? { ...defaultState.settings, ...remoteSettings.settings } : defaultState.settings,
         activeProfileId: remoteSettings?.activeProfileId || (remoteProfiles[0]?.id || null),
-        appScreen: remoteProfiles.length > 0 ? 'main' : 'welcome'
+        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : 'welcome'
       };
       dispatch({ type: 'INITIALIZE_STATE', payload: newState });
     } catch (e) {

@@ -9,7 +9,7 @@ const LanguageScreen: React.FC = () => {
 
   const handleSelectLanguage = (lang: Language) => {
     dispatch({ type: 'UPDATE_SETTINGS', payload: { lang } });
-    dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' });
+    dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
   };
 
   return (
