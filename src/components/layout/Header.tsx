@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore, useActiveProfileSelector } from '@/context/AppContext';
-import { LOGO_URL, LOGO_URL_DARK } from '@/constants/ui';
+import { LOGO_URL_DARK } from '@/constants/ui';
 import { clsx } from 'clsx';
 import { LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,8 +19,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const notificationCount = state.notificationHistory.length;
 
-    const isDark = !['light', 'sepia', 'emerald', 'aube', 'oasis', 'sand', 'wood', 'sunrise', 'leafy', 'pearl', 'rose'].includes(activeProfile?.theme ?? 'dark');
-    const logoSrc = isDark ? LOGO_URL_DARK : LOGO_URL;
+    const logoSrc = LOGO_URL_DARK;
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 10);

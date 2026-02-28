@@ -106,7 +106,14 @@ const Wizard: FC = () => {
     const nextStep = () => { if (currentStepIndex < activeSteps.length - 1) setCurrentStepIndex(currentStepIndex + 1); };
     const prevStep = () => {
         if (currentStepIndex > 0) setCurrentStepIndex(currentStepIndex - 1);
-        else dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' });
+        else {
+            if (flow === 'reading' || flow === 'revision') {
+                dispatch({ type: 'SET_APP_SCREEN', payload: 'main' });
+                dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'settings-view' });
+            } else {
+                dispatch({ type: 'SET_APP_SCREEN', payload: 'welcome' });
+            }
+        }
     };
 
     const handleFinish = () => {

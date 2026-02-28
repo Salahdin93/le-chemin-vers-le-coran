@@ -16,7 +16,7 @@ import StatsView from '@/components/views/StatsView';
 import Toast from '@/components/ui/Toast';
 import NotificationContainer from '@/components/ui/NotificationContainer';
 import NotificationCenterPanel from '@/components/ui/NotificationCenterPanel';
-import { LOGO_URL } from '@/constants/ui';
+import { LOGO_URL_DARK } from '@/constants/ui';
 import ShareModal from '@/components/ui/ShareModal';
 import PaceReadjustmentModal from '@/components/ui/PaceReadjustmentModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -74,7 +74,7 @@ const MainAppView: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-8 dynamic-bg">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center">
-          <img src={LOGO_URL} alt="App Logo" className="w-32 h-32 object-contain mb-8 filter grayscale opacity-20" />
+          <img src={LOGO_URL_DARK} alt="App Logo" className="w-32 h-32 object-contain mb-8 filter grayscale opacity-20" />
           <p className="text-sm font-black uppercase tracking-[0.3em] opacity-40 mb-2">{t('errorProfileNotFound')}</p>
           <p className="text-xs opacity-20">{t('reloadPrompt')}</p>
         </motion.div>

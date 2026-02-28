@@ -181,6 +181,7 @@ export const en = {
     "enableNotifications": "Daily notifications",
     "partialLabel": "Missing pages:",
     "catchUpLabel": "Extra pages:",
+    "summaryOfAnnotations": "Summary of annotations",
     "revisionNotesTitle": "Select surahs to review",
     "notRead": "❌ Not Read",
     "readingProgress": "Reading Progress",

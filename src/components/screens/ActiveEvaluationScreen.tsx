@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '@/context/AppContext';
 import { EvaluationStatus, EvaluationItem } from '@/types';
 import Button from '@/components/ui/Button';
-import { LOGO_URL } from '@/constants/ui';
+import { LOGO_URL_DARK } from '@/constants/ui';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 
 interface ActiveEvaluationScreenProps {
@@ -35,7 +35,7 @@ const ActiveEvaluationScreen: React.FC<ActiveEvaluationScreenProps> = ({ items, 
     if (sessionItems.length === 0 || !currentItem) {
         return (
             <div className="flex flex-col items-center justify-center p-4 text-center">
-                <img src={LOGO_URL} alt="Logo" className="w-32 h-32 object-contain mb-4 opacity-50" />
+                <img src={LOGO_URL_DARK} alt="Logo" className="w-32 h-32 object-contain mb-4 opacity-50" />
                 <p className="text-xl">{t('evaluationNoItems')}</p>
                 <p className="text-sm opacity-70 mt-2">{t('evaluationNoItemsDesc')}</p>
                 <Button onClick={() => onFinish([])} className="mt-6">{t('back')}</Button>

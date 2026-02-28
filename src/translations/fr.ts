@@ -188,6 +188,7 @@ export const fr = {
     "partialLabel": "Pages manquantes :",
     "catchUpLabel": "Pages supplémentaires :",
     "revisionNotesTitle": "Sélectionner les sourates à reprendre",
+    "summaryOfAnnotations": "Résumé des annotations",
     "notRead": "❌ Non Lu",
     "readingProgress": "Progression de Lecture",
     "hadithProgress": "Progression de Hadiths",

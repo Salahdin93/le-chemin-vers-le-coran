@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useRef, useSyncExternalStore } from 'react';
-import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan, ToReviewHistoryItem } from '../types/types';
+import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan, ToReviewHistoryItem, ReadingHistory } from '../types/types';
 import { generateReadingPlan, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan, generateHadithReadingPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
@@ -251,12 +251,28 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const revisionIndex = wizardData.resumeRevisionIndex || 0;
       const hadithIndex = 0;
 
+      // Préremplir readingHistory avec les pages déjà lues (reprise de programme)
+      let initialReadingHistory: ReadingHistory = {};
+      if (wizardData.resumeReadingHistory && Object.keys(wizardData.resumeReadingHistory).length > 0) {
+        initialReadingHistory = wizardData.resumeReadingHistory as ReadingHistory;
+      } else if (wizardData.existingDaysRead && wizardData.existingDaysRead > 0 && (wizardData.existingPagesRead ?? 0) > 0) {
+        const days = wizardData.existingDaysRead;
+        const totalPages = wizardData.existingPagesRead ?? 0;
+        const avgPerDay = Math.floor(totalPages / days);
+        const remainder = totalPages - (avgPerDay * days);
+        for (let d = 1; d <= days; d++) {
+          const realPages = d === days ? avgPerDay + remainder : avgPerDay;
+          initialReadingHistory[`day_${d}`] = { status: 'done', realPages, adjustment: 0 };
+        }
+      }
+
       const newProgress = {
         ...defaultState.progress,
         startDate,
         currentReadingDay: readingDay,
         currentRevisionIndex: revisionIndex,
-        currentHadithRevisionIndex: hadithIndex
+        currentHadithRevisionIndex: hadithIndex,
+        readingHistory: initialReadingHistory
       };
       const newProfile: Profile = {
         id: profileId,
@@ -628,12 +644,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         profiles: remoteProfiles,
         settings: remoteSettings?.settings ? { ...defaultState.settings, ...remoteSettings.settings } : defaultState.settings,
         activeProfileId: remoteSettings?.activeProfileId || (remoteProfiles[0]?.id || null),
-        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : 'welcome'
+        appScreen: remoteProfiles.length > 1 ? 'profile-selection' : remoteProfiles.length === 1 ? 'main' : 'language'
       };
       dispatch({ type: 'INITIALIZE_STATE', payload: newState });
     } catch (e) {
       console.error('Failed to load from Supabase', e);
-      dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
+      dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
     }
   }, [dispatch]);
 
@@ -643,14 +659,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    const goToLanguage = () => {
-      const storedLang = localStorage.getItem('quranCompanionLang') as 'fr' | 'en' | 'ar' | null;
-      const browserLang = navigator.language.split('-')[0];
-      const initialLang = (storedLang && ['fr', 'en', 'ar'].includes(storedLang))
-        ? storedLang
-        : (['fr', 'en', 'ar'].includes(browserLang) ? browserLang as 'fr' : 'fr');
-      dispatch({ type: 'UPDATE_SETTINGS', payload: { lang: initialLang as any } });
-      dispatch({ type: 'SET_APP_SCREEN', payload: 'language' });
+    const goToAuth = () => {
+      dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
     };
 
     const loadState = async () => {
@@ -662,19 +672,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
           await loadFromSupabase();
           return;
         }
-        goToLanguage();
+        goToAuth();
       } catch (error) {
         if (cancelled) return;
         clearTimeout(timeoutId);
         console.error('Failed to load state', error);
-        goToLanguage();
+        goToAuth();
       }
     };
 
     const timeoutId = setTimeout(() => {
       if (cancelled) return;
-      console.warn('Initial load timeout: switching to language screen');
-      goToLanguage();
+      console.warn('Initial load timeout: switching to auth');
+      goToAuth();
     }, INITIAL_LOAD_TIMEOUT_MS);
 
     loadState();
@@ -707,8 +717,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const isNewProfile = state.profiles.length !== prevProfilesCount.current;
     prevProfilesCount.current = state.profiles.length;
-    // Nouveau profil : sync immédiat. Sinon debounce 3s.
-    const delay = isNewProfile ? 0 : 3000;
+    // Nouveau profil : sync immédiat. Mise à jour profil : sync rapide (300ms) pour éviter perte à la déconnexion.
+    const delay = isNewProfile ? 0 : 300;
     const timeoutId = setTimeout(async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -717,7 +727,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }, delay);
     return () => clearTimeout(timeoutId);
-  }, [state.profiles, state.settings, state.progress, state.plans, state.activeProfileId]);
+  }, [state.profiles, state.settings, state.progress, state.plans, state.activeProfileId, state.settings.lang]);
 
   useEffect(() => {
     if (state.appScreen === 'main' && activeProfile && !state.kahfNotificationShownThisSession) {

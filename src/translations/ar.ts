@@ -183,6 +183,7 @@ export const ar = {
     "partialLabel": "الصفحات الناقصة:",
     "catchUpLabel": "الصفحات الإضافية:",
     "revisionNotesTitle": "اختر السور التي تحتاج إلى مراجعة",
+    "summaryOfAnnotations": "ملخص التعليقات التوضيحية",
     "notRead": "❌ لم تقرأ",
     "readingProgress": "تقدم القراءة",
     "hadithProgress": "تقدم الحديث",

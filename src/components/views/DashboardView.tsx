@@ -123,7 +123,6 @@ const DashboardView: React.FC = () => {
     const readingStatus = readingHistoryEntry?.status || 'not_read';
 
     const hasHadithRevisionGoal = !!activeProfile?.goals?.hadithRevision;
-    const hasHadithReadingPlan = !!(hadithPlan && hadithPlan.length > 0 && !hasHadithRevisionGoal);
 
     const handleHadithPlanStatusChange = (index: number, status: RevisionStatus) => {
         if (status === 'revised') {
@@ -316,7 +315,7 @@ const DashboardView: React.FC = () => {
                     </motion.div>
                 )}
 
-                {!hasHadithReadingPlan && (
+                {hasHadithRevisionGoal && (
                     <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
                         <Card className="!bg-slate-900 border-white/5 shadow-2xl overflow-visible text-white p-8 group transition-all hover-glow">
                             <div className="flex justify-between items-start mb-8">

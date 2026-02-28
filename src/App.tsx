@@ -33,7 +33,7 @@ function AppContent() {
     // Compte obligatoire : rediriger vers auth si non connecté sur les écrans protégés
     const checkAuthAndRedirect = async () => {
       if (showSplash) return;
-      const protectedScreens = ['welcome', 'profile-selection', 'wizard', 'main'];
+      const protectedScreens = ['welcome', 'profile-selection', 'wizard', 'main', 'language'];
       if (!protectedScreens.includes(state.appScreen)) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {

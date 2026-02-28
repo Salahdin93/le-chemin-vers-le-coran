@@ -5,7 +5,6 @@ import { Theme, AccentColor } from '@/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { generateProgressPDF, exportUserData, importUserData } from '@/services/export';
-import { LOGO_URL } from '@/constants/ui';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 import {
@@ -28,8 +27,6 @@ const SettingsView: React.FC = () => {
     const [endDate, setEndDate] = useState('');
     const [isResetProgressOpen, setIsResetProgressOpen] = useState(false);
     const [isResetAppOpen, setIsResetAppOpen] = useState(false);
-
-    const isDark = !['light', 'sepia', 'emerald', 'aube', 'oasis', 'sand', 'wood', 'sunrise', 'leafy', 'pearl'].includes(activeProfile?.theme ?? 'dark');
 
     const handleNameChange = (newName: string) => {
         setName(newName);
@@ -381,7 +378,7 @@ const SettingsView: React.FC = () => {
                             <div className="flex flex-col items-center justify-center p-12 rounded-[2.5rem] bg-bg-main/30 border border-border-main/50 relative overflow-hidden group/logo">
                                 <div className="absolute inset-0 bg-accent-color/5 opacity-0 group-hover/logo:opacity-100 transition-opacity" />
                                 <div className="w-32 h-32 md:w-48 md:h-48 rounded-[3rem] flex items-center justify-center glass-card border-none shadow-2xl bg-white/5 relative z-10">
-                                    <img src={isDark ? LOGO_URL_DARK : LOGO_URL} alt="Logo" className="w-20 h-20 md:w-32 md:h-32 object-contain" />
+                                    <img src={LOGO_URL_DARK} alt="Logo" className="w-20 h-20 md:w-32 md:h-32 object-contain" />
                                 </div>
                             </div>
 
@@ -474,7 +471,7 @@ const SettingsView: React.FC = () => {
             <footer className="text-center pt-24 pb-12">
                 <div className="flex flex-col items-center gap-6 opacity-80">
                     <div className="w-16 h-16 bg-bg-secondary rounded-[1.5rem] flex items-center justify-center border border-border-main shadow-premium">
-                        <img src={isDark ? LOGO_URL_DARK : LOGO_URL} alt="Spirit Logo" className="w-10" />
+                        <img src={LOGO_URL_DARK} alt="Spirit Logo" className="w-10" />
                     </div>
                     <div className="flex flex-col gap-2">
                         <p className="text-xs font-black uppercase tracking-[0.5em] text-text-main">{t('footerAppVersion')}</p>

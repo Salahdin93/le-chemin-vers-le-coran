@@ -1,12 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useStore } from '@/context/AppContext';
-import { LOGO_URL, LOGO_URL_DARK } from '@/constants/ui';
+import { LOGO_URL_DARK } from '@/constants/ui';
 
 const SplashScreen: React.FC = () => {
-  const { activeProfile } = useStore();
-  const isDark = ['dark', 'nightblue', 'midnight', 'chalkboard', 'crepuscule'].includes(activeProfile?.theme ?? 'dark');
-  const logoSrc = isDark ? LOGO_URL_DARK : LOGO_URL;
+  const logoSrc = LOGO_URL_DARK;
 
   return (
     <div
