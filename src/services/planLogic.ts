@@ -252,7 +252,8 @@ export const recalculateFuturePlan = (
             }
         });
     }
-    let currentPage = 1;
+    const firstDay = originalPlan.find(d => d.day === 1);
+    let currentPage = firstDay?.startPage ?? 1;
     for (let day = 1; day < currentReadingDay; day++) {
         const history = readingHistory[`day_${day}`];
         if (history?.realPages !== undefined) {
