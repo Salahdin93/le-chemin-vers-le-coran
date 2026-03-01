@@ -542,13 +542,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'ADVANCE_DAY': return { ...state, progress: { ...state.progress, readingHistory: action.payload.newHistory, consecutiveDays: action.payload.newConsecutiveDays, currentReadingDay: state.progress.currentReadingDay + 1 }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
     case 'UPDATE_READING_HISTORY': {
-      const { newHistory, timeSpent } = action.payload;
+      const { newHistory, timeSpent, recalculatedPlan } = action.payload;
       const mergedHistory = { ...state.progress.readingHistory, ...newHistory };
       if (timeSpent !== undefined) {
         const dayKey = `day_${state.progress.currentReadingDay}`;
         mergedHistory[dayKey] = { ...mergedHistory[dayKey], timeSpent: (mergedHistory[dayKey]?.timeSpent || 0) + timeSpent };
       }
-      return { ...state, progress: { ...state.progress, readingHistory: mergedHistory }, plans: { ...state.plans, reading: action.payload.recalculatedPlan } };
+      return { ...state, progress: { ...state.progress, readingHistory: mergedHistory }, plans: { ...state.plans, reading: recalculatedPlan ?? state.plans.reading } };
     }
     case 'UPDATE_REVISION_STATUS': {
       if (!state.plans.revision) return state;

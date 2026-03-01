@@ -446,7 +446,7 @@ export type AppAction =
   | { type: 'RESET_PROGRESS' }
   | { type: 'UPDATE_PLANS'; payload: { reading: PlanDay[] | null; revision: RevisionPlanDay[] | null } }
   | { type: 'ADVANCE_DAY'; payload: { newHistory: ReadingHistory; newConsecutiveDays: number; recalculatedPlan: PlanDay[] } }
-  | { type: 'UPDATE_READING_HISTORY'; payload: { newHistory: ReadingHistory; recalculatedPlan: PlanDay[]; timeSpent?: number } }
+  | { type: 'UPDATE_READING_HISTORY'; payload: { newHistory: ReadingHistory; recalculatedPlan?: PlanDay[] | null; timeSpent?: number } }
   | { type: 'UPDATE_REVISION_STATUS'; payload: { revisionIndex: number; status: RevisionStatus; difficulties?: string[]; hizbNum?: number; timeSpent?: number; quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'; surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>; } }
   | { type: 'ADD_EXTRA_REVISION'; payload: ExtraRevisionEntry }
   | { type: 'COMPLETE_GOAL'; payload: { type: 'reading'; goal: CompletedReadingGoal } | { type: 'revision'; goal: CompletedRevisionGoal } }

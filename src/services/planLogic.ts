@@ -291,31 +291,33 @@ export const generateRevisionPlan = (
     const { selection, revisionMode, unitsPerDay, revisionDuration, frequency, boosterSurahs, boosterSurahFreq, prioritizeWeaknesses } = revisionGoal;
     if (!selection || selection.length === 0) return [];
 
-    let weightedSelection: string[] = [];
-    if (prioritizeWeaknesses && memorizations) {
-        selection.forEach(itemId => {
-            let itemStatus: MemorizationStatus | undefined;
-            if (revisionMode === 'juzz') {
-                itemStatus = memorizations.juzz.find(j => String(j.number) === itemId)?.status;
-            } else if (revisionMode === 'hizb') {
-                itemStatus = memorizations.hizbs.find(h => h.number === itemId)?.status;
-            } else if (revisionMode === 'sourate') {
-                itemStatus = memorizations.surahParts.find(s => s.id === itemId)?.status;
-            }
-            const weight = getStatusWeight(itemStatus);
-            for (let i = 0; i < weight; i++) {
-                weightedSelection.push(itemId);
-            }
-        });
-    } else {
-        weightedSelection = [...selection];
-    }
     const order = revisionGoal.revisionOrder || 'shuffle';
-    if (order === 'ascending') {
-        weightedSelection.sort((a, b) => Number(a) - Number(b));
-    } else if (order === 'descending') {
-        weightedSelection.sort((a, b) => Number(b) - Number(a));
+    let weightedSelection: string[] = [];
+
+    if (order === 'ascending' || order === 'descending') {
+        const uniqueSelection = [...new Set(selection)];
+        weightedSelection = order === 'ascending'
+            ? uniqueSelection.sort((a, b) => Number(a) - Number(b))
+            : uniqueSelection.sort((a, b) => Number(b) - Number(a));
     } else {
+        if (prioritizeWeaknesses && memorizations) {
+            selection.forEach(itemId => {
+                let itemStatus: MemorizationStatus | undefined;
+                if (revisionMode === 'juzz') {
+                    itemStatus = memorizations.juzz.find(j => String(j.number) === itemId)?.status;
+                } else if (revisionMode === 'hizb') {
+                    itemStatus = memorizations.hizbs.find(h => h.number === itemId)?.status;
+                } else if (revisionMode === 'sourate') {
+                    itemStatus = memorizations.surahParts.find(s => s.id === itemId)?.status;
+                }
+                const weight = getStatusWeight(itemStatus);
+                for (let i = 0; i < weight; i++) {
+                    weightedSelection.push(itemId);
+                }
+            });
+        } else {
+            weightedSelection = [...selection];
+        }
         weightedSelection.sort(() => Math.random() - 0.5);
     }
 
