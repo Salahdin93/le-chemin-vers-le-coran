@@ -15,6 +15,8 @@ interface InputModalProps {
   inputType?: 'text' | 'number';
   confirmText?: string;
   cancelText?: string;
+  min?: number;
+  max?: number;
 }
 
 const InputModal: React.FC<InputModalProps> = ({
@@ -27,6 +29,8 @@ const InputModal: React.FC<InputModalProps> = ({
   inputType = 'number',
   confirmText = 'Valider',
   cancelText = 'Annuler',
+  min,
+  max,
 }) => {
   // État interne pour gérer la valeur du champ de saisie
   const [inputValue, setInputValue] = useState(initialValue);
@@ -65,12 +69,10 @@ const InputModal: React.FC<InputModalProps> = ({
               type={inputType}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              // Mise au point automatique sur le champ à l'ouverture
               autoFocus
-              // Styles cohérents avec votre application
               className="w-full px-3 py-2 bg-bg-main border border-border-main rounded-lg focus:ring-2 focus:ring-primary focus:outline-none transition-shadow"
-              // Pour les champs numériques, on peut ajouter des contraintes
-              min={inputType === 'number' ? '0' : undefined}
+              min={inputType === 'number' ? (min !== undefined ? min : 0) : undefined}
+              max={inputType === 'number' ? max : undefined}
             />
           </div>
 

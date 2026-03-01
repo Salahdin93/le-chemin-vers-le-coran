@@ -157,6 +157,9 @@ const ReadingPlanView: React.FC = () => {
         title: string;
         label: string;
         onSubmit: (value: string) => void;
+        min?: number;
+        max?: number;
+        initialValue?: string;
     }>({ isOpen: false, title: '', label: '', onSubmit: () => { } });
 
     const readingGoal = activeProfile?.goals.reading;
@@ -185,29 +188,45 @@ const ReadingPlanView: React.FC = () => {
     }
 
     const handleStatusChange = (day: PlanDay, status: ReadingStatus, isKahfUpdate: boolean = false) => {
-        const executeUpdate = (adjustment: number) => {
+        const executeUpdate = (realPages: number, statusOverride?: ReadingStatus) => {
             const dayKey = `day_${day.day}`;
             const existing = state.progress.readingHistory[dayKey] || { status: 'not_read', realPages: 0, adjustment: 0 };
+            const targetPages = day.recalculatedPages;
+            const adjustment = realPages - targetPages;
+            const resolvedStatus = statusOverride ?? (realPages >= targetPages ? (realPages > targetPages ? 'catchup' : 'done') : 'partial');
             const updatedHistory = {
                 ...state.progress.readingHistory,
-                [dayKey]: isKahfUpdate ? { ...existing, kahfStatus: status } : { ...existing, status, realPages: status === 'not_read' ? 0 : day.recalculatedPages + adjustment, adjustment }
+                [dayKey]: isKahfUpdate ? { ...existing, kahfStatus: status } : { ...existing, status: resolvedStatus, realPages, adjustment }
             };
             const recPlan = state.plans.originalReading ? recalculateFuturePlan(state.plans.originalReading, updatedHistory, state.progress.currentReadingDay) : null;
             dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory: updatedHistory, recalculatedPlan: recPlan! } });
-            const msg = (status === 'done' || status === 'catchup')
+            const msg = (resolvedStatus === 'done' || resolvedStatus === 'catchup')
                 ? (Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik'))
                 : t('mayAllahEase');
             dispatch({ type: 'SET_TOAST', payload: msg });
             setEditingDay(null);
         };
 
-        if (!isKahfUpdate && (status === 'partial' || status === 'catchup')) {
+        if (!isKahfUpdate && status === 'done') {
             setInputModalState({
-                isOpen: true, title: status === 'partial' ? t('partialReadingTitle') : t('catchUpReadingTitle'),
-                label: status === 'partial' ? t('partialLabel') : t('catchUpLabel'),
-                onSubmit: (v) => { const n = parseInt(v) || 0; if (n >= 0) executeUpdate(status === 'partial' ? -n : n); }
+                isOpen: true,
+                title: t('upToWhichPage'),
+                label: t('upToWhichPageLabel', { min: day.startPage, max: 604 }),
+                min: day.startPage,
+                max: 604,
+                initialValue: String(day.endPage),
+                onSubmit: (v) => {
+                    const p = Math.max(day.startPage, Math.min(604, parseInt(v) || day.startPage));
+                    const realPages = p - day.startPage + 1;
+                    executeUpdate(realPages);
+                }
             });
-        } else executeUpdate(0);
+        } else if (!isKahfUpdate && status === 'not_read') {
+            executeUpdate(0, 'not_read');
+        } else if (isKahfUpdate) {
+            const existing = state.progress.readingHistory[`day_${day.day}`] || { status: 'not_read' as ReadingStatus, realPages: 0, adjustment: 0 };
+            executeUpdate(existing.realPages || 0, existing.status);
+        }
     };
 
     const handleAdvance = () => {
@@ -479,26 +498,12 @@ const ReadingPlanView: React.FC = () => {
                                                     size="sm"
                                                     className={clsx(
                                                         "rounded-xl h-12 font-black transition-all duration-300",
-                                                        status === 'done' ? "shadow-lg shadow-success/30 scale-105" : ""
+                                                        (status === 'done' || status === 'partial' || status === 'catchup') ? "shadow-lg shadow-success/30 scale-105" : ""
                                                     )}
-                                                    variant={status === 'done' ? 'success' : 'secondary'}
+                                                    variant={(status === 'done' || status === 'partial' || status === 'catchup') ? 'success' : 'secondary'}
                                                     onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'done'); }}
                                                 >
-                                                    <div className="flex flex-col items-center leading-none gap-1">
-                                                        <span>{t('goalAchieved')}</span>
-                                                        <span className="text-[8px] opacity-60 font-black">{day.endPage - day.startPage + 1} pages</span>
-                                                    </div>
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    className={clsx(
-                                                        "rounded-xl h-12 font-black transition-all duration-300",
-                                                        status === 'partial' ? "shadow-lg shadow-warning/30 scale-105" : ""
-                                                    )}
-                                                    variant={status === 'partial' ? 'warning' : 'secondary'}
-                                                    onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'partial'); }}
-                                                >
-                                                    {t('partial')}
+                                                    {t('goalAchieved')}
                                                 </Button>
                                                 <Button
                                                     size="sm"
@@ -510,14 +515,6 @@ const ReadingPlanView: React.FC = () => {
                                                     onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'not_read'); }}
                                                 >
                                                     {t('notReadStatus') || 'Non lu'}
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    className="rounded-xl h-10 font-black"
-                                                    variant="secondary"
-                                                    onClick={(e) => { e.stopPropagation(); handleStatusChange(day, 'catchup'); }}
-                                                >
-                                                    {t('catchupStatus') || 'Pages supplémentaires'}
                                                 </Button>
                                             </div>
                                             {isCurrent && (
@@ -598,6 +595,9 @@ const ReadingPlanView: React.FC = () => {
                 label={inputModalState.label}
                 confirmText={t('validate')}
                 cancelText={t('cancel')}
+                min={inputModalState.min}
+                max={inputModalState.max}
+                initialValue={inputModalState.initialValue}
             />
         </div>
     );

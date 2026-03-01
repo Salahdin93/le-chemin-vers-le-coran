@@ -200,7 +200,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
         frequency: wizardData.revisionFrequency!,
         boosterSurahs: wizardData.boosterSurahs!,
         boosterSurahFreq: wizardData.boosterSurahFreq!,
-        prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined
+        prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined,
+        revisionOrder: (wizardData as Record<string, unknown>).revisionOrder as 'ascending' | 'descending' | 'shuffle' | undefined
       }, startDate, 1, tFn, activeProfile?.memorizations || { surahParts: [], hizbs: [], juzz: [] }) : null;
 
       let hadithPlan = null;
@@ -239,7 +240,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
           frequency: wizardData.revisionFrequency!,
           boosterSurahs: wizardData.boosterSurahs!,
           boosterSurahFreq: wizardData.boosterSurahFreq!,
-          prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined
+          prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined,
+          revisionOrder: (wizardData as Record<string, unknown>).revisionOrder as 'ascending' | 'descending' | 'shuffle' | undefined
         } : activeProfile.goals.revision;
 
         const updatedProfile: Profile = {
@@ -342,7 +344,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
             frequency: wizardData.revisionFrequency!,
             boosterSurahs: wizardData.boosterSurahs!,
             boosterSurahFreq: wizardData.boosterSurahFreq!,
-            prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined
+            prioritizeWeaknesses: (wizardData as Record<string, unknown>).prioritizeWeaknesses as boolean | undefined,
+            revisionOrder: (wizardData as Record<string, unknown>).revisionOrder as 'ascending' | 'descending' | 'shuffle' | undefined
           } : undefined,
           hadithRevision: (wizardData.wantsHadith && wizardData.hadithType === 'revision') ? {
             selectedHadiths: wizardData.hadithSelection || [],
@@ -671,9 +674,55 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SAVE_EVALUATION_RESULTS': {
       if (!activeProfile) return state;
       const record: EvaluationRecord = { id: `eval_${Date.now()}`, date: new Date().toISOString(), items: action.payload };
-      const newState = { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, evaluationHistory: [record, ...p.evaluationHistory] } : p) };
+      let memo = { ...activeProfile.memorizations };
+      for (const item of action.payload) {
+        const { type, itemId, result } = item;
+        if (!result || type === 'hadith') continue;
+        if (type === 'surahPart') {
+          const list = [...(memo.surahParts || [])];
+          const idx = list.findIndex((p: any) => p.id === itemId);
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], status: result, level: result as any };
+            memo = { ...memo, surahParts: list };
+          }
+        } else if (type === 'hizb') {
+          const list = [...(memo.hizbs || [])];
+          const idx = list.findIndex((h: any) => String(h.number) === itemId);
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], status: result, level: result as any };
+            memo = { ...memo, hizbs: list };
+          }
+        } else if (type === 'juzz') {
+          const list = [...(memo.juzz || [])];
+          const idx = list.findIndex((j: any) => String(j.number) === itemId);
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], status: result, level: result as any };
+            memo = { ...memo, juzz: list };
+          }
+        }
+      }
+      const newState = {
+        ...state,
+        profiles: state.profiles.map(p =>
+          p.id === activeProfile.id
+            ? { ...p, evaluationHistory: [record, ...p.evaluationHistory], memorizations: memo }
+            : p
+        )
+      };
       const badge = checkPerfectEvaluation(action.payload, newState);
       return unlockBadge(newState, badge);
+    }
+    case 'ADD_EXTRA_REVISION': {
+      const dateKey = new Date().toISOString().slice(0, 10);
+      const current = state.progress.extraRevisions?.[dateKey] || [];
+      const next = [...current, action.payload];
+      return {
+        ...state,
+        progress: {
+          ...state.progress,
+          extraRevisions: { ...state.progress.extraRevisions, [dateKey]: next }
+        }
+      };
     }
     case 'ADD_EVALUATION_PLAN': {
       if (!activeProfile) return state;

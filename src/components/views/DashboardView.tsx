@@ -4,18 +4,18 @@ import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLogic';
-import { HIZB_DATA } from '@/constants/quranData';
+import { HIZB_DATA, JUZ_DATA, FULL_SURAH_LIST } from '@/constants/quranData';
 import { checkReadingProgress } from '@/services/progressLogic';
 import EndOfGoalModal from '@/components/ui/EndOfGoalModal';
 import Modal from '@/components/ui/Modal';
 import Timer from '@/components/ui/Timer';
-import { ReadingStatus, Hadith, HadithMemorizationStatus, PlanDay, RevisionStatus } from '@/types';
+import { ReadingStatus, Hadith, HadithMemorizationStatus, PlanDay, RevisionStatus, ExtraRevisionEntry } from '@/types';
 import { notificationService } from '@/components/ui/NotificationContainer';
 import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 import { HADITH_COLLECTION } from '@/constants/hadithData';
-import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, AlertCircle, Star, Calendar, RotateCcw, Clock } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, Star, Calendar, RotateCcw, Clock } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 
 const cardVariants: Variants = {
@@ -64,8 +64,11 @@ const DashboardView: React.FC = () => {
     const [hadithDuJour, setHadithDuJour] = useState<Hadith | undefined>(undefined);
     const [isReadjustmentModalOpen, setIsReadjustmentModalOpen] = useState(false);
     const [hadithModalContent, setHadithModalContent] = useState<Hadith | null>(null);
-    const [inputModalState, setInputModalState] = useState<{ isOpen: boolean; title: string; label: string; onSubmit: (value: string) => void; }>({ isOpen: false, title: '', label: '', onSubmit: () => { } });
-    const [ratingSelector, setRatingSelector] = useState<{ isOpen: boolean; type: 'quran' | 'hadith'; index: number; surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>; pendingRating?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir' } | null>(null);
+    const [inputModalState, setInputModalState] = useState<{ isOpen: boolean; title: string; label: string; onSubmit: (value: string) => void; min?: number; max?: number; initialValue?: string; }>({ isOpen: false, title: '', label: '', onSubmit: () => { } });
+    const [ratingSelector, setRatingSelector] = useState<{ isOpen: boolean; type: 'quran' | 'hadith'; index: number; surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>; pendingRating?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'; extraRevisionItem?: ExtraRevisionEntry } | null>(null);
+    const [extraRevisionModalOpen, setExtraRevisionModalOpen] = useState(false);
+    const [extraRevisionType, setExtraRevisionType] = useState<'juzz' | 'hizb' | 'sourate'>('hizb');
+    const [extraRevisionItemId, setExtraRevisionItemId] = useState<string>('');
 
     const [hadithMissionTitle, setHadithMissionTitle] = useState<string>('');
 
@@ -140,21 +143,40 @@ const DashboardView: React.FC = () => {
     };
 
     const handleStatusChange = (day: PlanDay, status: ReadingStatus, isKahf: boolean = false, time?: number) => {
-        const execute = (adj: number) => {
+        const execute = (realPages: number, statusOverride?: ReadingStatus) => {
             if (!activeProfile) return;
             const dayKey = `day_${day.day}`;
             const existing = state.progress.readingHistory[dayKey] || { status: 'not_read', realPages: 0, adjustment: 0 };
-            const newHistory = { ...state.progress.readingHistory, [dayKey]: isKahf ? { ...existing, kahfStatus: status } : { ...existing, status, realPages: status === 'not_read' ? 0 : day.recalculatedPages + adj, adjustment: adj, timeSpent: time !== undefined ? (existing.timeSpent || 0) + time : existing.timeSpent } };
+            const targetPages = day.recalculatedPages;
+            const adjustment = realPages - targetPages;
+            const resolvedStatus = statusOverride ?? (realPages >= targetPages ? (realPages > targetPages ? 'catchup' : 'done') : 'partial');
+            const newHistory = {
+                ...state.progress.readingHistory,
+                [dayKey]: isKahf ? { ...existing, kahfStatus: status } : { ...existing, status: resolvedStatus, realPages, adjustment, timeSpent: time !== undefined ? (existing.timeSpent || 0) + time : existing.timeSpent }
+            };
             const recPlan = originalReadingPlan ? recalculateFuturePlan(originalReadingPlan, newHistory, state.progress.currentReadingDay) : null;
             dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory, recalculatedPlan: recPlan! } });
-            const msg = (status === 'done' || status === 'catchup')
+            const msg = (resolvedStatus === 'done' || resolvedStatus === 'catchup')
                 ? (Math.random() > 0.5 ? t('jazakAllahuKhayr') : t('barakAllahuFik'))
                 : t('mayAllahEase');
             dispatch({ type: 'SET_TOAST', payload: msg });
         };
-        if (!isKahf && (status === 'partial' || status === 'catchup')) {
-            setInputModalState({ isOpen: true, title: t(status === 'partial' ? 'partialReadingTitle' : 'catchUpReadingTitle'), label: t(status === 'partial' ? 'partialLabel' : 'catchUpLabel'), onSubmit: (v) => { const n = parseInt(v) || 0; if (n >= 0) execute(status === 'partial' ? -n : n); } });
-        } else execute(0);
+        if (!isKahf && status === 'done') {
+            setInputModalState({
+                isOpen: true, title: t('upToWhichPage'),
+                label: t('upToWhichPageLabel', { min: day.startPage, max: 604 }),
+                min: day.startPage, max: 604, initialValue: String(day.endPage),
+                onSubmit: (v) => {
+                    const p = Math.max(day.startPage, Math.min(604, parseInt(v) || day.startPage));
+                    execute(p - day.startPage + 1);
+                }
+            });
+        } else if (!isKahf && status === 'not_read') {
+            execute(0, 'not_read');
+        } else {
+            const existing = state.progress.readingHistory[`day_${day.day}`] || { status: 'not_read' as ReadingStatus, realPages: 0, adjustment: 0 };
+            execute(existing.realPages || day.recalculatedPages, existing.status);
+        }
     };
 
     const handleHadithStatusChange = (hadithId: number, status: HadithMemorizationStatus) => {
@@ -167,7 +189,14 @@ const DashboardView: React.FC = () => {
 
     const handleRevisionRating = (rating: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir') => {
         if (!ratingSelector) return;
-        const { type, index, surahRatings = {} } = ratingSelector;
+        const { type, index, surahRatings = {}, extraRevisionItem } = ratingSelector;
+
+        if (extraRevisionItem) {
+            dispatch({ type: 'ADD_EXTRA_REVISION', payload: { ...extraRevisionItem, quality: rating } });
+            dispatch({ type: 'SET_TOAST', payload: t('jazakAllahuKhayr') });
+            setRatingSelector(null);
+            return;
+        }
 
         if (type === 'quran') {
             const currentRevision = revisionPlan?.[index];
@@ -392,21 +421,22 @@ const DashboardView: React.FC = () => {
 
                                     <div className="p-10 md:p-14 bg-slate-900 rounded-[3.5rem] border border-white/5 text-center shadow-inner group/target hover:bg-slate-800 transition-colors duration-500">
                                         {(() => {
-                                            const { surahName, hizbNum } = getHizbDetailsFromPage(currentReading.startPage);
-                                            const hizbInfo = HIZB_DATA[hizbNum - 1];
-                                            const details = hizbInfo?.details || '';
+                                            const startHizb = getHizbDetailsFromPage(currentReading.startPage);
+                                            const endHizb = getHizbDetailsFromPage(currentReading.endPage);
+                                            const startInfo = HIZB_DATA[startHizb.hizbNum - 1];
+                                            const endInfo = HIZB_DATA[endHizb.hizbNum - 1];
 
-                                            return (
-                                                <>
-                                                    <h4 className="text-4xl md:text-5xl font-black mb-3 text-white tracking-tight drop-shadow-md">
-                                                        {surahName}
+                                            if (startHizb.hizbNum === endHizb.hizbNum) {
+                                                return (
+                                                    <h4 className="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md">
+                                                        Hizb {startHizb.hizbNum} : {startInfo?.details || ''}
                                                     </h4>
-                                                    {details && (
-                                                        <p className="text-xs md:text-sm font-semibold text-text-secondary mb-6">
-                                                            {details}
-                                                        </p>
-                                                    )}
-                                                </>
+                                                );
+                                            }
+                                            return (
+                                                <h4 className="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-md leading-tight">
+                                                    Hizb {startHizb.hizbNum} : {startInfo?.details || ''} à Hizb {endHizb.hizbNum} : {endInfo?.details || ''}
+                                                </h4>
                                             );
                                         })()}
                                         <div className="flex items-center justify-center gap-6 mt-4">
@@ -465,16 +495,14 @@ const DashboardView: React.FC = () => {
 
                                     <div className="space-y-6">
                                         <Timer onStop={(s) => handleStatusChange(currentReading, 'done', false, s)} />
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <div className="grid grid-cols-2 gap-2">
                                             {[
                                                 { status: 'done', icon: <CheckCircle2 size={18} />, label: t('goalAchieved') || 'Lu', color: 'success' },
-                                                { status: 'partial', icon: <AlertCircle size={18} />, label: t('partial') || 'Partiel', color: 'warning' },
-                                                { status: 'catchup', icon: <Sparkles size={18} />, label: t('catchupStatus') || 'Supp.', color: 'accent-color' },
-                                                { status: 'not_read', icon: < EyeOff size={18} />, label: t('notDone') || 'Pas fait', color: 'danger' }
+                                                { status: 'not_read', icon: <EyeOff size={18} />, label: t('notDone') || 'Pas fait', color: 'danger' }
                                             ].map((btn) => {
-                                                const isActive = readingStatus === btn.status;
+                                                const isActive = (btn.status === 'done' && (readingStatus === 'done' || readingStatus === 'partial' || readingStatus === 'catchup')) || (btn.status === 'not_read' && readingStatus === 'not_read');
                                                 const currentEntry = state.progress.readingHistory[`day_${currentReading.day}`];
-                                                const actualPages = (currentEntry?.realPages || (btn.status === 'done' ? currentReading.recalculatedPages : 0));
+                                                const actualPages = currentEntry?.realPages ?? 0;
                                                 const targetPages = currentReading.recalculatedPages;
                                                 const diff = actualPages - targetPages;
 
@@ -724,17 +752,17 @@ const DashboardView: React.FC = () => {
                                         <Button
                                             variant={currentRevision.status === 'revised' ? 'success' : 'secondary'}
                                             className={clsx(
-                                                "h-14 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all",
+                                                "h-14 min-w-0 flex items-center justify-center gap-1.5 font-black text-[9px] uppercase tracking-widest transition-all whitespace-normal text-center px-2",
                                                 currentRevision.status === 'revised' ? "shadow-lg shadow-success/20 ring-2 ring-success/50" : "bg-white/5 opacity-60 text-white/70"
                                             )}
                                             onClick={() => setRatingSelector({ isOpen: true, type: 'quran', index: state.progress.currentRevisionIndex })}
                                         >
-                                            <CheckCircle2 size={16} /> {t('revised') || 'Révisé'}
+                                            <CheckCircle2 size={14} className="shrink-0" /> <span className="truncate">{t('revised') || 'Révisé'}</span>
                                         </Button>
                                         <Button
                                             variant={currentRevision.status === 'to-review' ? 'warning' : 'secondary'}
                                             className={clsx(
-                                                "h-14 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all",
+                                                "h-14 min-w-0 flex items-center justify-center gap-1.5 font-black text-[9px] uppercase tracking-widest transition-all whitespace-normal text-center px-2",
                                                 currentRevision.status === 'to-review' ? "shadow-lg shadow-warning/20 ring-2 ring-warning/50" : "bg-white/5 opacity-60 text-white/70"
                                             )}
                                             onClick={() => dispatch({
@@ -742,12 +770,12 @@ const DashboardView: React.FC = () => {
                                                 payload: { revisionIndex: state.progress.currentRevisionIndex, status: 'to-review' }
                                             })}
                                         >
-                                            <RotateCcw size={16} /> {t('toReview') || 'À revoir'}
+                                            <RotateCcw size={14} className="shrink-0" /> <span className="truncate">{t('toReview') || 'À revoir'}</span>
                                         </Button>
                                         <Button
                                             variant={currentRevision.status === 'not_revised' ? 'danger' : 'secondary'}
                                             className={clsx(
-                                                "h-14 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all",
+                                                "h-14 min-w-0 flex items-center justify-center gap-1.5 font-black text-[9px] uppercase tracking-widest transition-all whitespace-normal text-center px-2",
                                                 currentRevision.status === 'not_revised' ? "shadow-lg shadow-danger/20 ring-2 ring-danger/50" : "bg-white/5 opacity-60 text-white/70"
                                             )}
                                             onClick={() => dispatch({
@@ -755,7 +783,18 @@ const DashboardView: React.FC = () => {
                                                 payload: { revisionIndex: state.progress.currentRevisionIndex, status: 'not_revised' }
                                             })}
                                         >
-                                            <EyeOff size={16} /> {t('notDone') || 'Pas fait'}
+                                            <EyeOff size={14} className="shrink-0" /> <span className="truncate">{t('notDone') || 'Pas fait'}</span>
+                                        </Button>
+                                        <Button
+                                            variant="secondary"
+                                            className="col-span-3 h-12 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest border border-dashed border-white/20 hover:border-accent-color/50"
+                                            onClick={() => {
+                                                setExtraRevisionType('hizb');
+                                                setExtraRevisionItemId('1');
+                                                setExtraRevisionModalOpen(true);
+                                            }}
+                                        >
+                                            <Star size={14} /> {t('addExtraRevision')}
                                         </Button>
                                     </div>
                                 </div>
@@ -802,7 +841,81 @@ const DashboardView: React.FC = () => {
 
             {/* Modals Portals */}
             <EndOfGoalModal isOpen={isEndOfGoalModalOpen} onClose={() => setIsEndOfGoalModalOpen(false)} />
-            <InputModal isOpen={inputModalState.isOpen} onClose={() => setInputModalState({ ...inputModalState, isOpen: false })} onSubmit={inputModalState.onSubmit} title={inputModalState.title} label={inputModalState.label} confirmText={t('validate')} cancelText={t('cancel')} />
+            <InputModal isOpen={inputModalState.isOpen} onClose={() => setInputModalState({ ...inputModalState, isOpen: false })} onSubmit={inputModalState.onSubmit} title={inputModalState.title} label={inputModalState.label} confirmText={t('validate')} cancelText={t('cancel')} min={inputModalState.min} max={inputModalState.max} initialValue={inputModalState.initialValue} />
+
+            <Modal isOpen={extraRevisionModalOpen} onClose={() => setExtraRevisionModalOpen(false)}>
+                <div className="p-6 space-y-6">
+                    <h3 className="text-xl font-black text-text-main">{t('extraRevisionTitle')}</h3>
+                    <div>
+                        <label className="block text-sm font-bold mb-2">{t('extraRevisionSelectType')}</label>
+                        <select
+                            value={extraRevisionType}
+                            onChange={(e) => {
+                                const t = e.target.value as 'juzz' | 'hizb' | 'sourate';
+                                setExtraRevisionType(t);
+                                if (t === 'juzz') setExtraRevisionItemId(String(JUZ_DATA[0]?.id || 1));
+                                else if (t === 'hizb') setExtraRevisionItemId('1');
+                                else setExtraRevisionItemId(String(FULL_SURAH_LIST[0]?.id || 1));
+                            }}
+                            className="w-full px-4 py-3 rounded-xl border border-border-main bg-bg-main"
+                        >
+                            <option value="juzz">{t('juzz')}</option>
+                            <option value="hizb">{t('hizb')}</option>
+                            <option value="sourate">{t('sourate') || 'Sourate'}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold mb-2">{t('extraRevisionSelectItem')}</label>
+                        <select
+                            value={extraRevisionItemId}
+                            onChange={(e) => setExtraRevisionItemId(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-border-main bg-bg-main"
+                        >
+                            {extraRevisionType === 'juzz' && JUZ_DATA.map(j => (
+                                <option key={j.id} value={String(j.id)}>Juzz {j.id} - {j.surah}</option>
+                            ))}
+                            {extraRevisionType === 'hizb' && HIZB_DATA.map((h, i) => (
+                                <option key={i} value={String(i + 1)}>Hizb {i + 1} : {h.details}</option>
+                            ))}
+                            {extraRevisionType === 'sourate' && FULL_SURAH_LIST.map(s => (
+                                <option key={s.id} value={String(s.id)}>{s.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex gap-3">
+                        <Button variant="ghost" className="flex-1" onClick={() => setExtraRevisionModalOpen(false)}>{t('cancel')}</Button>
+                        <Button
+                            variant="accent"
+                            className="flex-1"
+                            disabled={!extraRevisionItemId}
+                            onClick={() => {
+                                let entry: ExtraRevisionEntry | null = null;
+                                if (extraRevisionType === 'juzz') {
+                                    const j = JUZ_DATA.find(j => String(j.id) === extraRevisionItemId);
+                                    if (j) {
+                                        const h1 = HIZB_DATA[(j.id - 1) * 2];
+                                        const h2 = HIZB_DATA[(j.id - 1) * 2 + 1];
+                                        entry = { type: 'juzz', itemId: String(j.id), text: `Juzz ${j.id}`, surahs: `${h1?.details || ''} | ${h2?.details || ''}` };
+                                    }
+                                } else if (extraRevisionType === 'hizb') {
+                                    const idx = parseInt(extraRevisionItemId, 10) - 1;
+                                    const h = HIZB_DATA[idx];
+                                    if (h) entry = { type: 'hizb', itemId: extraRevisionItemId, text: `Hizb ${h.name}`, surahs: h.details };
+                                } else {
+                                    const s = FULL_SURAH_LIST.find(s => String(s.id) === extraRevisionItemId);
+                                    if (s) entry = { type: 'sourate', itemId: extraRevisionItemId, text: s.name, surahs: s.name };
+                                }
+                                if (entry) {
+                                    setExtraRevisionModalOpen(false);
+                                    setRatingSelector({ isOpen: true, type: 'quran', index: -2, extraRevisionItem: entry });
+                                }
+                            }}
+                        >
+                            {t('validate')}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
             {isReadjustmentModalOpen && currentRevision && (
                 <ReadjustmentModal
                     isOpen={isReadjustmentModalOpen}
@@ -857,6 +970,7 @@ const DashboardView: React.FC = () => {
                 className="max-w-sm"
             >
                 {ratingSelector?.index === -1 ? (
+                    /* Kahf */
                     <div className="text-center space-y-6">
                         <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
                             <Sparkles className="text-emerald-400" size={32} />
@@ -873,6 +987,46 @@ const DashboardView: React.FC = () => {
                         >
                             {t('close')}
                         </Button>
+                    </div>
+                ) : ratingSelector?.extraRevisionItem ? (
+                    <div className="space-y-6">
+                        <div className="text-center mb-6">
+                            <h3 className="text-xl font-black text-text-main">{t('rateYourRevision')}</h3>
+                            <p className="text-accent-color font-bold mt-2">{ratingSelector.extraRevisionItem.text}</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3">
+                            {[
+                                { id: 'tres_bien', label: t('veryGood') || 'Très bien', icon: '✨' },
+                                { id: 'bien', label: t('good') || 'Bien', icon: '👍' },
+                                { id: 'moyen', label: t('average') || 'Moyen', icon: '😐' },
+                                { id: 'a_revoir', label: t('toReview') || 'À réviser', icon: '🔄' },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => ratingSelector && setRatingSelector({ ...ratingSelector, pendingRating: opt.id as any })}
+                                    className={clsx(
+                                        "flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300",
+                                        ratingSelector?.pendingRating === opt.id
+                                            ? "bg-accent-color/10 border-accent-color shadow-lg shadow-accent-color/20"
+                                            : "bg-bg-secondary border-border-main hover:border-accent-color/30 group"
+                                    )}
+                                >
+                                    <span className="text-2xl">{opt.icon}</span>
+                                    <span className="font-black text-xs uppercase tracking-widest">{opt.label}</span>
+                                    {ratingSelector?.pendingRating === opt.id && <CheckCircle2 size={18} className="text-accent-color" />}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                            <Button variant="ghost" onClick={() => setRatingSelector(null)}>{t('cancel')}</Button>
+                            <Button
+                                variant="accent"
+                                disabled={!ratingSelector?.pendingRating}
+                                onClick={() => ratingSelector?.pendingRating && handleRevisionRating(ratingSelector.pendingRating)}
+                            >
+                                {t('validate')}
+                            </Button>
+                        </div>
                     </div>
                 ) : (
                     <>

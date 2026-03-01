@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Card from '@/components/ui/Card';
 import { useStore } from '@/context/AppContext';
-import { RevisionPlanDay, RevisionStatus, RevisionMode } from '@/types';
+import { RevisionPlanDay, RevisionStatus, RevisionMode, ExtraRevisionEntry } from '@/types';
 import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,6 +42,9 @@ const RevisionPlanView: React.FC = () => {
         surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>;
         pendingRating?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir';
     } | null>(null);
+    const [extraRevisionModalOpen, setExtraRevisionModalOpen] = useState(false);
+    const [extraRevisionType, setExtraRevisionType] = useState<'juzz' | 'hizb' | 'sourate'>('hizb');
+    const [extraRevisionItemId, setExtraRevisionItemId] = useState('1');
 
     const revisionPlan = state.plans.revision;
 
@@ -344,7 +347,104 @@ const RevisionPlanView: React.FC = () => {
                         </button>
                     ))}
                 </div>
+                {revisionPlan && revisionPlan.length > 0 && (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        className="flex items-center gap-2 border border-dashed border-accent-color/40 hover:border-accent-color"
+                        onClick={() => {
+                            setExtraRevisionType('hizb');
+                            setExtraRevisionItemId('1');
+                            setExtraRevisionModalOpen(true);
+                        }}
+                    >
+                        <Plus size={16} /> {t('addExtraRevision')}
+                    </Button>
+                )}
             </div>
+
+            {/* Extra Revision Modal */}
+            <Modal isOpen={extraRevisionModalOpen} onClose={() => setExtraRevisionModalOpen(false)}>
+                <div className="p-6 space-y-6">
+                    <h3 className="text-xl font-black text-text-main">{t('extraRevisionTitle')}</h3>
+                    <div>
+                        <label className="block text-sm font-bold mb-2">{t('extraRevisionSelectType')}</label>
+                        <select
+                            value={extraRevisionType}
+                            onChange={(e) => {
+                                const t = e.target.value as 'juzz' | 'hizb' | 'sourate';
+                                setExtraRevisionType(t);
+                                if (t === 'juzz') setExtraRevisionItemId(String(JUZ_DATA[0]?.id || 1));
+                                else if (t === 'hizb') setExtraRevisionItemId('1');
+                                else setExtraRevisionItemId(String(FULL_SURAH_LIST[0]?.id || 1));
+                            }}
+                            className="w-full px-4 py-3 rounded-xl border border-border-main bg-bg-main"
+                        >
+                            <option value="juzz">{t('juzz')}</option>
+                            <option value="hizb">{t('hizb')}</option>
+                            <option value="sourate">{t('sourate') || 'Sourate'}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold mb-2">{t('extraRevisionSelectItem')}</label>
+                        <select
+                            value={extraRevisionItemId}
+                            onChange={(e) => setExtraRevisionItemId(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-border-main bg-bg-main"
+                        >
+                            {extraRevisionType === 'juzz' && JUZ_DATA.map(j => (
+                                <option key={j.id} value={String(j.id)}>Juzz {j.id} - {j.surah}</option>
+                            ))}
+                            {extraRevisionType === 'hizb' && HIZB_DATA.map((h, i) => (
+                                <option key={i} value={String(i + 1)}>Hizb {i + 1} : {h.details}</option>
+                            ))}
+                            {extraRevisionType === 'sourate' && FULL_SURAH_LIST.map(s => (
+                                <option key={s.id} value={String(s.id)}>{s.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                        {[
+                            { id: 'tres_bien' as const, label: t('veryGood') || 'Très bien', icon: '✨' },
+                            { id: 'bien' as const, label: t('good') || 'Bien', icon: '👍' },
+                            { id: 'moyen' as const, label: t('average') || 'Moyen', icon: '😐' },
+                            { id: 'a_revoir' as const, label: t('toReview') || 'À réviser', icon: '🔄' },
+                        ].map((opt) => (
+                            <Button
+                                key={opt.id}
+                                variant="secondary"
+                                className="flex items-center justify-between"
+                                onClick={() => {
+                                    let entry: ExtraRevisionEntry | null = null;
+                                    if (extraRevisionType === 'juzz') {
+                                        const j = JUZ_DATA.find(j => String(j.id) === extraRevisionItemId);
+                                        if (j) {
+                                            const h1 = HIZB_DATA[(j.id - 1) * 2];
+                                            const h2 = HIZB_DATA[(j.id - 1) * 2 + 1];
+                                            entry = { type: 'juzz', itemId: String(j.id), text: `Juzz ${j.id}`, surahs: `${h1?.details || ''} | ${h2?.details || ''}`, quality: opt.id };
+                                        }
+                                    } else if (extraRevisionType === 'hizb') {
+                                        const idx = parseInt(extraRevisionItemId, 10) - 1;
+                                        const h = HIZB_DATA[idx];
+                                        if (h) entry = { type: 'hizb', itemId: extraRevisionItemId, text: `Hizb ${h.name}`, surahs: h.details, quality: opt.id };
+                                    } else {
+                                        const s = FULL_SURAH_LIST.find(s => String(s.id) === extraRevisionItemId);
+                                        if (s) entry = { type: 'sourate', itemId: extraRevisionItemId, text: s.name, surahs: s.name, quality: opt.id };
+                                    }
+                                    if (entry) {
+                                        dispatch({ type: 'ADD_EXTRA_REVISION', payload: entry });
+                                        dispatch({ type: 'SET_TOAST', payload: t('jazakAllahuKhayr') });
+                                        setExtraRevisionModalOpen(false);
+                                    }
+                                }}
+                            >
+                                <span>{opt.icon}</span> {opt.label}
+                            </Button>
+                        ))}
+                    </div>
+                    <Button variant="ghost" className="w-full" onClick={() => setExtraRevisionModalOpen(false)}>{t('cancel')}</Button>
+                </div>
+            </Modal>
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { WizardData, RevisionFrequency } from '@/types';
+import { WizardData, RevisionFrequency, RevisionOrder } from '@/types';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { ToggleSwitch } from '@/components/ui/Checkbox';
@@ -63,6 +63,20 @@ const StepRevisionPlan: React.FC<StepProps> = ({ formData, updateData, updateFre
                     variant="wizard"
                 />
             )}
+            <div>
+                <label className="font-black text-xs uppercase tracking-widest block mb-3 text-white/90">
+                    {t('revisionOrder')}
+                </label>
+                <Select
+                    value={(formData.revisionOrder as string) || 'shuffle'}
+                    onChange={(e) => updateData({ revisionOrder: e.target.value as RevisionOrder })}
+                    variant="wizard"
+                >
+                    <option value="ascending">{t('revisionOrderAscending')}</option>
+                    <option value="descending">{t('revisionOrderDescending')}</option>
+                    <option value="shuffle">{t('revisionOrderShuffle')}</option>
+                </Select>
+            </div>
             <div className="pt-4" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
                 <ToggleSwitch
                     label={t('prioritizeWeaknesses')}

@@ -310,7 +310,14 @@ export const generateRevisionPlan = (
     } else {
         weightedSelection = [...selection];
     }
-    weightedSelection.sort(() => Math.random() - 0.5);
+    const order = revisionGoal.revisionOrder || 'shuffle';
+    if (order === 'ascending') {
+        weightedSelection.sort((a, b) => Number(a) - Number(b));
+    } else if (order === 'descending') {
+        weightedSelection.sort((a, b) => Number(b) - Number(a));
+    } else {
+        weightedSelection.sort(() => Math.random() - 0.5);
+    }
 
     let units: RevisionUnit[] = [];
     if (revisionMode === 'sourate') {

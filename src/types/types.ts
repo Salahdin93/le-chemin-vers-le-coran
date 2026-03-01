@@ -190,6 +190,8 @@ export interface ReadingGoal {
   kahfPages: number;
 }
 
+export type RevisionOrder = 'ascending' | 'descending' | 'shuffle';
+
 export interface RevisionGoal {
   selection: string[];
   revisionMode: RevisionMode;
@@ -199,6 +201,7 @@ export interface RevisionGoal {
   boosterSurahs: string[];
   boosterSurahFreq: number;
   prioritizeWeaknesses?: boolean;
+  revisionOrder?: RevisionOrder;
 }
 
 export interface MemorizedSurah {
@@ -282,6 +285,15 @@ export interface ToReviewHistoryItem {
   surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>;
 }
 
+export interface ExtraRevisionEntry {
+  type: 'juzz' | 'hizb' | 'sourate';
+  itemId: string;
+  text: string;
+  surahs: string;
+  quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir';
+  difficulties?: string[];
+}
+
 export interface Progress {
   startDate: string | null;
   currentReadingDay: number;
@@ -290,6 +302,8 @@ export interface Progress {
   readingHistory: ReadingHistory;
   currentRevisionIndex: number;
   currentHadithRevisionIndex: number;
+  /** Révisions supplémentaires (hors plan) par date YYYY-MM-DD */
+  extraRevisions?: Record<string, ExtraRevisionEntry[]>;
   /** Pages already read before starting the current (resume) plan; used for display. */
   existingPagesRead?: number;
   /** Days already spent reading before the current (resume) plan; used for display. */
@@ -354,6 +368,7 @@ export interface WizardData {
   resumeReadingHistory?: ReadingHistory;
   resumeRevisionPlan?: RevisionPlanDay[];
   prioritizeWeaknesses?: boolean;
+  revisionOrder?: RevisionOrder;
   wantsRevision?: boolean;
   wantsReading?: boolean;
   // Hadith plan
@@ -433,6 +448,7 @@ export type AppAction =
   | { type: 'ADVANCE_DAY'; payload: { newHistory: ReadingHistory; newConsecutiveDays: number; recalculatedPlan: PlanDay[] } }
   | { type: 'UPDATE_READING_HISTORY'; payload: { newHistory: ReadingHistory; recalculatedPlan: PlanDay[]; timeSpent?: number } }
   | { type: 'UPDATE_REVISION_STATUS'; payload: { revisionIndex: number; status: RevisionStatus; difficulties?: string[]; hizbNum?: number; timeSpent?: number; quality?: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'; surahRatings?: Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>; } }
+  | { type: 'ADD_EXTRA_REVISION'; payload: ExtraRevisionEntry }
   | { type: 'COMPLETE_GOAL'; payload: { type: 'reading'; goal: CompletedReadingGoal } | { type: 'revision'; goal: CompletedRevisionGoal } }
   | { type: 'UPDATE_PROFILE'; payload: Partial<Profile> & { id?: string } }
   | { type: 'ADD_MEMORIZATION'; payload: { type: 'surahPart' | 'hizb' | 'juzz', item: any } }
