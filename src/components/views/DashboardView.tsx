@@ -15,7 +15,7 @@ import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 import { HADITH_COLLECTION } from '@/constants/hadithData';
-import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, AlertCircle, Star, Calendar, RotateCcw } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, AlertCircle, Star, Calendar, RotateCcw, Clock } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 
 const cardVariants: Variants = {
@@ -379,7 +379,15 @@ const DashboardView: React.FC = () => {
                                         <div className={`${missionBadgeBase} bg-success text-white shadow-success/20`}>
                                             {t('missionReading')}
                                         </div>
-                                        <div className="text-[10px] font-black uppercase tracking-widest opacity-30">Jour {currentReading.day}</div>
+                                        <div className="flex items-center gap-3">
+                                            {readingHistoryEntry?.timeSpent && readingHistoryEntry.timeSpent > 0 && (
+                                                <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                                                    <Clock size={14} />
+                                                    {Math.floor(readingHistoryEntry.timeSpent / 60)} min
+                                                </span>
+                                            )}
+                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Jour {currentReading.day}</span>
+                                        </div>
                                     </div>
 
                                     <div className="p-10 md:p-14 bg-slate-900 rounded-[3.5rem] border border-white/5 text-center shadow-inner group/target hover:bg-slate-800 transition-colors duration-500">
@@ -636,10 +644,17 @@ const DashboardView: React.FC = () => {
                                     <div className={`${missionBadgeBase} bg-blue-500 text-white shadow-blue-500/20`}>
                                         {t('missionRevision')}
                                     </div>
-                                    <div className="flex flex-col gap-1 items-end">
-                                        <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                                            {t('day')} {state.progress.currentRevisionIndex + 1}
-                                        </div>
+                                    <div className="flex items-center gap-3">
+                                        {currentRevision.timeSpent && currentRevision.timeSpent > 0 && (
+                                            <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-blue-400">
+                                                <Clock size={14} />
+                                                {Math.floor(currentRevision.timeSpent / 60)} min
+                                            </span>
+                                        )}
+                                        <div className="flex flex-col gap-1 items-end">
+                                            <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                                                {t('day')} {state.progress.currentRevisionIndex + 1}
+                                            </div>
                                         {state.plans.revision?.[state.progress.currentRevisionIndex + 1] && (
                                             <div className="text-[8px] font-bold uppercase tracking-[0.1em] text-white/40 text-right">
                                                 <span className="opacity-40">{t('nextRevision')} :</span> <span className="text-accent-color">{state.plans.revision?.[state.progress.currentRevisionIndex + 1]?.units.map(u => u.text).join(', ')}</span>
@@ -692,6 +707,17 @@ const DashboardView: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
+
+                                    <Timer
+                                        onStop={(s) => dispatch({
+                                            type: 'UPDATE_REVISION_STATUS',
+                                            payload: {
+                                                revisionIndex: state.progress.currentRevisionIndex,
+                                                status: currentRevision.status,
+                                                timeSpent: s
+                                            }
+                                        })}
+                                    />
 
                                     <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/5">
                                         <Button

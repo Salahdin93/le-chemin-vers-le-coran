@@ -550,13 +550,17 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'UPDATE_REVISION_STATUS': {
       if (!state.plans.revision) return state;
       const newRevisionPlan = [...state.plans.revision];
+      const existing = newRevisionPlan[action.payload.revisionIndex];
+      const cumulatedTime = action.payload.timeSpent !== undefined
+        ? (existing.timeSpent || 0) + action.payload.timeSpent
+        : existing.timeSpent;
       newRevisionPlan[action.payload.revisionIndex] = {
-        ...newRevisionPlan[action.payload.revisionIndex],
+        ...existing,
         status: action.payload.status,
-        difficulties: action.payload.difficulties || [],
-        quality: action.payload.quality,
-        timeSpent: action.payload.timeSpent,
-        surahRatings: action.payload.surahRatings
+        difficulties: action.payload.difficulties ?? existing.difficulties,
+        quality: action.payload.quality ?? existing.quality,
+        timeSpent: cumulatedTime,
+        surahRatings: action.payload.surahRatings ?? existing.surahRatings
       };
       let newDifficulties = [...(activeProfile?.difficulties || [])];
       if (action.payload.difficulties && action.payload.difficulties.length > 0) {
