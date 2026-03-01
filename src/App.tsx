@@ -29,6 +29,16 @@ function AppContent() {
     return () => clearTimeout(splashTimer);
   }, []);
 
+  // Supprimer barres de défilement sur écrans plein écran (auth, bienvenue, sélection profil)
+  useEffect(() => {
+    const noScrollScreens = ['auth', 'welcome', 'profile-selection'];
+    const active = noScrollScreens.includes(state.appScreen);
+    const el = document.documentElement;
+    if (active) el.classList.add('overflow-hidden-body');
+    else el.classList.remove('overflow-hidden-body');
+    return () => el.classList.remove('overflow-hidden-body');
+  }, [state.appScreen]);
+
   useEffect(() => {
     // Compte obligatoire : rediriger vers auth si non connecté sur les écrans protégés
     const checkAuthAndRedirect = async () => {
@@ -57,7 +67,7 @@ function AppContent() {
       case 'profile-selection': return <ProfileSelectionScreen />;
       case 'login': return <LoginScreen />;
       case 'auth': return <AuthScreen />;
-      case 'wizard': return <Wizard />;
+      case 'wizard': return <Wizard key={state.profiles.length === 0 ? 'wizard-new' : 'wizard'} />;
       case 'main': return <MainAppView />;
       default: return <SplashScreen />;
     }
