@@ -655,21 +655,22 @@ const DashboardView: React.FC = () => {
                                             <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
                                                 {t('day')} {state.progress.currentRevisionIndex + 1}
                                             </div>
-                                        {state.plans.revision?.[state.progress.currentRevisionIndex + 1] && (
-                                            <div className="text-[8px] font-bold uppercase tracking-[0.1em] text-white/40 text-right">
-                                                <span className="opacity-40">{t('nextRevision')} :</span> <span className="text-accent-color">{state.plans.revision?.[state.progress.currentRevisionIndex + 1]?.units.map(u => u.text).join(', ')}</span>
-                                                <div className="mt-1 lowercase opacity-30 italic font-medium">
-                                                    {state.plans.revision?.[state.progress.currentRevisionIndex + 1]?.units.flatMap(u => {
-                                                        const hizbMatch = u.text.match(/Hizb (\d+)/);
-                                                        if (hizbMatch) {
-                                                            const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
-                                                            return HIZB_DATA[hizbIndex]?.surahs || [];
-                                                        }
-                                                        return u.surahs.split(',').map(s => s.trim());
-                                                    }).join(', ')}
+                                            {state.plans.revision?.[state.progress.currentRevisionIndex + 1] && (
+                                                <div className="text-[8px] font-bold uppercase tracking-[0.1em] text-white/40 text-right">
+                                                    <span className="opacity-40">{t('nextRevision')} :</span> <span className="text-accent-color">{state.plans.revision?.[state.progress.currentRevisionIndex + 1]?.units.map(u => u.text).join(', ')}</span>
+                                                    <div className="mt-1 lowercase opacity-30 italic font-medium">
+                                                        {state.plans.revision?.[state.progress.currentRevisionIndex + 1]?.units.flatMap(u => {
+                                                            const hizbMatch = u.text.match(/Hizb (\d+)/);
+                                                            if (hizbMatch) {
+                                                                const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
+                                                                return HIZB_DATA[hizbIndex]?.surahs || [];
+                                                            }
+                                                            return u.surahs.split(',').map(s => s.trim());
+                                                        }).join(', ')}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
