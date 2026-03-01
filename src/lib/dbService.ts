@@ -1,9 +1,45 @@
 import { supabase } from './supabase';
 import { Profile, Settings, AppState } from '../types/types';
 
+const LOCAL_FALLBACK_KEY = 'quranCompanionState_v7';
+
+/**
+ * Sauvegarde l'état dans localStorage (fallback hors ligne).
+ */
+export function saveToLocalFallback(state: AppState): void {
+    try {
+        const payload = {
+            profiles: state.profiles,
+            settings: state.settings,
+            activeProfileId: state.activeProfileId,
+            progress: state.progress,
+            plans: state.plans
+        };
+        localStorage.setItem(LOCAL_FALLBACK_KEY, JSON.stringify(payload));
+    } catch (e) {
+        console.warn('Local fallback save failed', e);
+    }
+}
+
+/**
+ * Charge l'état depuis localStorage (fallback hors ligne). Retourne null si vide ou invalide.
+ */
+export function loadFromLocalFallback(): Partial<AppState> | null {
+    try {
+        const raw = localStorage.getItem(LOCAL_FALLBACK_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== 'object') return null;
+        return data as Partial<AppState>;
+    } catch {
+        return null;
+    }
+}
+
 /**
  * Service pour gérer la persistance des données avec Supabase.
- * Utilise les tables : profiles, user_settings
+ * Utilise les tables : profiles, user_settings.
+ * En cas d'indisponibilité Supabase, persistance locale (localStorage) en secours.
  */
 export const dbService = {
 
@@ -188,13 +224,13 @@ export const dbService = {
     },
 
     /**
-     * Synchronise tout l'état de l'application
+     * Synchronise tout l'état de l'application vers Supabase.
+     * En cas d'échec (réseau / hors ligne), sauvegarde dans localStorage.
      */
     async syncFullState(state: AppState): Promise<void> {
         try {
             const profilePromises = state.profiles.map(profile => {
                 if (profile.id === state.activeProfileId) {
-                    // Pour le profil actif, on utilise l'état global (progression, plans)
                     return this.saveProfile(profile, state.progress, state.plans);
                 } else {
                     return this.saveProfile(profile);
@@ -203,7 +239,8 @@ export const dbService = {
             await Promise.all(profilePromises);
             await this.saveSettings(state.settings, state.activeProfileId);
         } catch (error) {
-            console.error('Erreur lors de la synchronisation complète:', error);
+            console.warn('Sync Supabase failed, using local fallback', error);
+            saveToLocalFallback(state);
         }
     }
 };

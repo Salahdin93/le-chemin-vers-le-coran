@@ -23,30 +23,33 @@ const cardVariants = {
     })
 };
 
-const HadithAlKahf: React.FC = () => (
-    <div className="text-sm text-left space-y-6 p-2">
-        <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-accent-color/10 flex items-center justify-center text-accent-color">
-                <Star size={24} fill="currentColor" />
+const HadithAlKahf: React.FC = () => {
+    const { t } = useStore();
+    return (
+        <div className="text-sm text-left space-y-6 p-2">
+            <div className="flex items-center gap-4 mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-accent-color/10 flex items-center justify-center text-accent-color">
+                    <Star size={24} fill="currentColor" />
+                </div>
+                <h3 className="text-2xl font-black text-gradient tracking-tight">{t('surahAlKahf')}</h3>
             </div>
-            <h3 className="text-2xl font-black text-gradient tracking-tight">Sourate Al-Kahf</h3>
-        </div>
-        <div className="p-8 rounded-[2rem] bg-bg-secondary/50 border border-border-main/50 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
-                <BookOpen size={120} />
-            </div>
-            <p className="font-amiri text-3xl rtl text-right leading-[2.5] text-text-main/90 mb-8 relative z-10">
-                عن أبي سعيد الخدري رضي الله عنه قال النبي صلى الله عليه و سلم : من قرأ سورةَ الكهفِ في يومِ الجمعةِ أضاء له من النورِ ما بين الجمُعتَينِ
-            </p>
-            <div className="relative z-10">
-                <p className="text-sm md:text-base italic font-medium opacity-80 border-l-4 border-accent-color pl-6 py-2">
-                    "Celui qui lit la sourate Al Kahf le jour du vendredi, il est éclairé par une lumière entre les deux vendredis."
+            <div className="p-8 rounded-[2rem] bg-bg-secondary/50 border border-border-main/50 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+                    <BookOpen size={120} />
+                </div>
+                <p className="font-amiri text-3xl rtl text-right leading-[2.5] text-text-main/90 mb-8 relative z-10">
+                    عن أبي سعيد الخدري رضي الله عنه قال النبي صلى الله عليه و سلم : من قرأ سورةَ الكهفِ في يومِ الجمعةِ أضاء له من النورِ ما بين الجمُعتَينِ
                 </p>
-                <p className="text-[10px] opacity-40 mt-6 font-black uppercase tracking-[0.2em] text-right">(Rapporté par Al Bayhaqi)</p>
+                <div className="relative z-10">
+                    <p className="text-sm md:text-base italic font-medium opacity-80 border-l-4 border-accent-color pl-6 py-2">
+                        {t('kahfHadith')}
+                    </p>
+                    <p className="text-[10px] opacity-40 mt-6 font-black uppercase tracking-[0.2em] text-right">{t('kahfHadithSource')}</p>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const getDateForDay = (day: number, startDateStr: string | null): Date | null => {
     if (!startDateStr) return null;
@@ -584,7 +587,7 @@ const ReadingPlanView: React.FC = () => {
 
             <Modal isOpen={kahfModalOpen} onClose={() => setKahfModalOpen(false)}>
                 <HadithAlKahf />
-                <Button variant="accent" onClick={() => setKahfModalOpen(false)} className="mt-10 w-full h-12 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-accent-color/20 transition-all hover:scale-[1.02] active:scale-[0.98]">Je l'ai lue ! (Barakallah u feek)</Button>
+                <Button variant="accent" onClick={() => setKahfModalOpen(false)} className="mt-10 w-full h-12 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-accent-color/20 transition-all hover:scale-[1.02] active:scale-[0.98]">{t('kahfReadButton')}</Button>
             </Modal>
 
             <InputModal

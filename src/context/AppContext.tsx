@@ -5,7 +5,7 @@ import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
 import { getInitialBadges, checkRevisionMilestone, checkPerfectEvaluation, checkFirstMemorization, checkKhatmaMilestones, checkHadithMilestones } from '../services/achievementLogic';
 import { TRANSLATIONS } from '../translations';
-import { dbService } from '../lib/dbService';
+import { dbService, loadFromLocalFallback, saveToLocalFallback } from '../lib/dbService';
 import { supabase } from '../lib/supabase';
 import { generateUUID } from '../utils/uuid';
 
@@ -779,7 +779,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return translation;
   }, [state.settings.lang]);
 
-  // Charger l'état depuis Supabase (utilisé au mount et après connexion)
+  // Charger l'état depuis Supabase (utilisé au mount et après connexion). Fallback localStorage si hors ligne.
   const loadFromSupabase = useCallback(async () => {
     try {
       const remoteSettings = await dbService.getSettings();
@@ -795,8 +795,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
       dispatch({ type: 'INITIALIZE_STATE', payload: newState });
     } catch (e) {
-      console.error('Failed to load from Supabase', e);
-      dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
+      console.warn('Failed to load from Supabase, trying local fallback', e);
+      const local = loadFromLocalFallback();
+      if (local?.profiles?.length) {
+        const noProfiles = local.profiles.length === 0;
+        dispatch({
+          type: 'INITIALIZE_STATE',
+          payload: {
+            ...defaultState,
+            profiles: local.profiles,
+            settings: local.settings ? { ...defaultState.settings, ...local.settings } : defaultState.settings,
+            activeProfileId: local.activeProfileId ?? local.profiles[0]?.id ?? null,
+            progress: local.progress ?? defaultState.progress,
+            plans: local.plans ?? defaultState.plans,
+            appScreen: local.profiles.length > 1 ? 'profile-selection' : 'main',
+            wizard: defaultState.wizard
+          }
+        });
+      } else {
+        dispatch({ type: 'SET_APP_SCREEN', payload: 'auth' });
+      }
     }
   }, [dispatch]);
 
@@ -858,19 +876,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [loadFromSupabase, dispatch]);
 
-  // Sauvegarde uniquement sur Supabase (pas de persistance locale)
+  // Sauvegarde : Supabase si connecté, avec fallback localStorage en cas d'échec (hors ligne).
   useEffect(() => {
     if (state.appScreen === 'splash') return;
 
     const isNewProfile = state.profiles.length !== prevProfilesCount.current;
     prevProfilesCount.current = state.profiles.length;
-    // Nouveau profil : sync immédiat. Mise à jour profil : sync rapide (300ms) pour éviter perte à la déconnexion.
     const delay = isNewProfile ? 0 : 300;
     const timeoutId = setTimeout(async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         if (isNewProfile) console.log('☁️ Saving new profile to Supabase...');
         await dbService.syncFullState(state);
+      } else if (state.profiles.length > 0) {
+        saveToLocalFallback(state);
       }
     }, delay);
     return () => clearTimeout(timeoutId);
@@ -897,13 +916,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!state.settings.enableNotifications || !state.settings.notificationTime) return;
 
       const [hours, minutes] = state.settings.notificationTime.split(':').map(Number);
+      const hasReading = !!(activeProfile?.goals?.reading && state.plans?.reading?.length);
+      const hasRevision = !!(activeProfile?.goals?.revision && state.plans?.revision?.length);
+      const hasHadith = !!(state.plans?.hadithRevision?.length);
 
       const checkAndNotify = () => {
         const now = new Date();
         if (now.getHours() === hours && now.getMinutes() === minutes) {
+          const parts: string[] = [];
+          if (hasReading) parts.push(t('reminderReadingPart'));
+          if (hasRevision) parts.push(t('reminderRevisionPart'));
+          if (hasHadith) parts.push(t('reminderHadithPart'));
+          const message = parts.length > 0
+            ? t('reminderIntro') + parts.join(', ') + '.'
+            : t('dailyReminderMessage');
           notificationService.show({
             title: t('dailyReminderTitle'),
-            message: t('dailyReminderMessage'),
+            message,
             type: 'info'
           });
         }
@@ -915,7 +944,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const clearNotification = scheduleNotification();
     return clearNotification;
-  }, [state.settings.enableNotifications, state.settings.notificationTime, t]);
+  }, [state.settings.enableNotifications, state.settings.notificationTime, state.plans, activeProfile?.goals, t]);
 
   useEffect(() => {
     const theme: Theme = activeProfile?.theme || 'onboarding';

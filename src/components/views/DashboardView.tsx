@@ -303,7 +303,7 @@ const DashboardView: React.FC = () => {
                             {t('dashboard')}
                         </h1>
                         <p className="text-text-secondary font-medium text-lg md:text-xl max-w-2xl leading-relaxed">
-                            Bienvenue, <span className="text-text-main font-black underline decoration-accent-color/30 underline-offset-4">{activeProfile.name}</span>. {t('supportMsg2') || 'Votre voyage spirituel continue ici.'}
+                            <>{t('welcome')}, <span className="text-text-main font-black underline decoration-accent-color/30 underline-offset-4">{activeProfile.name}</span>. {t('supportMsg2')}</>
                         </p>
                     </div>
                 </motion.div>
@@ -614,10 +614,13 @@ const DashboardView: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 pt-6 border-t border-white/5">
-                                        {(['lu', 'en_memorisation', 'a_reprendre', 'acquis', 'non_lu'] as const).map(hStat => {
+                                    <div className={clsx("grid gap-2 pt-6 border-t border-white/5", hasHadithRevisionGoal ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2")}>
+                                        {(hasHadithRevisionGoal
+                                            ? (['en_memorisation', 'a_reprendre', 'acquis', 'non_lu'] as const)
+                                            : (['lu', 'non_lu'] as const)
+                                        ).map(hStat => {
                                             const currentHadithStatus = activeProfile?.hadithProgress?.[hadithDuJour.id];
-                                            const isActive = currentHadithStatus === hStat;
+                                            const isActive = currentHadithStatus === hStat || (hStat === 'lu' && currentHadithStatus === 'acquis');
                                             return (
                                                 <Button
                                                     key={hStat}
@@ -628,14 +631,21 @@ const DashboardView: React.FC = () => {
                                                             ? "shadow-premium scale-105 opacity-100 border-current"
                                                             : "bg-white/5 border-white/10 opacity-60 hover:opacity-100"
                                                     )}
-                                                    onClick={() => hStat === 'lu' ? handleHadithPlanStatusChange(state.progress.currentHadithRevisionIndex, 'revised') : handleHadithStatusChange(hadithDuJour.id, hStat)}
+                                                    onClick={() => {
+                                                        if (hStat === 'lu') {
+                                                            handleHadithPlanStatusChange(state.progress.currentHadithRevisionIndex, 'revised');
+                                                            if (!hasHadithRevisionGoal) dispatch({ type: 'UPDATE_HADITH_PROGRESS', payload: { hadithId: hadithDuJour.id, status: 'lu', date: new Date().toISOString() } });
+                                                        } else {
+                                                            handleHadithStatusChange(hadithDuJour.id, hStat);
+                                                        }
+                                                    }}
                                                 >
                                                     <div className="text-center leading-tight">
                                                         {hStat === 'lu' ? t('read') :
-                                                            hStat === 'en_memorisation' ? (t('statusEnMemorisation') || 'En mémorisation') :
+                                                            hStat === 'en_memorisation' ? t('statusEnMemorisation') :
                                                                 hStat === 'a_reprendre' ? t('statusARependre') :
                                                                     hStat === 'acquis' ? t('statusAcquis') :
-                                                                        t('notDone')}
+                                                                        t('statusNonLu')}
                                                     </div>
                                                 </Button>
                                             );
@@ -647,8 +657,8 @@ const DashboardView: React.FC = () => {
                                     <div className="w-32 h-32 accent-gradient rounded-[3rem] flex items-center justify-center text-white shadow-premium animate-bounce-subtle">
                                         <Trophy size={64} />
                                     </div>
-                                    <h3 className="text-4xl font-black italic tracking-tight">{t('allDone') || 'Macha\'Allah !'}</h3>
-                                    <p className="text-white/60 text-lg max-w-sm">{t('allHadithsCompleted') || 'Vous avez exploré toute la collection pour aujourd\'hui.'}</p>
+                                    <h3 className="text-4xl font-black italic tracking-tight">{t('allDone')}</h3>
+                                    <p className="text-white/60 text-lg max-w-sm">{t('allHadithsCompleted')}</p>
                                 </div>
                             )}
                         </div>
@@ -861,7 +871,7 @@ const DashboardView: React.FC = () => {
                         >
                             <option value="juzz">{t('juzz')}</option>
                             <option value="hizb">{t('hizb')}</option>
-                            <option value="sourate">{t('sourate') || 'Sourate'}</option>
+                            <option value="sourate">{t('sourate')}</option>
                         </select>
                     </div>
                     <div>

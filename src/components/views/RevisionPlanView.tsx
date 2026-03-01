@@ -160,8 +160,7 @@ const RevisionPlanView: React.FC = () => {
                 <div className="max-w-md">
                     <h3 className="text-3xl font-black mb-3 text-gradient">{t('noGoalsYet')}</h3>
                     <p className="text-text-secondary font-medium leading-relaxed">
-                        {t('revisionEmptySubtitle') ||
-                            "Vous n'avez pas encore défini d'objectif de révision pour fortifier votre mémoire."}
+                        {t('revisionEmptySubtitle')}
                     </p>
                 </div>
                 <Button
@@ -382,7 +381,7 @@ const RevisionPlanView: React.FC = () => {
                         >
                             <option value="juzz">{t('juzz')}</option>
                             <option value="hizb">{t('hizb')}</option>
-                            <option value="sourate">{t('sourate') || 'Sourate'}</option>
+                            <option value="sourate">{t('sourate')}</option>
                         </select>
                     </div>
                     <div>
@@ -844,7 +843,7 @@ const RevisionPlanView: React.FC = () => {
                                         </p>
                                     </div>
                                     <button className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.2em] group-hover:bg-accent-color group-hover:text-white group-hover:border-accent-color transition-all duration-500 shadow-premium">
-                                        {t('viewDetails') || 'Détails de l\'objectif'}
+                                        {t('viewDetails')}
                                     </button>
                                 </motion.div>
                             ))
@@ -864,26 +863,27 @@ const RevisionPlanView: React.FC = () => {
             {/* Summary Modal */}
             <AnimatePresence>
                 {summaryModalDay && (
-                    <Modal isOpen={!!summaryModalDay} onClose={() => setSummaryModalDay(null)}>
-                        <div className="p-8 space-y-10">
+                    <Modal isOpen={!!summaryModalDay} onClose={() => setSummaryModalDay(null)} className="max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="p-8 pb-4 flex-shrink-0">
                             <header className="text-center space-y-4">
                                 <div className="w-20 h-20 rounded-[2.5rem] bg-accent-color/10 flex items-center justify-center text-accent-color mx-auto shadow-inner group">
                                     <Brain size={36} className="group-hover:rotate-12 transition-transform" />
                                 </div>
                                 <h3 className="text-3xl font-black text-gradient">
-                                    {t('summaryOfAnnotations') || 'Résumé des annotations'}
+                                    {t('summaryOfAnnotations')}
                                 </h3>
                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">
                                     {summaryModalDay.units.map(u => u.text).join(' + ')}
                                 </p>
                             </header>
+                        </div>
 
-                            <div className="space-y-6">
+                        <div className="flex-1 min-h-0 overflow-y-auto px-8 space-y-6">
                                 {summaryModalDay.status === 'not_revised' ? (
                                     <div className="p-8 rounded-[2.5rem] bg-danger/5 border border-danger/20 text-center space-y-4">
                                         <AlertCircle size={40} className="text-danger mx-auto opacity-40" />
                                         <p className="text-danger font-black uppercase tracking-widest text-sm">{t('notDone')}</p>
-                                        <p className="text-text-secondary text-xs italic">Cette session n'a pas encore été effectuée.</p>
+                                        <p className="text-text-secondary text-xs italic">{t('sessionNotDoneYet')}</p>
                                     </div>
                                 ) : (
                                     <>
@@ -898,7 +898,7 @@ const RevisionPlanView: React.FC = () => {
                                                 </span>
                                             </div>
                                             <div className="p-6 rounded-[2rem] bg-white/5 border border-white/10 text-center">
-                                                <span className="text-[8px] font-black uppercase tracking-widest opacity-30 block mb-2">{t('quality') || 'Qualité globale'}</span>
+                                                <span className="text-[8px] font-black uppercase tracking-widest opacity-30 block mb-2">{t('overallQuality')}</span>
                                                 {summaryModalDay.quality ? (
                                                     <span className={clsx(
                                                         "text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block",
@@ -910,7 +910,7 @@ const RevisionPlanView: React.FC = () => {
                                                         {t(summaryModalDay.quality)}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-text-secondary italic text-xs">N/A</span>
+                                                    <span className="text-text-secondary italic text-xs">{t('notApplicable')}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -919,7 +919,7 @@ const RevisionPlanView: React.FC = () => {
                                             <div className="space-y-6 pt-4">
                                                 <h4 className="text-xs font-black uppercase tracking-widest text-text-secondary flex items-center gap-3">
                                                     <div className="w-8 h-px bg-border-main/50" />
-                                                    {t('surahRatings') || 'Détails par sourate'}
+                                                    {t('surahRatingsDetails')}
                                                     <div className="h-px bg-border-main/50 flex-1" />
                                                 </h4>
                                                 <div className="grid grid-cols-1 gap-3">
@@ -946,7 +946,7 @@ const RevisionPlanView: React.FC = () => {
                                             <div className="space-y-6 pt-4">
                                                 <h4 className="text-xs font-black uppercase tracking-widest text-text-secondary flex items-center gap-3">
                                                     <div className="w-8 h-px bg-border-main/50" />
-                                                    {t('difficultiesToReview') || 'Points à revoir'}
+                                                    {t('difficultiesToReview')}
                                                     <div className="h-px bg-border-main/50 flex-1" />
                                                 </h4>
                                                 <div className="flex flex-wrap gap-2">
@@ -960,8 +960,9 @@ const RevisionPlanView: React.FC = () => {
                                         )}
                                     </>
                                 )}
-                            </div>
+                        </div>
 
+                        <div className="p-8 pt-4 flex-shrink-0">
                             <Button
                                 variant="accent"
                                 size="lg"

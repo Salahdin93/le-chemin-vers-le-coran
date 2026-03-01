@@ -12,6 +12,7 @@ import {
 
 const HadithCard: React.FC<{ hadith: Hadith; status: HadithMemorizationStatus; index: number }> = ({ hadith, status, index }) => {
     const { state, dispatch, t } = useStore();
+    const activeProfile = useActiveProfileSelector();
     const [showTranslation, setShowTranslation] = useState(false);
 
     const statusConfig: Record<HadithMemorizationStatus, { color: string, icon: any, label: string }> = {
@@ -78,12 +79,18 @@ const HadithCard: React.FC<{ hadith: Hadith; status: HadithMemorizationStatus; i
                     )}
 
                     <div className="grid grid-cols-2 gap-2">
-                        {[
-                            { s: 'lu', v: 'secondary', l: t('statusLu') },
-                            { s: 'en_memorisation', v: 'ghost', l: t('statusEnMemorisation'), c: 'bg-warning/10 text-warning hover:bg-warning hover:text-white' },
-                            { s: 'a_reprendre', v: 'ghost', l: t('statusARependre'), c: 'bg-danger/10 text-danger hover:bg-danger hover:text-white' },
-                            { s: 'acquis', v: 'accent', l: t('statusAcquis') }
-                        ].map(opt => (
+                        {(activeProfile?.goals?.hadithRevision
+                            ? [
+                                { s: 'en_memorisation', v: 'ghost', l: t('statusEnMemorisation'), c: 'bg-warning/10 text-warning hover:bg-warning hover:text-white' },
+                                { s: 'a_reprendre', v: 'ghost', l: t('statusARependre'), c: 'bg-danger/10 text-danger hover:bg-danger hover:text-white' },
+                                { s: 'acquis', v: 'accent', l: t('statusAcquis') },
+                                { s: 'non_lu', v: 'secondary', l: t('statusNonLu') }
+                            ]
+                            : [
+                                { s: 'lu', v: 'secondary', l: t('statusLu') },
+                                { s: 'non_lu', v: 'ghost', l: t('statusNonLu'), c: 'bg-bg-secondary text-text-main/40 hover:bg-bg-main hover:text-text-main' }
+                            ]
+                        ).map(opt => (
                             <button
                                 key={opt.s}
                                 onClick={() => handleStatusChange(opt.s as any)}

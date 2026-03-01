@@ -1,21 +1,17 @@
 import React from 'react';
+import { useStore } from '@/context/AppContext';
 
 const AlKahfReminder: React.FC = () => {
+  const { t } = useStore();
   return (
     <div className="text-sm text-left max-w-md p-1">
-      <h3 className="font-bold text-base mb-2 text-text-main">Celui qui lit la sourate Al Kahf (La caverne) un vendredi</h3>
+      <h3 className="font-bold text-base mb-2 text-text-main">{t('kahfReminderTitleShort')}</h3>
       
       <div className="mb-4 text-text-secondary">
-        <p className="mb-2">Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux.</p>
-        <p className="italic">
-          D'après Abou Said Al Khoudri (qu'Allah l'agrée), le Prophète (que la prière d'Allah et Son salut soient sur lui) a dit: « Celui qui lit la sourate Al Kahf le jour du vendredi, il est éclairé par une lumière entre les deux vendredis (*_*) ».
-        </p>
-        <p className="text-xs opacity-80 mt-1">
-          (Rapporté par Al Bayhaqi et authentifié par Cheikh Albani dans Sahih Al Jami n°6470)
-        </p>
-        <p className="text-xs opacity-80 mt-2">
-          (*) C'est à dire entre le vendredi où la personne l'a lu jusqu'au vendredi suivant.
-        </p>
+        <p className="mb-2">{t('kahfReminderBismillah')}</p>
+        <p className="italic">{t('kahfHadith')}</p>
+        <p className="text-xs opacity-80 mt-1">{t('kahfHadithSourceExtended')}</p>
+        <p className="text-xs opacity-80 mt-2">{t('kahfReminderNote')}</p>
       </div>
 
       <div className="border-t border-border-main pt-3">
