@@ -48,6 +48,14 @@ const HadithAlKahf: React.FC = () => (
     </div>
 );
 
+const getDateForDay = (day: number, startDateStr: string | null): Date | null => {
+    if (!startDateStr) return null;
+    const [y, m, d] = startDateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + (day - 1));
+    return date;
+};
+
 const GlobalProgressCard: React.FC = () => {
     const { state, t, activeProfile } = useStore();
     const readingGoal = activeProfile?.goals.reading;
@@ -58,12 +66,20 @@ const GlobalProgressCard: React.FC = () => {
     const totalPagesToRead = readingGoal.khatmas * TOTAL_PAGES;
     const percentage = totalPagesToRead > 0 ? Math.round((totalPagesRead / totalPagesToRead) * 100) : 0;
     const pagesRemaining = Math.max(0, totalPagesToRead - totalPagesRead);
-    const daysElapsed = Math.max(1, (state.progress.existingDaysRead ?? 0) + Math.max(0, state.progress.currentReadingDay - 1));
-    const avgPagesPerDay = totalPagesRead / daysElapsed;
-    const estimatedDaysRemaining = avgPagesPerDay > 0 ? Math.ceil(pagesRemaining / avgPagesPerDay) : readingGoal.duration - state.progress.currentReadingDay;
-    const estimatedEndDate = percentage < 100
-        ? new Date(Date.now() + estimatedDaysRemaining * 24 * 60 * 60 * 1000)
+    const readingPlan = state.plans.reading;
+    const planEndDate = readingPlan && readingPlan.length > 0
+        ? getDateForDay(readingPlan[readingPlan.length - 1].day, state.progress.startDate)
         : null;
+    const estimatedEndDate = percentage < 100 && planEndDate
+        ? planEndDate
+        : percentage < 100
+            ? (() => {
+                const daysElapsed = Math.max(1, (state.progress.existingDaysRead ?? 0) + Math.max(0, state.progress.currentReadingDay - 1));
+                const avgPagesPerDay = totalPagesRead / daysElapsed;
+                const estimatedDaysRemaining = avgPagesPerDay > 0 ? Math.ceil(pagesRemaining / avgPagesPerDay) : readingGoal.duration - state.progress.currentReadingDay;
+                return new Date(Date.now() + estimatedDaysRemaining * 24 * 60 * 60 * 1000);
+            })()
+            : null;
 
     return (
         <div className="premium-card !bg-slate-900 border-none text-white shadow-2xl relative overflow-hidden group">
@@ -120,20 +136,12 @@ const GlobalProgressCard: React.FC = () => {
     );
 }
 
-const getDateForDay = (day: number, startDateStr: string | null) => {
-    if (!startDateStr) return null;
-    const [y, m, d] = startDateStr.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    date.setDate(date.getDate() + (day - 1));
-    return date;
-};
-
-/** Date de début "virtuelle" pour l'affichage des jours 1..existingDaysRead (jour 1 = startDate - (existingDaysRead - 1)). */
+/** Date de début "virtuelle" pour l'affichage des jours 1..existingDaysRead (jour 1 = startDate - existingDaysRead, pour que jour 11 = startDate). */
 const getVirtualStartDateStr = (startDateStr: string | null, existingDaysRead: number): string | null => {
     if (!startDateStr || existingDaysRead <= 0) return startDateStr;
     const [y, m, d] = startDateStr.split('-').map(Number);
     const d1 = new Date(y, m - 1, d);
-    d1.setDate(d1.getDate() - (existingDaysRead - 1));
+    d1.setDate(d1.getDate() - existingDaysRead);
     const yy = d1.getFullYear();
     const mm = String(d1.getMonth() + 1).padStart(2, '0');
     const dd = String(d1.getDate()).padStart(2, '0');
@@ -341,6 +349,10 @@ const ReadingPlanView: React.FC = () => {
                     const hizbDetails = getHizbDetailsFromPage(day.startPage);
                     const endHizbDetails = getHizbDetailsFromPage(day.endPage);
                     const hizbInfo = HIZB_DATA[hizbDetails.hizbNum - 1];
+                    const endHizbInfo = HIZB_DATA[endHizbDetails.hizbNum - 1];
+                    const hizbDetailsText = (hizbDetails.hizbNum !== endHizbDetails.hizbNum && hizbInfo && endHizbInfo)
+                        ? `${hizbInfo.details} ; Hizb ${endHizbDetails.hizbNum} : ${endHizbInfo.details}`
+                        : hizbInfo?.details;
 
                     return (
                         <motion.div key={day.day} custom={i} initial="hidden" animate="visible" variants={cardVariants}>
@@ -375,9 +387,9 @@ const ReadingPlanView: React.FC = () => {
                                             </span>
                                         </div>
                                         <h4 className="text-2xl font-black tracking-tight">{hizbDetails.surahName}</h4>
-                                        {hizbInfo && (
+                                        {hizbDetailsText && (
                                             <p className="text-sm font-semibold text-text-secondary mt-1">
-                                                {hizbInfo.details} — Pages : {day.startPage} à {day.endPage}
+                                                {hizbDetailsText} — Pages : {day.startPage} à {day.endPage}
                                             </p>
                                         )}
                                     </div>

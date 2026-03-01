@@ -18,9 +18,10 @@ const chunkArray = <T>(arr: T[], size: number): T[][] =>
         arr.slice(i * size, i * size + size)
     );
 
+const MAX_HIZB = 60;
 export const getHizbDetailsFromPage = (page: number) => {
     const adjustedPage = page - 1;
-    const hizbNum = Math.floor(adjustedPage / 10) + 1;
+    const hizbNum = Math.min(MAX_HIZB, Math.floor(adjustedPage / 10) + 1);
     const juzzNum = Math.floor((hizbNum - 1) / 2) + 1;
 
     const surah = SURAH_DATA.find(s => page >= s.startPage && page <= s.endPage);
