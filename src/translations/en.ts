@@ -251,6 +251,7 @@ export const en = {
     "resumeExistingReadingAction": "📖 Resume my reading",
     "startFromScratchAction": "✨ Start from scratch",
     "daysAlreadyRead": "Days already completed",
+    "readBeforeRegistration": "Completed before registration",
     "pagesAlreadyRead": "Pages already read",
     "daysReadLabel": "Days read",
     "pagesReadLabel": "Pages read",

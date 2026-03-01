@@ -1,6 +1,6 @@
 import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useRef, useSyncExternalStore } from 'react';
 import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan, ToReviewHistoryItem, ReadingHistory } from '../types/types';
-import { generateReadingPlan, generateReadingPlanResume, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan, generateHadithReadingPlan } from '../services/planLogic';
+import { generateReadingPlan, generateReadingPlanResume, getTargetPagesPerDayResume, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan, generateHadithReadingPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
 import { getInitialBadges, checkRevisionMilestone, checkPerfectEvaluation, checkFirstMemorization, checkKhatmaMilestones, checkHadithMilestones } from '../services/achievementLogic';
@@ -151,9 +151,19 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const wizardMode = (action.payload as any).mode as WizardMode;
       const wizardFlow = state.wizard.type; // 'full' | 'reading' | 'revision'
 
-      // Calculer pagesPerDay avant de générer le plan
+      // Calculer pagesPerDay avant de générer le plan (reprise = jours restants, sinon durée totale)
       const totalPages = 604;
-      const calculatedPagesPerDay = wizardData.duration ? Math.ceil((totalPages * (wizardData.khatmas || 1)) / wizardData.duration) : wizardData.pagesPerDay || 1;
+      const isResumeForCalc = wizardData.wantsResumeExistingProgram === true && wizardData.existingPagesRead != null && wizardData.existingDaysRead != null;
+      const calculatedPagesPerDay = isResumeForCalc && wizardData.duration != null
+        ? getTargetPagesPerDayResume(
+            wizardData.duration,
+            wizardData.existingDaysRead ?? 0,
+            wizardData.khatmas ?? 1,
+            wizardData.existingPagesRead ?? 0,
+            !!wizardData.kahfOption,
+            wizardData.kahfPages ?? 0
+          ) || 1
+        : wizardData.duration ? Math.ceil((totalPages * (wizardData.khatmas || 1)) / wizardData.duration) : wizardData.pagesPerDay || 1;
       // En "reprise" lecture, garder la date de début existante pour que le plan reste aligné
       const readingStartDate = (wizardFlow === 'reading' && wizardData.readingGoalMode === 'resume' && state.progress.startDate)
         ? state.progress.startDate

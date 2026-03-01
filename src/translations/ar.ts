@@ -252,6 +252,7 @@ export const ar = {
     "resumeExistingReadingAction": "📖 استئناف قراءتي",
     "startFromScratchAction": "✨ البدء من الصفر",
     "daysAlreadyRead": "أيام مكتملة بالفعل",
+    "readBeforeRegistration": "مكتمل قبل التسجيل",
     "pagesAlreadyRead": "صفحات مقروءة بالفعل",
     "daysReadLabel": "أيام مقروءة",
     "pagesReadLabel": "صفحات مقروءة",

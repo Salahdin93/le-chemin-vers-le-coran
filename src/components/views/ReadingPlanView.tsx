@@ -95,7 +95,7 @@ const GlobalProgressCard: React.FC = () => {
                 </div>
                 <div className="flex flex-col justify-center">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 mb-2">{t('pagesPerDay')}</span>
-                    <span className="text-2xl font-black tracking-tight">~{Math.round(totalPagesRead / Math.max(1, state.progress.currentReadingDay - 1))}</span>
+                    <span className="text-2xl font-black tracking-tight">~{readingGoal.pagesPerDay}</span>
                 </div>
                 <div className="flex flex-col justify-center border-l border-white/5 pl-6 md:pl-0">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 mb-2">{t('status')}</span>
@@ -126,6 +126,18 @@ const getDateForDay = (day: number, startDateStr: string | null) => {
     const date = new Date(y, m - 1, d);
     date.setDate(date.getDate() + (day - 1));
     return date;
+};
+
+/** Date de début "virtuelle" pour l'affichage des jours 1..existingDaysRead (jour 1 = startDate - (existingDaysRead - 1)). */
+const getVirtualStartDateStr = (startDateStr: string | null, existingDaysRead: number): string | null => {
+    if (!startDateStr || existingDaysRead <= 0) return startDateStr;
+    const [y, m, d] = startDateStr.split('-').map(Number);
+    const d1 = new Date(y, m - 1, d);
+    d1.setDate(d1.getDate() - (existingDaysRead - 1));
+    const yy = d1.getFullYear();
+    const mm = String(d1.getMonth() + 1).padStart(2, '0');
+    const dd = String(d1.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
 };
 
 const ReadingPlanView: React.FC = () => {
@@ -275,6 +287,49 @@ const ReadingPlanView: React.FC = () => {
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Jours 1..existingDaysRead : affichés comme "Lu" (effectués avant l'inscription) */}
+                {(() => {
+                    const existingDays = state.progress.existingDaysRead ?? 0;
+                    const virtualStart = getVirtualStartDateStr(state.progress.startDate, existingDays);
+                    const pastDayCards: { displayDayNum: number; date: Date | null }[] = [];
+                    for (let i = 1; i <= existingDays; i++) {
+                        pastDayCards.push({
+                            displayDayNum: i,
+                            date: getDateForDay(i, virtualStart)
+                        });
+                    }
+                    return pastDayCards.map((past, idx) => (
+                        <motion.div key={`past_${past.displayDayNum}`} custom={idx} initial="hidden" animate="visible" variants={cardVariants}>
+                            <div className="premium-card h-full p-8 flex flex-col gap-6 border-2 border-border-main/50 bg-bg-secondary/40 opacity-60 grayscale-[0.5] border-success/10">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Calendar size={12} className="text-accent-color opacity-50" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-color">
+                                                {t('day')} {past.displayDayNum}
+                                                {past.date && (
+                                                    <span className="ml-2 font-black text-text-main">
+                                                        — {past.date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-text-secondary mt-1">{t('readBeforeRegistration')}</p>
+                                    </div>
+                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-success shadow-lg shadow-success/20 text-white">
+                                        <CheckCircle2 size={24} />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="px-3 py-1 rounded-full bg-success/20 border border-success/30 text-[9px] font-black uppercase tracking-widest text-success flex items-center gap-1.5">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-success"></div>
+                                        Lu
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ));
+                })()}
                 {readingPlan.map((day, i) => {
                     const status = state.progress.readingHistory[`day_${day.day}`]?.status || 'not_read';
                     const isCurrent = day.day === state.progress.currentReadingDay;

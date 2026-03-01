@@ -77,6 +77,33 @@ export const generateReadingPlan = (readingGoal: ReadingGoal, startDateString: s
     return plan;
 };
 
+/** Pages/jour cible pour la reprise (durée = total jours, jours restants = duration - existingDaysRead). */
+export const getTargetPagesPerDayResume = (
+    duration: number,
+    existingDaysRead: number,
+    khatmas: number,
+    existingPagesRead: number,
+    kahfOption: boolean,
+    kahfPages: number
+): number => {
+    const daysRemaining = Math.max(1, duration - existingDaysRead);
+    const totalToRead = TOTAL_PAGES * khatmas;
+    const remaining = Math.max(0, totalToRead - existingPagesRead);
+    let pagesForNormalDays = remaining;
+    let fridaysCount = 0;
+    if (kahfOption && kahfPages > 0) {
+        const start = new Date();
+        for (let i = 0; i < daysRemaining; i++) {
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+            if (d.getDay() === 5) fridaysCount++;
+        }
+        pagesForNormalDays = Math.max(0, remaining - fridaysCount * kahfPages);
+    }
+    const normalDaysCount = daysRemaining - fridaysCount;
+    return normalDaysCount > 0 ? Math.round(pagesForNormalDays / normalDaysCount) : 0;
+};
+
 /** Plan for resume: duration = total days to finish; effective days = duration - existingDaysRead. Remaining pages spread over that. */
 export const generateReadingPlanResume = (
     readingGoal: ReadingGoal,

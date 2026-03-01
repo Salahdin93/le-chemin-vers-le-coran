@@ -257,6 +257,7 @@ export const fr = {
     "resumeExistingReadingAction": "📖 Reprendre ma lecture",
     "startFromScratchAction": "✨ Commencer à zéro",
     "daysAlreadyRead": "Jours déjà effectués",
+    "readBeforeRegistration": "Effectué avant l'inscription",
     "pagesAlreadyRead": "Pages déjà lues",
     "daysReadLabel": "Jours lus",
     "pagesReadLabel": "Pages lues",
