@@ -80,8 +80,9 @@ export const generateReadingPlan = (readingGoal: ReadingGoal, startDateString: s
             const effectivePage = ((currentPage - 1) % TOTAL_PAGES) + 1;
             const startHizb = getHizbNumFromPage(effectivePage);
             const endHizb = Math.min(60, startHizb + hizbsToAssign - 1);
-            startPage = effectivePage;
+            const rangeStart = HIZB_PAGE_RANGES[startHizb - 1];
             const rangeEnd = HIZB_PAGE_RANGES[endHizb - 1];
+            startPage = rangeStart ? rangeStart.startPage : effectivePage;
             endPage = rangeEnd ? rangeEnd.endPage : Math.min(effectivePage + 19, TOTAL_PAGES);
             pagesToday = endPage - startPage + 1;
         } else {
@@ -191,8 +192,11 @@ export const generateReadingPlanResume = (
             const effPage = ((currentPage - 1) % TOTAL_PAGES) + 1;
             const startHizb = getHizbNumFromPage(effPage);
             const endHizb = Math.min(60, startHizb + hizbsToAssign - 1);
-            startPage = effPage;
+            const rangeStart = HIZB_PAGE_RANGES[startHizb - 1];
             const rangeEnd = HIZB_PAGE_RANGES[endHizb - 1];
+            const isFirstNormalDay = normalDayIdx === 1;
+            const atHizbBoundary = rangeStart && effPage === rangeStart.startPage;
+            startPage = (isFirstNormalDay && !atHizbBoundary) ? effPage : (rangeStart ? rangeStart.startPage : effPage);
             endPage = rangeEnd ? rangeEnd.endPage : Math.min(effPage + 19, TOTAL_PAGES);
             pagesToday = endPage - startPage + 1;
         } else {
