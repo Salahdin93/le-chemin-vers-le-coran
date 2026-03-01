@@ -585,15 +585,5 @@ export const fr = {
     "kahfReminderTitleShort": "Celui qui lit la sourate Al Kahf (La caverne) un vendredi",
     "kahfReminderBismillah": "Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux.",
     "kahfReminderNote": "(*) C'est à dire entre le vendredi où la personne l'a lu jusqu'au vendredi suivant.",
-    "kahfHadithSourceExtended": "(Rapporté par Al Bayhaqi et authentifié par Cheikh Albani dans Sahih Al Jami n°6470)",
-    "statsSubtitle": "Analysez vos efforts et visualisez votre ascension spirituelle.",
-    "liveStats": "Mise à jour en direct",
-    "noDataYet": "Aucune donnée pour le moment",
-    "statsAppearHere": "Vos statistiques apparaîtront ici au fur et à mesure de votre progression.",
-    "readingActivity": "Activité de Lecture",
-    "revisionActivity": "Activité de Révision",
-    "exportJSON": "Sauvegarder (.JSON)",
-    "pdfDateFilter": "Filtrer le rapport PDF",
-    "dangerZone": "Zone Sensible",
-    "dangerZoneSubtitle": "Actions irréversibles sur vos données"
+    "kahfHadithSourceExtended": "(Rapporté par Al Bayhaqi et authentifié par Cheikh Albani dans Sahih Al Jami n°6470)"
 };

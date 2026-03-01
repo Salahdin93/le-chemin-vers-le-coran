@@ -798,7 +798,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.warn('Failed to load from Supabase, trying local fallback', e);
       const local = loadFromLocalFallback();
       if (local?.profiles?.length) {
-        const noProfiles = local.profiles.length === 0;
         dispatch({
           type: 'INITIALIZE_STATE',
           payload: {
