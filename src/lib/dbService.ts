@@ -1,15 +1,18 @@
 import { supabase } from './supabase';
 import { Profile, Settings, AppState } from '../types/types';
+import { hashProfilePassword, isStoredHash } from './passwordUtils';
 
 const LOCAL_FALLBACK_KEY = 'quranCompanionState_v7';
 
 /**
  * Sauvegarde l'état dans localStorage (fallback hors ligne).
+ * Les mots de passe de profil sont exclus pour ne pas les persister en clair/local.
  */
 export function saveToLocalFallback(state: AppState): void {
     try {
+        const profilesWithoutPasswords = state.profiles.map(({ password: _, ...p }) => ({ ...p, password: undefined }));
         const payload = {
-            profiles: state.profiles,
+            profiles: profilesWithoutPasswords,
             settings: state.settings,
             activeProfileId: state.activeProfileId,
             progress: state.progress,
@@ -84,17 +87,23 @@ export const dbService = {
 
     /**
      * Sauvegarde ou met à jour un profil.
+     * Le mot de passe est haché côté client avant envoi si ce n'est pas déjà un hash.
      */
     async saveProfile(profile: Profile, progress?: any, plans?: any): Promise<boolean> {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return false;
+
+        let passwordToStore: string | null = profile.password || null;
+        if (passwordToStore && !isStoredHash(passwordToStore)) {
+            passwordToStore = await hashProfilePassword(profile.id, passwordToStore);
+        }
 
         const profileData = {
             id: profile.id,
             user_id: user.id,
             name: profile.name,
             gender: profile.gender || 'male',
-            password: profile.password || null,
+            password: passwordToStore,
             theme: profile.theme || 'light',
             accent_color: profile.accentColor || '#2E7D32',
             avatar: profile.avatar || null,

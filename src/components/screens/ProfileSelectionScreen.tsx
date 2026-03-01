@@ -70,9 +70,12 @@ const ProfileSelectionScreen: React.FC = () => {
         }
     };
 
-    const handlePasswordSubmit = (e: React.FormEvent) => {
+    const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (passwordPrompt && passwordInput === passwordPrompt.password) {
+        if (!passwordPrompt) return;
+        const { verifyProfilePassword } = await import('@/lib/passwordUtils');
+        const ok = await verifyProfilePassword(passwordPrompt.id, passwordInput, passwordPrompt.password);
+        if (ok) {
             setError(null);
             dispatch({ type: 'SET_ACTIVE_PROFILE', payload: passwordPrompt.id });
         } else {
@@ -82,6 +85,10 @@ const ProfileSelectionScreen: React.FC = () => {
     };
 
     const handleOpenCreator = () => {
+        if (state.profiles.length === 0) {
+            dispatch({ type: 'START_WIZARD', payload: { type: 'full', mode: 'new' } });
+            return;
+        }
         setProfileToEdit(null);
         setIsEditorOpen(true);
     };
