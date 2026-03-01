@@ -510,7 +510,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'RESET_APP': {
       localStorage.removeItem('quranCompanionState_v7');
-      return { ...defaultState, profiles: [], activeProfileId: null, appScreen: 'welcome' };
+      return { ...defaultState, profiles: [], activeProfileId: null, appScreen: 'profile-selection' };
     }
     case 'RESET_PROGRESS': {
       if (!activeProfile) return state;
