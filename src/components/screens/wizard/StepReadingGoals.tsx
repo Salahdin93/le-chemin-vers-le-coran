@@ -7,28 +7,30 @@ import { motion } from 'framer-motion';
 
 const TOTAL_PAGES = 604;
 
-/** Calcule les pages/jour cible pour la reprise (durée, khatmas, Al-Kahf). */
+/** Calcule les pages/jour cible pour la reprise. duration = total jours pour terminer ; jours restants = duration - existingDaysRead. */
 function getTargetPagesPerDayResume(
     duration: number,
+    existingDaysRead: number,
     khatmas: number,
     pagesRead: number,
     kahfOption: boolean,
     kahfPages: number
 ): number {
+    const daysRemaining = Math.max(1, duration - existingDaysRead);
     const totalToRead = TOTAL_PAGES * khatmas;
     const remaining = Math.max(0, totalToRead - pagesRead);
     let pagesForNormalDays = remaining;
     let fridaysCount = 0;
     if (kahfOption && (kahfPages ?? 0) > 0) {
         const start = new Date();
-        for (let i = 0; i < duration; i++) {
+        for (let i = 0; i < daysRemaining; i++) {
             const d = new Date(start);
             d.setDate(start.getDate() + i);
             if (d.getDay() === 5) fridaysCount++;
         }
         pagesForNormalDays = Math.max(0, remaining - fridaysCount * (kahfPages ?? 0));
     }
-    const normalDaysCount = duration - fridaysCount;
+    const normalDaysCount = daysRemaining - fridaysCount;
     return normalDaysCount > 0 ? Math.round(pagesForNormalDays / normalDaysCount) : 0;
 }
 
@@ -47,7 +49,7 @@ const StepReadingGoals: React.FC<StepProps> = ({ formData, updateData, t }) => {
     const khatmas = formData.khatmas ?? 1;
     const kahfOption = !!formData.kahfOption;
     const kahfPages = formData.kahfPages ?? 0;
-    const targetPagesPerDay = useMemo(() => getTargetPagesPerDayResume(duration, khatmas, pagesRead, kahfOption, kahfPages), [duration, khatmas, pagesRead, kahfOption, kahfPages]);
+    const targetPagesPerDay = useMemo(() => getTargetPagesPerDayResume(duration, daysRead, khatmas, pagesRead, kahfOption, kahfPages), [duration, daysRead, khatmas, pagesRead, kahfOption, kahfPages]);
 
     useEffect(() => {
         if (isResume) {

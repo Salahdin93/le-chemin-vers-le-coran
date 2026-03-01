@@ -77,32 +77,33 @@ export const generateReadingPlan = (readingGoal: ReadingGoal, startDateString: s
     return plan;
 };
 
-/** Plan for resume: remaining pages spread over `duration` days starting at page existingPagesRead+1. */
+/** Plan for resume: duration = total days to finish; effective days = duration - existingDaysRead. Remaining pages spread over that. */
 export const generateReadingPlanResume = (
     readingGoal: ReadingGoal,
     startDateString: string,
-    options: { existingPagesRead: number }
+    options: { existingPagesRead: number; existingDaysRead?: number }
 ): PlanDay[] => {
     const { duration, khatmas, kahfOption, kahfPages } = readingGoal;
+    const daysRemaining = Math.max(1, duration - (options.existingDaysRead ?? 0));
     const startDate = new Date(startDateString);
     const totalPagesToRead = TOTAL_PAGES * khatmas;
     const remainingPages = Math.max(0, totalPagesToRead - options.existingPagesRead);
     let pagesForNormalDays = remainingPages;
     let fridaysCount = 0;
     if (kahfOption && (kahfPages ?? 0) > 0) {
-        for (let i = 0; i < duration; i++) {
+        for (let i = 0; i < daysRemaining; i++) {
             const tempDate = new Date(startDate);
             tempDate.setDate(startDate.getDate() + i);
             if (tempDate.getDay() === 5) fridaysCount++;
         }
         pagesForNormalDays = Math.max(0, remainingPages - fridaysCount * (kahfPages ?? 0));
     }
-    const normalDaysCount = duration - fridaysCount;
+    const normalDaysCount = daysRemaining - fridaysCount;
     const pagesPerNormalDay = normalDaysCount > 0 ? Math.floor(pagesForNormalDays / normalDaysCount) : 0;
     let extraPages = normalDaysCount > 0 ? pagesForNormalDays % normalDaysCount : 0;
     const plan: PlanDay[] = [];
     let currentPage = options.existingPagesRead + 1;
-    for (let day = 1; day <= duration; day++) {
+    for (let day = 1; day <= daysRemaining; day++) {
         let pagesToday: number;
         let isKahfDay = false;
         const tempDate = new Date(startDate);

@@ -171,7 +171,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 pagesPerDay: calculatedPagesPerDay
               },
               startDate,
-              { existingPagesRead: wizardData.existingPagesRead! }
+              { existingPagesRead: wizardData.existingPagesRead!, existingDaysRead: wizardData.existingDaysRead ?? 0 }
             )
           : generateReadingPlan({
               duration: wizardData.duration!,
