@@ -8,7 +8,7 @@ import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLo
 import { TOTAL_PAGES, HIZB_DATA } from '@/constants/quranData';
 import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, CheckCircle2, Circle, ArrowRight, Star, BookOpen, Calendar, ChevronRight, Folder, Trophy } from 'lucide-react';
+import { Clock, CheckCircle2, Circle, ArrowRight, Star, BookOpen, Calendar, Folder, Trophy } from 'lucide-react';
 
 const cardVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -351,8 +351,8 @@ const ReadingPlanView: React.FC = () => {
                     const hizbInfo = HIZB_DATA[hizbDetails.hizbNum - 1];
                     const endHizbInfo = HIZB_DATA[endHizbDetails.hizbNum - 1];
                     const hizbDetailsText = (hizbDetails.hizbNum !== endHizbDetails.hizbNum && hizbInfo && endHizbInfo)
-                        ? `${hizbInfo.details} ; Hizb ${endHizbDetails.hizbNum} : ${endHizbInfo.details}`
-                        : hizbInfo?.details;
+                        ? `Hizb ${hizbDetails.hizbNum} : ${hizbInfo.details} à Hizb ${endHizbDetails.hizbNum} : ${endHizbInfo.details}`
+                        : hizbInfo ? `Hizb ${hizbDetails.hizbNum} : ${hizbInfo.details}` : undefined;
 
                     return (
                         <motion.div key={day.day} custom={i} initial="hidden" animate="visible" variants={cardVariants}>
@@ -436,7 +436,7 @@ const ReadingPlanView: React.FC = () => {
 
                                     <div className="flex items-center gap-2 p-2 px-3 bg-accent-color/5 rounded-xl border border-accent-color/10 self-start">
                                         <span className="text-[9px] font-black uppercase tracking-[0.2em] text-accent-color">
-                                            Hizb {hizbDetails.hizbNum} <ChevronRight size={8} className="inline mx-1" /> {endHizbDetails.hizbNum}
+                                            {hizbDetails.hizbNum === endHizbDetails.hizbNum ? `Hizb ${hizbDetails.hizbNum}` : `Hizbs ${hizbDetails.hizbNum}-${endHizbDetails.hizbNum}`}
                                         </span>
                                     </div>
 
