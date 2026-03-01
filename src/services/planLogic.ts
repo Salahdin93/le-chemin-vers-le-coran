@@ -141,6 +141,42 @@ const getHizbsPerDayForRemaining = (remainingHizbs: number, normalDaysCount: num
     return Array.from({ length: normalDaysCount }, (_, i) => Math.max(1, base + (i < remainder ? 1 : 0)));
 };
 
+/** Répartition des hizbs par jour pour approcher la cible pages/jour (alignement hizb conservé). */
+const getHizbsPerDayByTargetPages = (
+    startHizb: number,
+    endHizb: number,
+    normalDaysCount: number,
+    targetPagesPerDay: number,
+    tolerance: number = 5
+): number[] => {
+    if (normalDaysCount <= 0 || startHizb > endHizb || targetPagesPerDay <= 0) return [];
+    const pageCounts: number[] = [];
+    for (let h = startHizb - 1; h < endHizb && h < HIZB_PAGE_RANGES.length; h++) {
+        const r = HIZB_PAGE_RANGES[h];
+        pageCounts.push(r.endPage - r.startPage + 1);
+    }
+    const result: number[] = [];
+    let hizbIdx = 0;
+    for (let day = 0; day < normalDaysCount; day++) {
+        let dayPages = 0;
+        let hizbsThisDay = 0;
+        while (hizbIdx < pageCounts.length) {
+            const nextPages = pageCounts[hizbIdx];
+            const wouldExceed = dayPages + nextPages > targetPagesPerDay + tolerance;
+            if (wouldExceed && hizbsThisDay >= 1) break;
+            dayPages += nextPages;
+            hizbsThisDay++;
+            hizbIdx++;
+        }
+        if (day === normalDaysCount - 1 && hizbIdx < pageCounts.length) {
+            hizbsThisDay += pageCounts.length - hizbIdx;
+            hizbIdx = pageCounts.length;
+        }
+        result.push(Math.max(1, hizbsThisDay));
+    }
+    return result;
+};
+
 /** Plan for resume: duration = total days to finish; effective days = duration - existingDaysRead. Remaining pages spread over that, aligned to hizbs. */
 export const generateReadingPlanResume = (
     readingGoal: ReadingGoal,
@@ -168,13 +204,19 @@ export const generateReadingPlanResume = (
     const effectiveStartPage = ((startPageResume - 1) % TOTAL_PAGES) + 1;
     const startHizbResume = useHizbAlignment ? getHizbNumFromPage(effectiveStartPage) : 0;
     const remainingHizbs = useHizbAlignment ? Math.max(1, 60 - startHizbResume + 1) : 0;
-    const hizbsPerDayResume = useHizbAlignment ? getHizbsPerDayForRemaining(remainingHizbs, normalDaysCount) : [];
+    const targetPagesPerDay = normalDaysCount > 0 ? Math.round(pagesForNormalDays / normalDaysCount) : 0;
+    const hizbsPerDayResume = useHizbAlignment && targetPagesPerDay > 0
+        ? getHizbsPerDayByTargetPages(startHizbResume, 60, normalDaysCount, targetPagesPerDay)
+        : useHizbAlignment
+            ? getHizbsPerDayForRemaining(remainingHizbs, normalDaysCount)
+            : [];
     const pagesPerNormalDay = !useHizbAlignment && normalDaysCount > 0 ? Math.floor(pagesForNormalDays / normalDaysCount) : 0;
     let extraPages = !useHizbAlignment && normalDaysCount > 0 ? pagesForNormalDays % normalDaysCount : 0;
     const plan: PlanDay[] = [];
     let currentPage = startPageResume;
     let normalDayIdx = 0;
     for (let day = 1; day <= daysRemaining; day++) {
+        if (!(kahfOption && new Date(startDate.getTime() + (day - 1) * 86400000).getDay() === 5) && currentPage > totalPagesToRead) break;
         const tempDate = new Date(startDate);
         tempDate.setDate(startDate.getDate() + day - 1);
         const isKahfDay = !!(kahfOption && tempDate.getDay() === 5);
@@ -183,28 +225,27 @@ export const generateReadingPlanResume = (
         let endPage: number;
         if (isKahfDay) {
             pagesToday = Math.min(kahfPages ?? 0, remainingPages);
-            startPage = currentPage > TOTAL_PAGES ? (((currentPage - 1) % TOTAL_PAGES) + 1) : Math.min(currentPage, TOTAL_PAGES);
+            startPage = Math.min(currentPage, totalPagesToRead);
             endPage = Math.min(currentPage + pagesToday - 1, totalPagesToRead);
-            if (endPage > TOTAL_PAGES) endPage = ((endPage - 1) % TOTAL_PAGES) + 1;
         } else if (useHizbAlignment && hizbsPerDayResume.length > 0) {
             const hizbsToAssign = hizbsPerDayResume[normalDayIdx] ?? 2;
             normalDayIdx++;
-            const effPage = ((currentPage - 1) % TOTAL_PAGES) + 1;
+            const effPage = currentPage <= TOTAL_PAGES ? currentPage : ((currentPage - 1) % TOTAL_PAGES) + 1;
             const startHizb = getHizbNumFromPage(effPage);
             const endHizb = Math.min(60, startHizb + hizbsToAssign - 1);
             const rangeStart = HIZB_PAGE_RANGES[startHizb - 1];
             const rangeEnd = HIZB_PAGE_RANGES[endHizb - 1];
             const isFirstNormalDay = normalDayIdx === 1;
             const atHizbBoundary = rangeStart && effPage === rangeStart.startPage;
-            startPage = (isFirstNormalDay && !atHizbBoundary) ? effPage : (rangeStart ? rangeStart.startPage : effPage);
+            startPage = (isFirstNormalDay && !atHizbBoundary) ? effectiveStartPage : (rangeStart ? rangeStart.startPage : effPage);
             endPage = rangeEnd ? rangeEnd.endPage : Math.min(effPage + 19, TOTAL_PAGES);
+            endPage = Math.min(endPage, totalPagesToRead);
             pagesToday = endPage - startPage + 1;
         } else {
             pagesToday = pagesPerNormalDay + (extraPages > 0 ? 1 : 0);
             if (extraPages > 0) extraPages--;
-            startPage = currentPage > totalPagesToRead ? (((currentPage - 1) % TOTAL_PAGES) + 1) : Math.min(currentPage, TOTAL_PAGES);
+            startPage = Math.min(currentPage, totalPagesToRead);
             endPage = Math.min(currentPage + pagesToday - 1, totalPagesToRead);
-            if (endPage > TOTAL_PAGES) endPage = ((endPage - 1) % TOTAL_PAGES) + 1;
         }
         plan.push({
             day,
@@ -267,9 +308,9 @@ export const recalculateFuturePlan = (
         const planDay = newPlan.find((d: PlanDay) => d.day === day);
         if (!planDay) continue;
         const pagesForThisDay = planDay.recalculatedPages;
-        planDay.startPage = currentPage > TOTAL_PAGES ? (currentPage % TOTAL_PAGES || TOTAL_PAGES) : currentPage;
+        planDay.startPage = Math.min(currentPage, TOTAL_PAGES);
         currentPage += pagesForThisDay;
-        planDay.endPage = (currentPage - 1) > TOTAL_PAGES ? ((currentPage - 1) % TOTAL_PAGES || TOTAL_PAGES) : (currentPage - 1);
+        planDay.endPage = Math.min(currentPage - 1, TOTAL_PAGES);
     }
     return newPlan;
 };
