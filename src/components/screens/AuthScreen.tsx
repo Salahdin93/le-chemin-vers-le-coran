@@ -97,7 +97,7 @@ const AuthScreen: React.FC = () => {
 
     return (
         <div
-            className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 flex items-center justify-center p-4 overflow-hidden min-w-0"
             style={{ background: 'linear-gradient(160deg, #052e16 0%, #064e3b 35%, #065f46 60%, #047857 100%)' }}
         >
             {/* Background pattern */}
@@ -115,7 +115,7 @@ const AuthScreen: React.FC = () => {
                 initial={{ opacity: 0, y: 30, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
-                className="max-w-md w-full"
+                className="max-w-md w-full min-w-0 overflow-hidden"
             >
                 <AnimatePresence mode="wait">
                     {view === 'landing' ? (
@@ -204,7 +204,7 @@ const AuthScreen: React.FC = () => {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            className="relative max-h-[90vh] overflow-y-auto my-4"
+                            className="relative max-h-[90vh] overflow-y-auto my-4 no-scrollbar min-w-0"
                             style={{
                                 background: 'rgba(255,255,255,0.07)',
                                 backdropFilter: 'blur(24px)',

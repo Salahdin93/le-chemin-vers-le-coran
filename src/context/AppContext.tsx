@@ -128,7 +128,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'REMOVE_PROFILE': {
       const newProfiles = state.profiles.filter(p => p.id !== action.payload);
       const newActiveProfileId = state.activeProfileId === action.payload ? (newProfiles[0]?.id || null) : state.activeProfileId;
-      return { ...state, profiles: newProfiles, activeProfileId: newActiveProfileId };
+      const appScreen = newProfiles.length === 0 ? 'profile-selection' : state.appScreen;
+      return { ...state, profiles: newProfiles, activeProfileId: newActiveProfileId, appScreen };
     }
     case 'UPDATE_PROFILE': {
       const updatePayload = action.payload;
