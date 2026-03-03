@@ -83,7 +83,7 @@ const SettingsView: React.FC = () => {
                         <div className="flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('gender')}</span>
                             <span className="text-sm font-bold">
-                                {activeProfile.gender === 'female' ? '🚺' : '🚹'} {t(activeProfile.gender)}
+                                {t(activeProfile.gender)}
                             </span>
                         </div>
                         <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">

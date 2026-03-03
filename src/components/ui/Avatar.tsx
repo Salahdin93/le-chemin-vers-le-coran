@@ -24,19 +24,19 @@ const Avatar: React.FC<AvatarProps> = ({ config, className = '' }) => {
             {gender === 'male_beard' ? (
                 <g filter="url(#shadow)">
                     {/* Shoulders / Body */}
-                    <path d="M 20 100 C 20 70, 80 70, 80 100 Z" fill="currentColor" opacity="0.8" />
+                    <path d="M 20 100 C 20 70, 80 70, 80 100 Z" fill="currentColor" opacity="0.85" />
 
                     {/* Head base (Skin tone) */}
-                    <circle cx="50" cy="45" r="22" fill={skinTone} />
+                    <circle cx="50" cy="42" r="20" fill={skinTone} />
 
-                    {/* Beard (Dark grey/black usually, we'll use a soft slightly transparent or complementary dark tone) */}
+                    {/* Full beard under the face (bien visible) */}
                     <path
-                        d="M 28 45 Q 50 85 72 45 Q 75 65 50 78 Q 25 65 28 45 Z"
-                        fill="#2d3748"
+                        d="M 32 46 Q 50 88 68 46 Q 66 70 50 82 Q 34 70 32 46 Z"
+                        fill="#111827"
                     />
 
-                    {/* Head covering like a Kufi (optional but classic) */}
-                    <path d="M 29 40 C 29 20, 71 20, 71 40 Z" fill="currentColor" opacity="0.9" />
+                    {/* Head covering (kufi) */}
+                    <path d="M 30 38 C 30 22, 70 22, 70 38 Z" fill="currentColor" opacity="0.95" />
                 </g>
             ) : (
                 <g filter="url(#shadow)">

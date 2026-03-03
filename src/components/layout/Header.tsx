@@ -78,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ onNotificationClick }) => {
                                     ٱلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّٰهِ وَبَرَكَاتُهُ
                                 </span>
                                 <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
-                                    {greeting}, {activeProfile.gender === 'female' ? '🚺' : '🚹'} {activeProfile.name}
+                                    {greeting}, {activeProfile.name}
                                 </span>
                             </motion.div>
                         )}

@@ -8,6 +8,8 @@ import Avatar from '@/components/ui/Avatar';
 import { getInitialBadges } from '@/services/achievementLogic';
 import { THEMES } from '@/constants/ui';
 import { generateUUID } from '@/utils/uuid';
+import { supabase } from '@/lib/supabase';
+import { dbService } from '@/lib/dbService';
 
 const SKIN_TONES = ['#FFE0BD', '#F1C27D', '#E0AC69', '#8D5524', '#3D2415'];
 
@@ -55,7 +57,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
     }
   }, [profileToEdit, isEditing, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
@@ -89,6 +91,14 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
         badges: getInitialBadges(),
       };
       dispatch({ type: 'ADD_PROFILE', payload: newProfile });
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await dbService.saveProfile(newProfile);
+        }
+      } catch (err) {
+        console.warn('Failed to persist new profile to Supabase', err);
+      }
     }
     onClose();
   };
