@@ -47,7 +47,7 @@ export type Language = 'fr' | 'en' | 'ar';
 export type Theme = 'light' | 'dark' | 'sepia' | 'chalkboard' | 'wood' | 'nightblue' | 'sand' | 'emerald' | 'sunrise' | 'leafy' | 'pearl' | 'midnight' | 'aube' | 'crepuscule' | 'oasis' | 'onboarding';
 export type AccentColor = string;
 export type Gender = 'male' | 'female';
-export type AvatarGender = 'male_beard' | 'female_hijab';
+export type AvatarGender = 'male_beard' | 'female_hijab' | 'boy' | 'girl';
 export interface AvatarConfig {
   gender: AvatarGender;
   skinTone: string;

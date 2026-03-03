@@ -20,15 +20,15 @@
     --danger: #ef4444;
 
     /* Light Theme (Porcelain & Silver) – contraste renforcé */
-    --bg-main: #e5edf5;
+    --bg-main: #dde4ee;
     --bg-secondary: #ffffff;
     --card-bg: #ffffff;
     --text-main: #020617;
-    --text-secondary: #1f2933;
+    --text-secondary: #1f2937;
     --border-main: #9ca3af;
 
-    --premium-gradient: linear-gradient(160deg, #f0f4f8 0%, #d1d5db 100%);
-    --geom-opacity: 0.65;
+    --premium-gradient: linear-gradient(160deg, #dde4ee 0%, #cbd5e1 100%);
+    --geom-opacity: 0.55;
 
     /* Refined Shadows */
     --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
@@ -68,14 +68,14 @@
   html.rose {
     --bg-main: #fff0f5;
     --bg-secondary: #ffe4e1;
-    --text-main: #8c1044;
-    --text-secondary: #c94c7a;
+    --text-main: #4d001d;
+    --text-secondary: #8c1044;
     --border-main: #ffb6c1;
     --accent-color: #d81b60;
     --warning: #fbc02d;
     --card-bg: #fff0f5;
     --premium-gradient: linear-gradient(160deg, #4d001d 0%, #8c1044 35%, #d81b60 100%);
-    --geom-opacity: 0.32;
+    --geom-opacity: 0.55;
   }
 
 
@@ -99,13 +99,13 @@
   html.sepia {
     --bg-main: #fdf6e3;
     --bg-secondary: #eee8d5;
-    --text-main: #4a5c64;
-    --text-secondary: #93a1a1;
+    --text-main: #374151;
+    --text-secondary: #6b7280;
     --border-main: #dcd7c0;
     --accent-color: #268bd2;
     --warning: #b58900;
-    --premium-gradient: linear-gradient(160deg, #fdf6e3 0%, #eee8d5 100%);
-    --geom-opacity: 0.25;
+    --premium-gradient: linear-gradient(160deg, #f3e8c8 0%, #eee8d5 100%);
+    --geom-opacity: 0.5;
   }
 
 
@@ -141,13 +141,13 @@
   html.sand {
     --bg-main: #f5f5dc;
     --bg-secondary: #ece4cd;
-    --text-main: #5c4033;
+    --text-main: #3f2a20;
     --text-secondary: #8b5a2b;
     --border-main: #e8dcc4;
     --accent-color: #cd853f;
     --warning: #d2691e;
-    --premium-gradient: linear-gradient(160deg, #f5f5dc 0%, #ece4cd 100%);
-    --geom-opacity: 0.25;
+    --premium-gradient: linear-gradient(160deg, #e5dec5 0%, #f5f5dc 100%);
+    --geom-opacity: 0.55;
   }
 
 
@@ -169,13 +169,13 @@
   html.sunrise {
     --bg-main: #fff3e0;
     --bg-secondary: #ffe0b2;
-    --text-main: #e65100;
-    --text-secondary: #ef6c00;
+    --text-main: #7c2d12;
+    --text-secondary: #c05621;
     --border-main: #ffcc80;
     --accent-color: #ff9800;
     --warning: #fbc02d;
-    --premium-gradient: linear-gradient(160deg, #e65100 0%, #ff9800 50%, #fff3e0 100%);
-    --geom-opacity: 0.25;
+    --premium-gradient: linear-gradient(160deg, #c05621 0%, #ff9800 50%, #fff3e0 100%);
+    --geom-opacity: 0.55;
   }
 
 
@@ -197,13 +197,13 @@
   html.oasis {
     --bg-main: #e0f7fa;
     --bg-secondary: #b2ebf2;
-    --text-main: #006064;
-    --text-secondary: #00838f;
+    --text-main: #00454a;
+    --text-secondary: #006064;
     --border-main: #80deea;
     --accent-color: #00acc1;
     --warning: #ffea00;
-    --premium-gradient: linear-gradient(160deg, #b2ebf2 0%, #e0f7fa 100%);
-    --geom-opacity: 0.25;
+    --premium-gradient: linear-gradient(160deg, #80deea 0%, #e0f7fa 100%);
+    --geom-opacity: 0.55;
   }
 
 
@@ -211,13 +211,13 @@
   html.leafy {
     --bg-main: #f1f8e9;
     --bg-secondary: #dcedc8;
-    --text-main: #33691e;
-    --text-secondary: #558b2f;
+    --text-main: #1b4332;
+    --text-secondary: #33691e;
     --border-main: #c5e1a5;
     --accent-color: #7cb342;
     --warning: #ffa000;
-    --premium-gradient: linear-gradient(160deg, #dcedc8 0%, #f1f8e9 100%);
-    --geom-opacity: 0.25;
+    --premium-gradient: linear-gradient(160deg, #c5e1a5 0%, #f1f8e9 100%);
+    --geom-opacity: 0.5;
   }
 
 
@@ -225,13 +225,13 @@
   html.pearl {
     --bg-main: #f8fcfd;
     --bg-secondary: #eef7f9;
-    --text-main: #4f6a75;
-    --text-secondary: #7f9ca8;
+    --text-main: #334155;
+    --text-secondary: #64748b;
     --border-main: #d3e4eb;
     --accent-color: #38aacc;
     --warning: #fbbf24;
-    --premium-gradient: linear-gradient(160deg, #eef7f9 0%, #f8fcfd 100%);
-    --geom-opacity: 0.2;
+    --premium-gradient: linear-gradient(160deg, #e2edf2 0%, #f8fcfd 100%);
+    --geom-opacity: 0.5;
   }
 
 
@@ -442,6 +442,14 @@
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
+  }
+
+  /* Text gradient used for grands titres (doit rester très lisible sur thèmes clairs & sombres) */
+  .text-gradient {
+    background-image: linear-gradient(135deg, #ffffff 0%, #e5e7eb 40%, #cbd5f5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
 

@@ -302,8 +302,14 @@ const DashboardView: React.FC = () => {
                         <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gradient mb-4">
                             {t('dashboard')}
                         </h1>
-                        <p className="text-text-secondary font-medium text-lg md:text-xl max-w-2xl leading-relaxed">
-                            <>{t('welcome')}, <span className="text-text-main font-black underline decoration-accent-color/30 underline-offset-4">{activeProfile.name}</span>. {t('supportMsg2')}</>
+                        <p className="text-white/80 font-medium text-lg md:text-xl max-w-2xl leading-relaxed">
+                            <>
+                                {t('welcome')},{" "}
+                                <span className="text-white font-black underline decoration-accent-color/40 underline-offset-4">
+                                    {activeProfile.name}
+                                </span>
+                                . {t('supportMsg2')}
+                            </>
                         </p>
                     </div>
                 </motion.div>

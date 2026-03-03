@@ -453,7 +453,7 @@ export const en = {
     "protected": "Protected",
     "shareOnWhatsApp": "Share progress on WhatsApp",
     "errorProfileNotFound": "Error: Profile not found.",
-    "reloadPrompt": "Please reload the application or select a profile.",
+    "reloadPrompt": "Please select a profile to continue.",
     "endOfGoalTitle": "End of goal period",
     "endOfGoalMessage": "Masha'Allah, you have reached the end date of your {duration}-day goal. However, you still have pages to read to complete it. What would you like to do?",
     "extendGoal": "Continue until the end",

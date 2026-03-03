@@ -21,35 +21,52 @@ const Avatar: React.FC<AvatarProps> = ({ config, className = '' }) => {
             {/* Circular background */}
             <circle cx="50" cy="50" r="50" fill="currentColor" opacity="0.1" />
 
-            {gender === 'male_beard' ? (
+            {gender === 'male_beard' && (
                 <g filter="url(#shadow)">
-                    {/* Shoulders / Body */}
-                    <path d="M 20 100 C 20 70, 80 70, 80 100 Z" fill="currentColor" opacity="0.85" />
-
-                    {/* Head base (Skin tone) */}
-                    <circle cx="50" cy="42" r="20" fill={skinTone} />
-
-                    {/* Full beard under the face (bien visible) */}
+                    {/* Corps adulte */}
+                    <path d="M 20 100 C 20 70, 80 70, 80 100 Z" fill="currentColor" opacity="0.9" />
+                    {/* Tête */}
+                    <circle cx="50" cy="40" r="19" fill={skinTone} />
+                    {/* Barbe pleine, bien marquée */}
                     <path
-                        d="M 32 46 Q 50 88 68 46 Q 66 70 50 82 Q 34 70 32 46 Z"
+                        d="M 33 43 Q 50 86 67 43 Q 65 68 50 80 Q 35 68 33 43 Z"
                         fill="#111827"
                     />
-
-                    {/* Head covering (kufi) */}
-                    <path d="M 30 38 C 30 22, 70 22, 70 38 Z" fill="currentColor" opacity="0.95" />
+                    {/* Kufi */}
+                    <path d="M 31 36 C 31 22, 69 22, 69 36 Z" fill="currentColor" opacity="0.95" />
                 </g>
-            ) : (
+            )}
+
+            {gender === 'female_hijab' && (
                 <g filter="url(#shadow)">
-                    {/* Hijab Covering / Body */}
-                    {/* Body shape sweeping down */}
-                    <path d="M 15 100 C 15 65, 30 20, 50 20 C 70 20, 85 65, 85 100 Z" fill="currentColor" opacity="0.9" />
+                    {/* Hijab adulte */}
+                    <path d="M 15 100 C 15 60, 30 20, 50 20 C 70 20, 85 60, 85 100 Z" fill="currentColor" opacity="0.9" />
+                    {/* Visage */}
+                    <circle cx="50" cy="46" r="17" fill={skinTone} />
+                    {/* Liseré intérieur */}
+                    <path d="M 33 46 C 33 30, 67 30, 67 46 C 67 68, 50 74, 50 74 C 50 74, 33 68, 33 46 Z" fill="transparent" stroke="currentColor" strokeWidth="4" opacity="0.9" />
+                </g>
+            )}
 
-                    {/* Face cutout area showing skin tone */}
-                    {/* The face shape underneath the hijab */}
-                    <circle cx="50" cy="48" r="18" fill={skinTone} />
+            {gender === 'boy' && (
+                <g filter="url(#shadow)">
+                    {/* Corps enfant garçon */}
+                    <path d="M 25 100 C 25 75, 75 75, 75 100 Z" fill="currentColor" opacity="0.9" />
+                    {/* Tête légèrement plus petite */}
+                    <circle cx="50" cy="42" r="17" fill={skinTone} />
+                    {/* Cheveux / calotte simple */}
+                    <path d="M 34 38 C 34 26, 66 26, 66 38 Z" fill="#111827" opacity="0.9" />
+                </g>
+            )}
 
-                    {/* Inner hijab wrap to frame the face */}
-                    <path d="M 32 48 C 32 30, 68 30, 68 48 C 68 70, 50 75, 50 75 C 50 75, 32 70, 32 48 Z" fill="transparent" stroke="currentColor" strokeWidth="4" opacity="0.9" />
+            {gender === 'girl' && (
+                <g filter="url(#shadow)">
+                    {/* Hijab enfant fille */}
+                    <path d="M 18 100 C 18 62, 32 26, 50 26 C 68 26, 82 62, 82 100 Z" fill="currentColor" opacity="0.9" />
+                    {/* Visage */}
+                    <circle cx="50" cy="48" r="15" fill={skinTone} />
+                    {/* Liseré plus doux */}
+                    <path d="M 35 48 C 35 34, 65 34, 65 48 C 65 66, 50 72, 50 72 C 50 72, 35 66, 35 48 Z" fill="transparent" stroke="currentColor" strokeWidth="3" opacity="0.9" />
                 </g>
             )}
         </svg>

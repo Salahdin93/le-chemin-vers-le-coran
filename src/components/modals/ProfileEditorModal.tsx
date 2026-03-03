@@ -37,6 +37,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
   const [skinTone, setSkinTone] = useState<string>('#E0AC69');
   const [theme, setTheme] = useState<Theme>('light');
   const [accentColor, setAccentColor] = useState<AccentColor>('#2E7D32');
+  const [avatarVariant, setAvatarVariant] = useState<'male_beard' | 'female_hijab' | 'boy' | 'girl'>('male_beard');
 
   const isEditing = !!profileToEdit;
 
@@ -47,6 +48,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
       setSkinTone(profileToEdit.avatar?.skinTone || '#E0AC69');
       setTheme(profileToEdit.theme);
       setAccentColor(profileToEdit.accentColor);
+      setAvatarVariant(profileToEdit.avatar?.gender || (profileToEdit.gender === 'female' ? 'female_hijab' : 'male_beard'));
     } else {
       // Réinitialiser pour la création
       setName('');
@@ -54,6 +56,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
       setSkinTone('#E0AC69');
       setTheme('light');
       setAccentColor('#2E7D32');
+      setAvatarVariant('male_beard');
     }
   }, [profileToEdit, isEditing, isOpen]);
 
@@ -68,7 +71,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
           ...profileToEdit,
           name,
           gender,
-          avatar: { gender: gender === 'female' ? 'female_hijab' : 'male_beard', skinTone },
+          avatar: { gender: avatarVariant, skinTone },
           theme,
           accentColor
         },
@@ -78,7 +81,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
         id: generateUUID(),
         name: name.trim(),
         gender,
-        avatar: { gender: gender === 'female' ? 'female_hijab' : 'male_beard', skinTone },
+        avatar: { gender: avatarVariant, skinTone },
         theme,
         accentColor,
         goals: {},
@@ -118,14 +121,42 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
 
         <div>
           <label className="block mb-2 font-semibold text-text-main text-left">{t('gender')} & Avatar</label>
-          <div className="flex gap-4 mb-4">
-            <Button type="button" variant={gender === 'male' ? 'primary' : 'ghost'} onClick={() => setGender('male')} className="flex-1 min-h-[100px] flex-col gap-2">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Button
+              type="button"
+              variant={avatarVariant === 'male_beard' ? 'primary' : 'ghost'}
+              onClick={() => { setGender('male'); setAvatarVariant('male_beard'); }}
+              className="flex-1 min-h-[100px] flex-col gap-2"
+            >
               <div className="w-12 h-12"><Avatar config={{ gender: 'male_beard', skinTone }} /></div>
               <span>Homme</span>
             </Button>
-            <Button type="button" variant={gender === 'female' ? 'primary' : 'ghost'} onClick={() => setGender('female')} className="flex-1 min-h-[100px] flex-col gap-2">
+            <Button
+              type="button"
+              variant={avatarVariant === 'female_hijab' ? 'primary' : 'ghost'}
+              onClick={() => { setGender('female'); setAvatarVariant('female_hijab'); }}
+              className="flex-1 min-h-[100px] flex-col gap-2"
+            >
               <div className="w-12 h-12"><Avatar config={{ gender: 'female_hijab', skinTone }} /></div>
               <span>Femme</span>
+            </Button>
+            <Button
+              type="button"
+              variant={avatarVariant === 'boy' ? 'primary' : 'ghost'}
+              onClick={() => { setGender('male'); setAvatarVariant('boy'); }}
+              className="flex-1 min-h-[100px] flex-col gap-2"
+            >
+              <div className="w-12 h-12"><Avatar config={{ gender: 'boy', skinTone }} /></div>
+              <span>Garçon</span>
+            </Button>
+            <Button
+              type="button"
+              variant={avatarVariant === 'girl' ? 'primary' : 'ghost'}
+              onClick={() => { setGender('female'); setAvatarVariant('girl'); }}
+              className="flex-1 min-h-[100px] flex-col gap-2"
+            >
+              <div className="w-12 h-12"><Avatar config={{ gender: 'girl', skinTone }} /></div>
+              <span>Fille</span>
             </Button>
           </div>
 
