@@ -176,7 +176,7 @@ const MemorizationView: React.FC = () => {
     };
 
     const memorizedHadiths = Object.entries(activeProfile.hadithProgress || {})
-        .filter(([, status]) => status !== 'non_lu')
+        .filter(([, status]) => status === 'acquis' || status === 'en_memorisation' || status === 'a_reprendre')
         .map(([id]) => HADITH_COLLECTION.find(h => h.id === parseInt(id)))
         .filter(Boolean) as Hadith[];
 

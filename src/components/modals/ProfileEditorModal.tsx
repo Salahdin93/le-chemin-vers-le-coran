@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Avatar from '@/components/ui/Avatar';
 import { getInitialBadges } from '@/services/achievementLogic';
 import { THEMES } from '@/constants/ui';
+import { generateUUID } from '@/utils/uuid';
 
 const SKIN_TONES = ['#FFE0BD', '#F1C27D', '#E0AC69', '#8D5524', '#3D2415'];
 
@@ -72,7 +73,7 @@ const ProfileEditorModal: React.FC<ProfileEditorModalProps> = ({ isOpen, onClose
       });
     } else {
       const newProfile: Profile = {
-        id: `profile_${Date.now()}`,
+        id: generateUUID(),
         name: name.trim(),
         gender,
         avatar: { gender: gender === 'female' ? 'female_hijab' : 'male_beard', skinTone },

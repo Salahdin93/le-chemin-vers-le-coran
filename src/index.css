@@ -19,13 +19,13 @@
     --warning: #f59e0b;
     --danger: #ef4444;
 
-    /* Light Theme (Porcelain & Silver) */
-    --bg-main: #f0f4f8;
+    /* Light Theme (Porcelain & Silver) – contraste renforcé */
+    --bg-main: #e5edf5;
     --bg-secondary: #ffffff;
     --card-bg: #ffffff;
-    --text-main: #111827;
-    --text-secondary: #4b5563;
-    --border-main: #d1d5db;
+    --text-main: #020617;
+    --text-secondary: #1f2933;
+    --border-main: #9ca3af;
 
     --premium-gradient: linear-gradient(160deg, #f0f4f8 0%, #d1d5db 100%);
     --geom-opacity: 0.65;

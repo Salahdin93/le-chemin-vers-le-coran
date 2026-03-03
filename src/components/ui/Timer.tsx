@@ -17,6 +17,29 @@ const Timer: React.FC<TimerProps> = ({ onStop }) => {
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<any>(null);
+  const wakeLockRef = useRef<any>(null);
+
+  const requestWakeLock = async () => {
+    try {
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLockRef.current) {
+        // @ts-ignore - experimental API
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      }
+    } catch (e) {
+      console.warn('Wake Lock request failed', e);
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    try {
+      if (wakeLockRef.current) {
+        await wakeLockRef.current.release?.();
+        wakeLockRef.current = null;
+      }
+    } catch (e) {
+      console.warn('Wake Lock release failed', e);
+    }
+  };
 
   useEffect(() => {
     if (isActive && !isPaused) {
@@ -31,16 +54,24 @@ const Timer: React.FC<TimerProps> = ({ onStop }) => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      releaseWakeLock();
     };
   }, [isActive, isPaused]);
 
   const handleStart = () => {
     setIsActive(true);
     setIsPaused(false);
+    requestWakeLock();
   };
 
   const handlePauseResume = () => {
-    setIsPaused(!isPaused);
+    const next = !isPaused;
+    setIsPaused(next);
+    if (next) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
   };
 
   const handleStop = () => {
@@ -50,6 +81,7 @@ const Timer: React.FC<TimerProps> = ({ onStop }) => {
     onStop(time);
     setIsActive(false);
     setTime(0);
+    releaseWakeLock();
   };
 
   return (

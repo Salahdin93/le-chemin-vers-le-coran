@@ -82,7 +82,9 @@ const SettingsView: React.FC = () => {
                     <div className="flex items-center justify-between p-4 bg-bg-main/50 rounded-2xl border border-border-main/50">
                         <div className="flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('gender')}</span>
-                            <span className="text-sm font-bold">{t(activeProfile.gender)}</span>
+                            <span className="text-sm font-bold">
+                                {activeProfile.gender === 'female' ? '🚺' : '🚹'} {t(activeProfile.gender)}
+                            </span>
                         </div>
                         <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">
                             <User size={14} />
@@ -255,8 +257,7 @@ const SettingsView: React.FC = () => {
                                 onChange={(e) => importUserData(
                                     e,
                                     () => {
-                                        dispatch({ type: 'SET_TOAST', payload: "✅ Sauvegarde restaurée avec succès ! Redémarrage..." });
-                                        setTimeout(() => window.location.reload(), 1500);
+                                        dispatch({ type: 'SET_TOAST', payload: "✅ Sauvegarde restaurée avec succès. Vous pouvez continuer votre utilisation." });
                                     },
                                     (msg) => dispatch({ type: 'SET_TOAST', payload: `❌ ${msg}` })
                                 )}

@@ -22,7 +22,9 @@ const ProfileCard = React.memo<{ profile: Profile; onSelect: () => void; onEdit:
                             config={profile.avatar || { gender: profile.gender === 'female' ? 'female_hijab' : 'male_beard', skinTone: '#E0AC69' }}
                         />
                     </div>
-                    <h3 className="text-xl font-black text-white truncate mb-1">{profile.name}</h3>
+                    <h3 className="text-xl font-black text-white truncate mb-1">
+                        {profile.gender === 'female' ? '🚺' : '🚹'} {profile.name}
+                    </h3>
                     {profile.password && (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/20 text-[10px] text-amber-400 font-bold uppercase tracking-widest border border-amber-400/20">
                             🔒 {t('protected')}
