@@ -493,8 +493,19 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, badges: updatedBadges } : p) };
     }
     case 'SYNC_WITH_TODAY': {
-      const { revisionIndex, hadithIndex, hadithNonLuIds } = action.payload as { revisionIndex?: number; hadithIndex?: number; hadithNonLuIds?: number[] };
+      const { readingDay, revisionIndex, hadithIndex, hadithNonLuIds } = action.payload as { readingDay?: number; revisionIndex?: number; hadithIndex?: number; hadithNonLuIds?: number[] };
       let newState: AppState = state;
+
+      if (typeof readingDay === 'number' && state.plans.reading && state.plans.reading.length > 0) {
+        const clampedDay = Math.max(1, Math.min(readingDay, state.plans.reading.length));
+        newState = {
+          ...newState,
+          progress: {
+            ...newState.progress,
+            currentReadingDay: clampedDay,
+          },
+        };
+      }
 
       if (typeof revisionIndex === 'number' && state.plans.revision && state.plans.revision.length > 0) {
         const clampedIndex = Math.max(0, Math.min(revisionIndex, state.plans.revision.length - 1));
@@ -948,11 +959,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Synchroniser automatiquement les index de plans (Coran & hadiths) avec la date du jour
   useEffect(() => {
     if (state.appScreen !== 'main' || !activeProfile) return;
-    if (!state.plans.revision && !state.plans.hadithRevision) return;
+    if (!state.plans.reading && !state.plans.revision && !state.plans.hadithRevision) return;
     if (hasSyncedWithTodayRef.current) return;
 
     const today = new Date();
     const todayStr = today.toISOString().slice(0, 10);
+
+    let readingDay: number | undefined;
+    const readingPlan = state.plans.reading;
+    if (readingPlan && readingPlan.length > 0) {
+      const idx = readingPlan.findIndex((day) => {
+        const d = new Date(day.date as any);
+        const dStr = d.toISOString().slice(0, 10);
+        return dStr === todayStr;
+      });
+      if (idx >= 0) {
+        readingDay = idx + 1; // currentReadingDay est 1-based
+      }
+    }
 
     let revisionIndex: number | undefined;
     const revisionPlan = state.plans.revision;
@@ -1003,12 +1027,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    if (revisionIndex !== undefined || hadithIndex !== undefined || (hadithNonLuIds && hadithNonLuIds.length > 0)) {
-      dispatch({ type: 'SYNC_WITH_TODAY', payload: { revisionIndex, hadithIndex, hadithNonLuIds } });
+    if (readingDay !== undefined || revisionIndex !== undefined || hadithIndex !== undefined || (hadithNonLuIds && hadithNonLuIds.length > 0)) {
+      dispatch({ type: 'SYNC_WITH_TODAY', payload: { readingDay, revisionIndex, hadithIndex, hadithNonLuIds } });
     }
 
     hasSyncedWithTodayRef.current = true;
-  }, [state.appScreen, state.plans.revision, state.plans.hadithRevision, activeProfile]);
+  }, [state.appScreen, state.plans.reading, state.plans.revision, state.plans.hadithRevision, activeProfile]);
 
   // Sauvegarde : Supabase si connecté, avec fallback localStorage en cas d'échec (hors ligne).
   useEffect(() => {
