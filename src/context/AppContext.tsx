@@ -521,7 +521,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       if (activeProfile && hadithNonLuIds && hadithNonLuIds.length > 0) {
         const currentProgress = activeProfile.hadithProgress || {};
         const updatedProgress = { ...currentProgress };
-        hadithNonLuIds.forEach((id) => {
+        hadithNonLuIds.forEach((id: number) => {
           const current = currentProgress[id];
           if (!current) {
             updatedProgress[id] = 'non_lu';
@@ -989,7 +989,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const d = new Date(day.date as any);
           const dStr = d.toISOString().slice(0, 10);
           if (dStr < todayStr) {
-            day.hadithIds.forEach((id) => {
+            day.hadithIds.forEach((id: number) => {
               const currentStatus = activeProfile.hadithProgress?.[id];
               if (!currentStatus) {
                 pendingIds.push(id);
