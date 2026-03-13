@@ -318,6 +318,7 @@ export interface Progress {
 
 export interface PlanDay {
   day: number;
+  date?: Date;
   startPage: number;
   endPage: number;
   pages: number;
