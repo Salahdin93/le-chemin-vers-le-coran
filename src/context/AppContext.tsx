@@ -558,6 +558,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const cumulatedTime = action.payload.timeSpent !== undefined
         ? (existing.timeSpent || 0) + action.payload.timeSpent
         : existing.timeSpent;
+      // Met à jour le jour ciblé
       newRevisionPlan[action.payload.revisionIndex] = {
         ...existing,
         status: action.payload.status,
@@ -589,6 +590,28 @@ function appReducer(state: AppState, action: AppAction): AppState {
         toReviewHistory = [historyItem, ...toReviewHistory];
       }
 
+      // Décalage / replanification pour les jours "non révisés"
+      let currentRevisionIndex = state.progress.currentRevisionIndex;
+      if (action.payload.status === 'not_revised') {
+        const [moved] = newRevisionPlan.splice(action.payload.revisionIndex, 1);
+        if (moved) {
+          newRevisionPlan.push({
+            ...moved,
+            status: 'pending',
+            quality: moved.quality,
+          });
+          // Si on retire un jour situé avant l'index courant, l'index doit reculer d'une position
+          if (action.payload.revisionIndex < currentRevisionIndex) {
+            currentRevisionIndex = Math.max(0, currentRevisionIndex - 1);
+          }
+        }
+      }
+
+      // Avancement automatique quand une journée est complétée
+      if (action.payload.status === 'revised') {
+        currentRevisionIndex = state.progress.currentRevisionIndex + 1;
+      }
+
       const updatedProfile = activeProfile ? { ...activeProfile, difficulties: newDifficulties } : null;
       const newState = {
         ...state,
@@ -596,7 +619,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         profiles: updatedProfile ? state.profiles.map(p => p.id === activeProfile?.id ? updatedProfile : p) : state.profiles,
         progress: {
           ...state.progress,
-          currentRevisionIndex: action.payload.status === 'revised' ? state.progress.currentRevisionIndex + 1 : state.progress.currentRevisionIndex,
+          currentRevisionIndex,
           history: { ...state.progress.history, toReview: toReviewHistory }
         }
       };

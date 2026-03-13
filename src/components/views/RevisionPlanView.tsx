@@ -47,6 +47,8 @@ const RevisionPlanView: React.FC = () => {
     const [extraRevisionItemId, setExtraRevisionItemId] = useState('1');
 
     const revisionPlan = state.plans.revision;
+    const extraRevisionsMap = (state.progress as any).extraRevisions || {};
+    const extraRevisionDates = Object.keys(extraRevisionsMap).sort().reverse();
 
     const currentSurahNames = useMemo(() => {
         if (!activeProfile || !revisionPlan) return [];
@@ -505,6 +507,12 @@ const RevisionPlanView: React.FC = () => {
                                                     </span>
                                                 )}
                                             </h4>
+                                            {day.timeSpent && day.timeSpent > 0 && (
+                                                <div className="mt-1 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-blue-400">
+                                                    <Clock size={14} />
+                                                    {Math.floor(day.timeSpent / 60)} min
+                                                </div>
+                                            )}
                                         </div>
                                         <div
                                             className={clsx(
@@ -622,6 +630,70 @@ const RevisionPlanView: React.FC = () => {
                     })}
                 </AnimatePresence>
             </div>
+
+            {/* Extra Revisions History */}
+            {extraRevisionDates.length > 0 && (
+                <section className="mt-16 space-y-6">
+                    <h2 className="text-2xl font-black tracking-tight text-gradient">
+                        {t('extraRevisionTitle')}
+                    </h2>
+                    <p className="text-text-secondary text-sm md:text-base">
+                        {t('extraRevisionHistory') || 'Révisions additionnelles réalisées en dehors du plan principal.'}
+                    </p>
+                    <div className="space-y-4">
+                        {extraRevisionDates.map(dateKey => {
+                            const entries = extraRevisionsMap[dateKey] as ExtraRevisionEntry[];
+                            if (!entries || entries.length === 0) return null;
+                            const dateLabel = new Date(dateKey).toLocaleDateString('fr-FR', {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                            });
+                            return (
+                                <div key={dateKey} className="premium-card p-6 border-none bg-bg-secondary/40">
+                                    <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-4 text-text-secondary">
+                                        {dateLabel}
+                                    </h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {entries.map((entry, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="px-4 py-3 rounded-2xl bg-bg-main/60 border border-border-main/40 text-xs font-bold flex items-center gap-3"
+                                            >
+                                                <span className="text-[10px] uppercase tracking-widest opacity-50">
+                                                    {entry.type === 'juzz'
+                                                        ? t('juzz')
+                                                        : entry.type === 'hizb'
+                                                            ? t('hizb')
+                                                            : t('sourate')}
+                                                </span>
+                                                <span className="text-text-main">{entry.text}</span>
+                                                {entry.quality && (
+                                                    <span
+                                                        className={clsx(
+                                                            "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest",
+                                                            entry.quality === 'tres_bien'
+                                                                ? 'bg-success/20 text-success border border-success/30'
+                                                                : entry.quality === 'bien'
+                                                                    ? 'bg-accent-color/20 text-accent-color border border-accent-color/30'
+                                                                    : entry.quality === 'moyen'
+                                                                        ? 'bg-warning/20 text-warning border border-warning/30'
+                                                                        : 'bg-danger/20 text-danger border border-danger/30'
+                                                        )}
+                                                    >
+                                                        {entry.quality.replace('_', ' ')}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
 
             {/* ReadjustmentModal */}
             {reviewModalDay && (
