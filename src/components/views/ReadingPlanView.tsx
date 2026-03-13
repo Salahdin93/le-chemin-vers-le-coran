@@ -365,6 +365,7 @@ const ReadingPlanView: React.FC = () => {
                     const isCompleted = status === 'done' || status === 'partial' || status === 'catchup';
                     const isCurrent = day.day === state.progress.currentReadingDay;
                     const isEditing = editingDay === day.day;
+                    const isHighlighted = isCurrent || isEditing;
                     const displayDayNum = (state.progress.existingDaysRead ?? 0) + day.day;
                     const dayDate = getDateForDay(day.day, state.progress.startDate);
                     const isFriday = dayDate?.getDay() === 5;
@@ -382,8 +383,8 @@ const ReadingPlanView: React.FC = () => {
                             <div
                                 className={clsx(
                                     "premium-card h-full p-8 flex flex-col gap-6 border-2 transition-all relative overflow-hidden group",
-                                    isCurrent ? "border-accent-color ring-8 ring-accent-color/5 shadow-premium" : "border-border-main/50 bg-bg-secondary/40",
-                                    isCompleted && !isCurrent && "opacity-60 grayscale-[0.5] border-success/10"
+                                    isHighlighted ? "border-accent-color ring-8 ring-accent-color/5 shadow-premium" : "border-border-main/50 bg-bg-secondary/40",
+                                    isCompleted && !isHighlighted && "opacity-60 grayscale-[0.5] border-success/10"
                                 )}
                                 onClick={() => !isCurrent && setEditingDay(isEditing ? null : day.day)}
                             >
