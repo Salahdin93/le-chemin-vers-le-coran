@@ -492,6 +492,50 @@ function appReducer(state: AppState, action: AppAction): AppState {
       );
       return { ...state, profiles: state.profiles.map(p => p.id === activeProfile.id ? { ...p, badges: updatedBadges } : p) };
     }
+    case 'SYNC_WITH_TODAY': {
+      const { revisionIndex, hadithIndex, hadithNonLuIds } = action.payload as { revisionIndex?: number; hadithIndex?: number; hadithNonLuIds?: number[] };
+      let newState: AppState = state;
+
+      if (typeof revisionIndex === 'number' && state.plans.revision && state.plans.revision.length > 0) {
+        const clampedIndex = Math.max(0, Math.min(revisionIndex, state.plans.revision.length - 1));
+        newState = {
+          ...newState,
+          progress: {
+            ...newState.progress,
+            currentRevisionIndex: clampedIndex,
+          },
+        };
+      }
+
+      if (typeof hadithIndex === 'number' && state.plans.hadithRevision && state.plans.hadithRevision.length > 0) {
+        const clampedIndex = Math.max(0, Math.min(hadithIndex, state.plans.hadithRevision.length - 1));
+        newState = {
+          ...newState,
+          progress: {
+            ...newState.progress,
+            currentHadithRevisionIndex: clampedIndex,
+          },
+        };
+      }
+
+      if (activeProfile && hadithNonLuIds && hadithNonLuIds.length > 0) {
+        const currentProgress = activeProfile.hadithProgress || {};
+        const updatedProgress = { ...currentProgress };
+        hadithNonLuIds.forEach((id) => {
+          const current = currentProgress[id];
+          if (!current) {
+            updatedProgress[id] = 'non_lu';
+          }
+        });
+        const updatedProfile = { ...activeProfile, hadithProgress: updatedProgress };
+        newState = {
+          ...newState,
+          profiles: newState.profiles.map(p => p.id === activeProfile.id ? updatedProfile : p),
+        };
+      }
+
+      return newState;
+    }
     case 'UPDATE_HADITH_PROGRESS': {
       if (!activeProfile) return state;
       const { hadithId, status, date } = action.payload as { hadithId: number; status: HadithMemorizationStatus; date: string };
@@ -803,6 +847,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return translation;
   }, [state.settings.lang]);
 
+  const hasSyncedWithTodayRef = useRef(false);
+
   // Charger l'état depuis Supabase (utilisé au mount et après connexion). Fallback localStorage si hors ligne.
   const loadFromSupabase = useCallback(async () => {
     try {
@@ -898,6 +944,71 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, [loadFromSupabase, dispatch]);
+
+  // Synchroniser automatiquement les index de plans (Coran & hadiths) avec la date du jour
+  useEffect(() => {
+    if (state.appScreen !== 'main' || !activeProfile) return;
+    if (!state.plans.revision && !state.plans.hadithRevision) return;
+    if (hasSyncedWithTodayRef.current) return;
+
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    let revisionIndex: number | undefined;
+    const revisionPlan = state.plans.revision;
+    if (revisionPlan && revisionPlan.length > 0) {
+      const idx = revisionPlan.findIndex((day) => {
+        const d = new Date(day.date as any);
+        const dStr = d.toISOString().slice(0, 10);
+        return dStr === todayStr;
+      });
+      if (idx >= 0) {
+        revisionIndex = idx;
+      }
+    }
+
+    let hadithIndex: number | undefined;
+    let hadithNonLuIds: number[] | undefined;
+    const hadithPlan = state.plans.hadithRevision;
+    const hasHadithRevisionGoal = !!activeProfile.goals.hadithRevision;
+
+    if (hadithPlan && hadithPlan.length > 0) {
+      const idx = hadithPlan.findIndex((day) => {
+        const d = new Date(day.date as any);
+        const dStr = d.toISOString().slice(0, 10);
+        return dStr === todayStr;
+      });
+      if (idx >= 0) {
+        hadithIndex = idx;
+      }
+
+      // Pour la lecture de hadiths (pas de plan de révision), marquer automatiquement "non_lu"
+      if (!hasHadithRevisionGoal) {
+        const pendingIds: number[] = [];
+        hadithPlan.forEach((day) => {
+          const d = new Date(day.date as any);
+          const dStr = d.toISOString().slice(0, 10);
+          if (dStr < todayStr) {
+            day.hadithIds.forEach((id) => {
+              const currentStatus = activeProfile.hadithProgress?.[id];
+              if (!currentStatus) {
+                pendingIds.push(id);
+              }
+            });
+          }
+        });
+        if (pendingIds.length > 0) {
+          hadithNonLuIds = Array.from(new Set(pendingIds));
+        }
+      }
+    }
+
+    if (revisionIndex !== undefined || hadithIndex !== undefined || (hadithNonLuIds && hadithNonLuIds.length > 0)) {
+      dispatch({ type: 'SYNC_WITH_TODAY', payload: { revisionIndex, hadithIndex, hadithNonLuIds } });
+    }
+
+    hasSyncedWithTodayRef.current = true;
+  }, [state.appScreen, state.plans.revision, state.plans.hadithRevision, activeProfile]);
 
   // Sauvegarde : Supabase si connecté, avec fallback localStorage en cas d'échec (hors ligne).
   useEffect(() => {

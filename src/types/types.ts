@@ -475,6 +475,7 @@ export type AppAction =
   | { type: 'REMOVE_PROFILE'; payload: string }
   | { type: 'SET_ACTIVE_PROFILE'; payload: string | null }
   | { type: 'UNLOCK_BADGE'; payload: BadgeId }
+  | { type: 'SYNC_WITH_TODAY'; payload: { revisionIndex?: number; hadithIndex?: number; hadithNonLuIds?: number[] } }
   | { type: 'UPDATE_HADITH_STATUS'; payload: { hadithId: number; status: HadithMemorizationStatus } }
   | { type: 'SET_HADITH_REVISION_PLAN'; payload: { goal: HadithRevisionGoal; } }
   | { type: 'ADD_TO_REVISION_PLAN'; payload: { addedIds: string[] } }

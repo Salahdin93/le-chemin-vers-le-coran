@@ -375,9 +375,28 @@ const RevisionPlanView: React.FC = () => {
                             onChange={(e) => {
                                 const t = e.target.value as 'juzz' | 'hizb' | 'sourate';
                                 setExtraRevisionType(t);
-                                if (t === 'juzz') setExtraRevisionItemId(String(JUZ_DATA[0]?.id || 1));
-                                else if (t === 'hizb') setExtraRevisionItemId('1');
-                                else setExtraRevisionItemId(String(FULL_SURAH_LIST[0]?.id || 1));
+                                const mem = activeProfile?.memorizations;
+                                if (t === 'juzz') {
+                                    const memorizedJuzzNumbers = new Set<number>(
+                                        (mem?.juzz || []).map((j: any) =>
+                                            typeof j.number === 'number' ? j.number : Number(j.number)
+                                        )
+                                    );
+                                    const first = JUZ_DATA.find(j => memorizedJuzzNumbers.has(j.id));
+                                    setExtraRevisionItemId(first ? String(first.id) : '');
+                                } else if (t === 'hizb') {
+                                    const memorizedHizbNumbers = new Set<number>(
+                                        (mem?.hizbs || []).map((h: any) => Number(h.number))
+                                    );
+                                    const firstIndex = HIZB_DATA.findIndex((_, idx) => memorizedHizbNumbers.has(idx + 1));
+                                    setExtraRevisionItemId(firstIndex >= 0 ? String(firstIndex + 1) : '');
+                                } else {
+                                    const memorizedSurahIds = new Set<number>(
+                                        (mem?.surahParts || []).map((s: any) => s.originalSurahId)
+                                    );
+                                    const first = FULL_SURAH_LIST.find(s => memorizedSurahIds.has(s.id));
+                                    setExtraRevisionItemId(first ? String(first.id) : '');
+                                }
                             }}
                             className="w-full px-4 py-3 rounded-xl border border-border-main bg-bg-main"
                         >
@@ -393,15 +412,37 @@ const RevisionPlanView: React.FC = () => {
                             onChange={(e) => setExtraRevisionItemId(e.target.value)}
                             className="w-full px-4 py-3 rounded-xl border border-border-main bg-bg-main"
                         >
-                            {extraRevisionType === 'juzz' && JUZ_DATA.map(j => (
-                                <option key={j.id} value={String(j.id)}>Juzz {j.id} - {j.surah}</option>
-                            ))}
-                            {extraRevisionType === 'hizb' && HIZB_DATA.map((h, i) => (
-                                <option key={i} value={String(i + 1)}>Hizb {i + 1} : {h.details}</option>
-                            ))}
-                            {extraRevisionType === 'sourate' && FULL_SURAH_LIST.map(s => (
-                                <option key={s.id} value={String(s.id)}>{s.name}</option>
-                            ))}
+                            {(() => {
+                                const mem = activeProfile?.memorizations;
+                                if (extraRevisionType === 'juzz') {
+                                    const memorizedJuzzNumbers = new Set<number>(
+                                        (mem?.juzz || []).map((j: any) =>
+                                            typeof j.number === 'number' ? j.number : Number(j.number)
+                                        )
+                                    );
+                                    const options = JUZ_DATA.filter(j => memorizedJuzzNumbers.has(j.id));
+                                    return options.map(j => (
+                                        <option key={j.id} value={String(j.id)}>Juzz {j.id} - {j.surah}</option>
+                                    ));
+                                }
+                                if (extraRevisionType === 'hizb') {
+                                    const memorizedHizbNumbers = new Set<number>(
+                                        (mem?.hizbs || []).map((h: any) => Number(h.number))
+                                    );
+                                    return HIZB_DATA.map((h, i) => ({ h, i }))
+                                        .filter(({ i }) => memorizedHizbNumbers.has(i + 1))
+                                        .map(({ h, i }) => (
+                                            <option key={i} value={String(i + 1)}>Hizb {i + 1} : {h.details}</option>
+                                        ));
+                                }
+                                const memorizedSurahIds = new Set<number>(
+                                    (mem?.surahParts || []).map((s: any) => s.originalSurahId)
+                                );
+                                const options = FULL_SURAH_LIST.filter(s => memorizedSurahIds.has(s.id));
+                                return options.map(s => (
+                                    <option key={s.id} value={String(s.id)}>{s.name}</option>
+                                ));
+                            })()}
                         </select>
                     </div>
                     <div className="grid grid-cols-1 gap-2">
