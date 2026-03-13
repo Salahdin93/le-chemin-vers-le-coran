@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, ReactNode, Dispatch, useEffect, useMemo, useContext, useCallback, useRef, useSyncExternalStore } from 'react';
-import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan, ToReviewHistoryItem, ReadingHistory, ReadingStatus } from '../types/types';
+import { AppState, AppAction, Profile, WizardData, WizardMode, EvaluationRecord, BadgeId, Theme, AccentColor, HadithMemorizationStatus, HadithHistoryEntry, EvaluationPlan, ToReviewHistoryItem, ReadingHistory } from '../types/types';
 import { generateReadingPlan, generateReadingPlanResume, getTargetPagesPerDayResume, generateRevisionPlan, recalculateFuturePlan, generateHadithRevisionPlan, generateHadithReadingPlan } from '../services/planLogic';
 import { notificationService } from '../components/ui/NotificationContainer';
 import AlKahfReminder from '../components/reminders/AlKahfReminder';
@@ -967,13 +967,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     let readingDay: number | undefined;
     const readingPlan = state.plans.reading;
-    if (readingPlan && readingPlan.length > 0) {
-      const history = state.progress.readingHistory || {};
-      const firstIncomplete = readingPlan.find((d) => {
-        const st = history[`day_${d.day}`]?.status as ReadingStatus | undefined;
-        return st !== 'done' && st !== 'partial' && st !== 'catchup';
-      });
-      readingDay = firstIncomplete ? firstIncomplete.day : readingPlan[readingPlan.length - 1].day;
+    if (readingPlan && readingPlan.length > 0 && state.progress.startDate) {
+      const start = new Date(state.progress.startDate);
+      if (!isNaN(start.getTime())) {
+        const diffMs = today.getTime() - start.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // Jour 1 = date de début
+        if (diffDays >= 1 && diffDays <= readingPlan.length) {
+          readingDay = diffDays;
+        } else if (diffDays > readingPlan.length) {
+          readingDay = readingPlan.length;
+        }
+      }
     }
 
     let revisionIndex: number | undefined;
