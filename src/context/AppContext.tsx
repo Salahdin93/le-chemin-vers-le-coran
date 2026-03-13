@@ -969,7 +969,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const readingPlan = state.plans.reading;
     if (readingPlan && readingPlan.length > 0) {
       const idx = readingPlan.findIndex((day) => {
-        const d = new Date(day.date as any);
+        const rawDate = (day as any).date;
+        if (!rawDate) return false;
+        const d = new Date(rawDate as any);
+        if (isNaN(d.getTime())) return false;
         const dStr = d.toISOString().slice(0, 10);
         return dStr === todayStr;
       });
@@ -982,7 +985,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const revisionPlan = state.plans.revision;
     if (revisionPlan && revisionPlan.length > 0) {
       const idx = revisionPlan.findIndex((day) => {
-        const d = new Date(day.date as any);
+        const rawDate = (day as any).date;
+        if (!rawDate) return false;
+        const d = new Date(rawDate as any);
+        if (isNaN(d.getTime())) return false;
         const dStr = d.toISOString().slice(0, 10);
         return dStr === todayStr;
       });
@@ -998,7 +1004,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (hadithPlan && hadithPlan.length > 0) {
       const idx = hadithPlan.findIndex((day) => {
-        const d = new Date(day.date as any);
+        const rawDate = (day as any).date;
+        if (!rawDate) return false;
+        const d = new Date(rawDate as any);
+        if (isNaN(d.getTime())) return false;
         const dStr = d.toISOString().slice(0, 10);
         return dStr === todayStr;
       });
@@ -1010,7 +1019,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!hasHadithRevisionGoal) {
         const pendingIds: number[] = [];
         hadithPlan.forEach((day) => {
-          const d = new Date(day.date as any);
+          const rawDate = (day as any).date;
+          if (!rawDate) return;
+          const d = new Date(rawDate as any);
+          if (isNaN(d.getTime())) return;
           const dStr = d.toISOString().slice(0, 10);
           if (dStr < todayStr) {
             day.hadithIds.forEach((id: number) => {
