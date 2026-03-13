@@ -967,17 +967,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     let readingDay: number | undefined;
     const readingPlan = state.plans.reading;
-    if (readingPlan && readingPlan.length > 0) {
-      const idx = readingPlan.findIndex((day) => {
-        const rawDate = (day as any).date;
-        if (!rawDate) return false;
-        const d = new Date(rawDate as any);
-        if (isNaN(d.getTime())) return false;
-        const dStr = d.toISOString().slice(0, 10);
-        return dStr === todayStr;
-      });
-      if (idx >= 0) {
-        readingDay = idx + 1; // currentReadingDay est 1-based
+    if (readingPlan && readingPlan.length > 0 && state.progress.startDate) {
+      const start = new Date(state.progress.startDate);
+      if (!isNaN(start.getTime())) {
+        const diffMs = today.getTime() - start.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // Jour 1 = date de début
+        if (diffDays >= 1 && diffDays <= readingPlan.length) {
+          readingDay = diffDays;
+        } else if (diffDays > readingPlan.length) {
+          readingDay = readingPlan.length;
+        }
       }
     }
 

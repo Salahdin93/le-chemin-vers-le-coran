@@ -362,6 +362,7 @@ const ReadingPlanView: React.FC = () => {
                 })()}
                 {readingPlan.map((day, i) => {
                     const status = state.progress.readingHistory[`day_${day.day}`]?.status || 'not_read';
+                    const isCompleted = status === 'done' || status === 'partial' || status === 'catchup';
                     const isCurrent = day.day === state.progress.currentReadingDay;
                     const isEditing = editingDay === day.day;
                     const displayDayNum = (state.progress.existingDaysRead ?? 0) + day.day;
@@ -382,7 +383,7 @@ const ReadingPlanView: React.FC = () => {
                                 className={clsx(
                                     "premium-card h-full p-8 flex flex-col gap-6 border-2 transition-all relative overflow-hidden group",
                                     isCurrent ? "border-accent-color ring-8 ring-accent-color/5 shadow-premium" : "border-border-main/50 bg-bg-secondary/40",
-                                    status === 'done' && !isCurrent && "opacity-60 grayscale-[0.5] border-success/10"
+                                    isCompleted && !isCurrent && "opacity-60 grayscale-[0.5] border-success/10"
                                 )}
                                 onClick={() => !isCurrent && setEditingDay(isEditing ? null : day.day)}
                             >
