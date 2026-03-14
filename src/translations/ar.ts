@@ -98,6 +98,7 @@ export const ar = {
     "mushafResumeReading": "متابعة القراءة",
     "mushafResumeRevision": "متابعة المراجعة",
     "mushafMarkStop": "تحديد التوقف",
+    "mushafActions": "إجراءات",
     "mushafFullscreen": "ملء الشاشة",
     "mushafExitFullscreen": "خروج",
     "everyXDays": "كل {count} أيام",

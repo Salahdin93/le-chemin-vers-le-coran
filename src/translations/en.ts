@@ -95,6 +95,7 @@ export const en = {
     "mushafResumeReading": "Resume reading",
     "mushafResumeRevision": "Resume revision",
     "mushafMarkStop": "Mark stop",
+    "mushafActions": "Actions",
     "mushafFullscreen": "Fullscreen",
     "mushafExitFullscreen": "Exit",
     "everyXDays": "Every {count} days",

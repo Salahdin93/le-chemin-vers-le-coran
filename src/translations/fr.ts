@@ -98,6 +98,7 @@ export const fr = {
     "mushafResumeReading": "Reprendre lecture",
     "mushafResumeRevision": "Reprendre révision",
     "mushafMarkStop": "Marquer l'arrêt",
+    "mushafActions": "Actions",
     "mushafFullscreen": "Plein écran",
     "mushafExitFullscreen": "Quitter",
     "everyXDays": "Tous les {count} jours",

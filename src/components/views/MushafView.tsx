@@ -66,10 +66,21 @@ const MushafView: React.FC = () => {
     return 'hafs-tajweed';
   });
   const [goToOpen, setGoToOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fullscreenRef = useRef<HTMLDivElement>(null);
   const goToPanelRef = useRef<HTMLDivElement>(null);
+  const actionsPanelRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number>(0);
+
+  const activeProfile = useMemo(
+    () => state.profiles.find((p) => p.id === state.activeProfileId) ?? null,
+    [state.profiles, state.activeProfileId],
+  );
+  const readingPlan = state.plans.reading;
+  const revisionPlan = state.plans.revision;
+  const currentReadingDay = state.progress.currentReadingDay ?? 1;
+  const currentRevisionIndex = state.progress.currentRevisionIndex ?? 0;
 
   useEffect(() => {
     if (!goToOpen) return;
@@ -80,14 +91,14 @@ const MushafView: React.FC = () => {
     return () => document.removeEventListener('click', close);
   }, [goToOpen]);
 
-  const activeProfile = useMemo(
-    () => state.profiles.find((p) => p.id === state.activeProfileId) ?? null,
-    [state.profiles, state.activeProfileId],
-  );
-  const readingPlan = state.plans.reading;
-  const revisionPlan = state.plans.revision;
-  const currentReadingDay = state.progress.currentReadingDay ?? 1;
-  const currentRevisionIndex = state.progress.currentRevisionIndex ?? 0;
+  useEffect(() => {
+    if (!actionsOpen) return;
+    const close = (e: MouseEvent) => {
+      if (actionsPanelRef.current && !actionsPanelRef.current.contains(e.target as Node)) setActionsOpen(false);
+    };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [actionsOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,6 +151,16 @@ const MushafView: React.FC = () => {
 
   const imageSrc = `${imageBasePath}/${currentPage}.jpg`;
 
+  useEffect(() => {
+    const preload = (page: number) => {
+      if (page < 1 || page > 604) return;
+      const img = new Image();
+      img.src = `${imageBasePath}/${page}.jpg`;
+    };
+    preload(currentPage - 1);
+    preload(currentPage + 1);
+  }, [currentPage, imageBasePath]);
+
   const handlePrev = useCallback(() => {
     setCurrentPage((p) => (p > 1 ? p - 1 : 1));
   }, []);
@@ -175,18 +196,23 @@ const MushafView: React.FC = () => {
     return getPageFromRevisionUnit(firstUnit);
   }, [revisionPlan, currentRevisionIndex]);
 
+  const hasActions = !!(resumeReadingPage != null || resumeRevisionPage != null || activeProfile?.id);
+
   const handleMarkStop = useCallback(() => {
     if (activeProfile?.id && typeof window !== 'undefined') {
       window.localStorage.setItem(`mushafReadingStop_${activeProfile.id}`, String(currentPage));
     }
+    setActionsOpen(false);
   }, [activeProfile?.id, currentPage]);
 
   const handleResumeReading = useCallback(() => {
     if (resumeReadingPage != null) setCurrentPage(resumeReadingPage);
+    setActionsOpen(false);
   }, [resumeReadingPage]);
 
   const handleResumeRevision = useCallback(() => {
     if (resumeRevisionPage != null) setCurrentPage(resumeRevisionPage);
+    setActionsOpen(false);
   }, [resumeRevisionPage]);
 
   const toggleFullscreen = useCallback(() => {
@@ -244,152 +270,215 @@ const MushafView: React.FC = () => {
   }
 
   const btnClass =
-    'px-3 py-2 rounded-xl text-xs font-semibold border-2 border-border-main bg-bg-secondary hover:bg-bg-main transition-all disabled:opacity-40 disabled:cursor-not-allowed';
+    'px-3 py-2 rounded-xl text-xs font-semibold border border-border-main bg-bg-secondary hover:bg-bg-main transition-all disabled:opacity-40 disabled:cursor-not-allowed';
   const selectClass =
-    'px-3 py-2 rounded-xl text-xs font-semibold border-2 border-accent-color/70 bg-bg-secondary text-text-main min-w-[140px]';
+    'px-3 py-2 rounded-xl text-xs font-semibold border border-accent-color/70 bg-bg-secondary text-text-main';
+
+  const pageIndicator = (
+    <span className="tabular-nums font-bold text-accent-color">
+      {t('pageLabel') ?? 'Page'} {currentPage} / 604
+      {currentMeta && (
+        <span className="text-text-secondary font-normal text-[10px] ml-1.5">
+          · Juz {currentMeta.juz} · Hizb {currentMeta.hizb}
+        </span>
+      )}
+    </span>
+  );
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.25em] text-text-secondary/60 mb-1">
-            {t('mushaf') ?? 'Mushaf'}
-          </p>
-          <h1 className="text-2xl md:text-3xl font-black text-text-main">
-            {t('quranReaderTitle') ?? 'Lecture du Coran (Mushaf)'}
-          </h1>
-          {currentMeta && (
-            <p className="text-xs text-text-secondary mt-1">
-              {t('pageLabel') ?? 'Page'} {currentPage} / 604 · Juz {currentMeta.juz} · Hizb {currentMeta.hizb}
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={riwaya}
-            onChange={(e) => setRiwaya(e.target.value as MushafRiwaya)}
-            className={selectClass}
-            aria-label={t('mushafRiwayaLabel') ?? 'Type de Coran'}
-          >
-            <option value="hafs-tajweed">{t('mushafHafsTajwid') ?? 'Hafs (tajwid)'}</option>
-            <option value="hafs-wasat">{t('mushafHafsSimple') ?? 'Hafs (simple)'}</option>
-            <option value="warsh-wasat">{t('mushafWarshWasat') ?? 'Warsh (wasat)'}</option>
-          </select>
-
-          <div className="relative" ref={goToPanelRef}>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setGoToOpen((o) => !o); }}
-              className={btnClass}
-            >
-              {t('mushafGoTo') ?? 'Aller à'}
-            </button>
-            {goToOpen && (
-              <div className="absolute top-full left-0 mt-2 z-50 glass-card rounded-2xl p-4 shadow-premium border border-border-main min-w-[200px]">
-                <p className="text-xs font-semibold text-text-secondary mb-2">{t('mushafGoToPage') ?? 'Page'}</p>
-                <input
-                  type="number"
-                  min={1}
-                  max={604}
-                  value={currentPage}
-                  onChange={(e) => goToPage(parseInt(e.target.value, 10) || 1)}
-                  className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
-                />
-                <p className="text-xs font-semibold text-text-secondary mb-2">{t('juz') ?? 'Juz'}</p>
-                <select
-                  className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
-                  value={currentMeta?.juz ?? 1}
-                  onChange={(e) => goToPage(JUZ_DATA[parseInt(e.target.value, 10) - 1].page)}
-                >
-                  {JUZ_DATA.map((j) => (
-                    <option key={j.id} value={j.id}>
-                      {t('juz')} {j.id}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs font-semibold text-text-secondary mb-2">{t('hizb') ?? 'Hizb'}</p>
-                <select
-                  className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
-                  value={currentMeta?.hizb ?? 1}
-                  onChange={(e) => goToPage(HIZB_PAGE_RANGES[parseInt(e.target.value, 10) - 1].startPage)}
-                >
-                  {HIZB_PAGE_RANGES.map((_, i) => (
-                    <option key={i} value={i + 1}>
-                      {t('hizb')} {i + 1}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs font-semibold text-text-secondary mb-2">{t('mushafGoToSurah') ?? 'Sourate'}</p>
-                <select
-                  className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm"
-                  value={currentMeta?.sura ?? 1}
-                  onChange={(e) => {
-                    const surah = SURAH_DATA.find((s) => s.id === parseInt(e.target.value, 10));
-                    if (surah) goToPage(surah.startPage);
-                  }}
-                >
-                  {SURAH_DATA.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          {resumeReadingPage != null && (
-            <button type="button" onClick={handleResumeReading} className={btnClass}>
-              {t('mushafResumeReading') ?? 'Reprendre lecture'}
-            </button>
-          )}
-          {resumeRevisionPage != null && (
-            <button type="button" onClick={handleResumeRevision} className={btnClass}>
-              {t('mushafResumeRevision') ?? 'Reprendre révision'}
-            </button>
-          )}
-          {activeProfile && (
-            <button type="button" onClick={handleMarkStop} className={btnClass}>
-              {t('mushafMarkStop') ?? "Marquer l'arrêt"}
-            </button>
-          )}
-
+    <div
+      ref={fullscreenRef}
+      className={`w-full flex flex-col ${isFullscreen ? 'h-screen bg-bg-main' : ''}`}
+    >
+      {isFullscreen ? (
+        <div className="flex-shrink-0 flex justify-end px-2 py-1.5">
           <button
             type="button"
             onClick={toggleFullscreen}
             className={btnClass}
-            title={isFullscreen ? (t('mushafExitFullscreen') ?? 'Quitter plein écran') : (t('mushafFullscreen') ?? 'Plein écran')}
           >
-            {isFullscreen ? (t('mushafExitFullscreen') ?? 'Quitter') : (t('mushafFullscreen') ?? 'Plein écran')}
-          </button>
-
-          <button onClick={handlePrev} disabled={currentPage <= 1} className={btnClass}>
-            {t('previousPage') ?? 'Page précédente'}
-          </button>
-          <div className="px-3 py-2 rounded-xl text-xs font-semibold bg-accent-color/10 border-2 border-accent-color/40 text-accent-color">
-            {t('pageLabelShort') ?? 'P.'} {currentPage}/604
-          </div>
-          <button onClick={handleNext} disabled={currentPage >= 604} className={btnClass}>
-            {t('nextPage') ?? 'Page suivante'}
+            {t('mushafExitFullscreen') ?? 'Quitter'}
           </button>
         </div>
+      ) : (
+        <div className="mb-3">
+          <p className="text-[11px] font-black uppercase tracking-[0.25em] text-text-secondary/60 mb-0.5">
+            {t('mushaf') ?? 'Mushaf'}
+          </p>
+          <h1 className="text-xl md:text-2xl font-black text-text-main">
+            {t('quranReaderTitle') ?? 'Lecture du Coran (Mushaf)'}
+          </h1>
+        </div>
+      )}
+
+      {!isFullscreen && (
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <select
+          value={riwaya}
+          onChange={(e) => setRiwaya(e.target.value as MushafRiwaya)}
+          className={selectClass}
+          aria-label={t('mushafRiwayaLabel') ?? 'Type de Coran'}
+        >
+          <option value="hafs-tajweed">{t('mushafHafsTajwid') ?? 'Hafs (tajwid)'}</option>
+          <option value="hafs-wasat">{t('mushafHafsSimple') ?? 'Hafs (simple)'}</option>
+          <option value="warsh-wasat">{t('mushafWarshWasat') ?? 'Warsh (wasat)'}</option>
+        </select>
+
+        <div className="relative" ref={goToPanelRef}>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setGoToOpen((o) => !o); }}
+            className={btnClass}
+          >
+            {t('mushafGoTo') ?? 'Aller à'}
+          </button>
+          {goToOpen && (
+            <div className="absolute top-full left-0 mt-2 z-50 glass-card rounded-2xl p-4 shadow-premium border border-border-main min-w-[200px]">
+              <p className="text-xs font-semibold text-text-secondary mb-2">{t('mushafGoToPage') ?? 'Page'}</p>
+              <input
+                type="number"
+                min={1}
+                max={604}
+                value={currentPage}
+                onChange={(e) => goToPage(parseInt(e.target.value, 10) || 1)}
+                className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
+              />
+              <p className="text-xs font-semibold text-text-secondary mb-2">{t('juz') ?? 'Juz'}</p>
+              <select
+                className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
+                value={currentMeta?.juz ?? 1}
+                onChange={(e) => goToPage(JUZ_DATA[parseInt(e.target.value, 10) - 1].page)}
+              >
+                {JUZ_DATA.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {t('juz')} {j.id}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs font-semibold text-text-secondary mb-2">{t('hizb') ?? 'Hizb'}</p>
+              <select
+                className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
+                value={currentMeta?.hizb ?? 1}
+                onChange={(e) => goToPage(HIZB_PAGE_RANGES[parseInt(e.target.value, 10) - 1].startPage)}
+              >
+                {HIZB_PAGE_RANGES.map((_, i) => (
+                  <option key={i} value={i + 1}>
+                    {t('hizb')} {i + 1}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs font-semibold text-text-secondary mb-2">{t('mushafGoToSurah') ?? 'Sourate'}</p>
+              <select
+                className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm"
+                value={currentMeta?.sura ?? 1}
+                onChange={(e) => {
+                  const surah = SURAH_DATA.find((s) => s.id === parseInt(e.target.value, 10));
+                  if (surah) goToPage(surah.startPage);
+                }}
+              >
+                {SURAH_DATA.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {hasActions && (
+          <div className="relative" ref={actionsPanelRef}>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setActionsOpen((o) => !o); }}
+              className={btnClass}
+            >
+              {t('mushafActions') ?? 'Actions'} ▾
+            </button>
+            {actionsOpen && (
+              <div className="absolute top-full left-0 mt-2 z-50 glass-card rounded-2xl py-2 shadow-premium border border-border-main min-w-[180px]">
+                {resumeReadingPage != null && (
+                  <button
+                    type="button"
+                    onClick={handleResumeReading}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors"
+                  >
+                    {t('mushafResumeReading') ?? 'Reprendre lecture'}
+                  </button>
+                )}
+                {resumeRevisionPage != null && (
+                  <button
+                    type="button"
+                    onClick={handleResumeRevision}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors"
+                  >
+                    {t('mushafResumeRevision') ?? 'Reprendre révision'}
+                  </button>
+                )}
+                {activeProfile && (
+                  <button
+                    type="button"
+                    onClick={handleMarkStop}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors"
+                  >
+                    {t('mushafMarkStop') ?? "Marquer l'arrêt"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className={btnClass}
+          title={t('mushafFullscreen') ?? 'Plein écran'}
+        >
+          {t('mushafFullscreen') ?? 'Plein écran'}
+        </button>
+      </div>
+      )}
+
+      <div className="flex items-center justify-center gap-3 mb-3">
+        <button onClick={handlePrev} disabled={currentPage <= 1} className={btnClass}>
+          ◀
+        </button>
+        <div className="px-4 py-2.5 rounded-xl bg-accent-color/15 border-2 border-accent-color/50 text-center min-w-[120px]">
+          {pageIndicator}
+        </div>
+        <button onClick={handleNext} disabled={currentPage >= 604} className={btnClass}>
+          ▶
+        </button>
       </div>
 
       <div
-        ref={fullscreenRef}
-        className="glass-card rounded-3xl p-5 md:p-8 shadow-premium bg-bg-secondary/90"
+        className={`flex-1 flex flex-col min-h-0 ${isFullscreen ? 'rounded-none' : 'glass-card rounded-3xl p-4 md:p-6 shadow-premium bg-bg-secondary/90'}`}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        <div className="w-full flex justify-center">
+        <div className="flex-1 flex justify-center items-center min-h-0 overflow-hidden">
           <img
             src={imageSrc}
             alt={`Page ${currentPage}`}
-            className="max-h-[calc(100vh-260px)] w-auto max-w-full rounded-3xl shadow-premium object-contain select-none"
+            className={`max-w-full max-h-full w-auto h-auto object-contain select-none rounded-2xl ${!isFullscreen ? 'shadow-premium' : ''}`}
+            style={isFullscreen ? { maxHeight: '100%' } : undefined}
             draggable={false}
           />
         </div>
+
+        {isFullscreen && (
+          <div className="flex-shrink-0 py-2 flex justify-center bg-bg-main/90 border-t border-border-main/50">
+            <span className="text-sm font-bold text-text-main tabular-nums">
+              {t('pageLabel') ?? 'Page'} {currentPage} / 604
+              {currentMeta && (
+                <span className="text-text-secondary font-normal ml-2">
+                  Juz {currentMeta.juz} · Hizb {currentMeta.hizb}
+                </span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
