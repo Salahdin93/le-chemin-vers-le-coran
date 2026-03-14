@@ -1,19 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useStore } from '@/context/AppContext';
 
-interface MushafVerse {
+type MushafRiwaya = 'hafs-tajweed' | 'hafs-wasat' | 'warsh-wasat';
+
+interface MushafPageMeta {
   sura: number;
   ayah: number;
-  page: number;
   juz: number;
   hizb: number;
-  text: string;
-  text_tajwid: string;
 }
+
+type MushafPagesMap = Record<string, MushafPageMeta>;
 
 const MushafView: React.FC = () => {
   const { t } = useStore();
-  const [verses, setVerses] = useState<MushafVerse[]>([]);
+  const [meta, setMeta] = useState<MushafPagesMap | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(() => {
@@ -22,16 +23,24 @@ const MushafView: React.FC = () => {
     const parsed = stored ? parseInt(stored, 10) : 1;
     return Number.isFinite(parsed) && parsed >= 1 && parsed <= 604 ? parsed : 1;
   });
+  const [riwaya, setRiwaya] = useState<MushafRiwaya>(() => {
+    if (typeof window === 'undefined') return 'hafs-tajweed';
+    const stored = window.localStorage.getItem('mushafRiwaya');
+    if (stored === 'hafs-wasat' || stored === 'warsh-wasat' || stored === 'hafs-tajweed') {
+      return stored;
+    }
+    return 'hafs-tajweed';
+  });
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch('/quran-data/hafs-tajwid.json');
+        const res = await fetch('/quran-data/mushaf-pages.json');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as MushafVerse[];
+        const data = (await res.json()) as MushafPagesMap;
         if (cancelled) return;
-        setVerses(data);
+        setMeta(data);
         setLoading(false);
       } catch (e: any) {
         if (cancelled) return;
@@ -50,12 +59,29 @@ const MushafView: React.FC = () => {
     window.localStorage.setItem('mushafLastPage', String(currentPage));
   }, [currentPage]);
 
-  const pageVerses = useMemo(
-    () => verses.filter(v => v.page === currentPage),
-    [verses, currentPage]
-  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('mushafRiwaya', riwaya);
+  }, [riwaya]);
 
-  const firstMeta = pageVerses[0];
+  const currentMeta = useMemo(() => {
+    if (!meta) return undefined;
+    return meta[String(currentPage)];
+  }, [meta, currentPage]);
+
+  const imageBasePath = useMemo(() => {
+    switch (riwaya) {
+      case 'hafs-wasat':
+        return '/mushaf-pages/hafs-wasat';
+      case 'warsh-wasat':
+        return '/mushaf-pages/warsh-wasat';
+      case 'hafs-tajweed':
+      default:
+        return '/mushaf-pages/hafs-tajweed';
+    }
+  }, [riwaya]);
+
+  const imageSrc = `${imageBasePath}/${currentPage}.jpg`;
 
   const handlePrev = () => {
     setCurrentPage(p => (p > 1 ? p - 1 : 1));
@@ -95,14 +121,23 @@ const MushafView: React.FC = () => {
           <h1 className="text-2xl md:text-3xl font-black text-text-main">
             {t('quranReaderTitle') ?? 'Lecture du Coran (Mushaf)'}
           </h1>
-          {firstMeta && (
+          {currentMeta && (
             <p className="text-xs text-text-secondary mt-1">
-              {t('pageLabel') ?? 'Page'} {currentPage} / 604 · Juz {firstMeta.juz} · Hizb {firstMeta.hizb}
+              {t('pageLabel') ?? 'Page'} {currentPage} / 604 · Juz {currentMeta.juz} · Hizb {currentMeta.hizb}
             </p>
           )}
         </div>
 
         <div className="flex items-center gap-2">
+          <select
+            value={riwaya}
+            onChange={e => setRiwaya(e.target.value as MushafRiwaya)}
+            className="px-3 py-2 rounded-xl text-xs font-semibold border border-border-main/60 bg-bg-secondary/80 hover:bg-bg-secondary transition-all"
+          >
+            <option value="hafs-tajweed">Hafs (tajwid)</option>
+            <option value="hafs-wasat">Hafs (simple)</option>
+            <option value="warsh-wasat">Warsh (tajwid)</option>
+          </select>
           <button
             onClick={handlePrev}
             disabled={currentPage <= 1}
@@ -124,15 +159,12 @@ const MushafView: React.FC = () => {
       </div>
 
       <div className="glass-card rounded-3xl p-5 md:p-8 shadow-premium bg-bg-secondary/90">
-        <div className="quran leading-relaxed space-y-4">
-          {pageVerses.map(v => (
-            <div key={`${v.sura}:${v.ayah}`} className="inline">
-              <span
-                dangerouslySetInnerHTML={{ __html: v.text_tajwid }}
-              />
-              <span className="mx-1 text-text-secondary/60">۝</span>
-            </div>
-          ))}
+        <div className="w-full flex justify-center">
+          <img
+            src={imageSrc}
+            alt={`Page ${currentPage}`}
+            className="max-h-[calc(100vh-260px)] w-auto max-w-full rounded-3xl shadow-premium object-contain"
+          />
         </div>
       </div>
     </div>
