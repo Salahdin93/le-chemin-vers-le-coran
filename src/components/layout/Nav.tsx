@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import { useStore } from '@/context/AppContext';
 import { ActiveView } from '@/types';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, BookOpen, Brain, ScrollText, Trophy, BarChart3, Settings, PenTool as Tool } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Brain, ScrollText, Trophy, BarChart3, Settings, PenTool as Tool, BookOpenCheck } from 'lucide-react';
 
 const navItems = [
     { view: 'dashboard-view', icon: <LayoutDashboard size={20} />, labelKey: 'dashboard' },
@@ -12,6 +12,7 @@ const navItems = [
     { view: 'hadith-plan-view', icon: <ScrollText size={20} />, labelKey: '100hadiths' },
     { view: 'memorization-view', icon: <Trophy size={20} />, labelKey: 'memorization' },
     { view: 'evaluation-plans-view', icon: <Tool size={20} />, labelKey: 'evaluation' },
+    { view: 'mushaf-view', icon: <BookOpenCheck size={20} />, labelKey: 'mushaf' },
     { view: 'stats-view', icon: <BarChart3 size={20} />, labelKey: 'statistics' },
     { view: 'settings-view', icon: <Settings size={20} />, labelKey: 'settings' },
 ];

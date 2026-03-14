@@ -42,6 +42,23 @@
     --glass-blur: 16px;
   }
 
+  /* Texte coranique avec tajwid (lecteur Mushaf) */
+  .quran {
+    font-family: 'Amiri', 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+    direction: rtl;
+    text-align: right;
+    font-size: 1.35rem;
+    line-height: 2.1;
+  }
+
+  .quran .ghunnah { color: #0099cc; }
+  .quran .ikhfa { color: #ff6600; }
+  .quran .idgham { color: #33aa33; }
+  .quran .qalqala { color: #cc0000; }
+  .quran .madda { color: #0055ff; }
+  .quran .ham_wasl { color: #aa33aa; }
+  .quran .lam_shamsiyyah { color: #aa8800; }
+
 
   /* --- DARK THEME (Deep Aurora) --- */
   html.dark,

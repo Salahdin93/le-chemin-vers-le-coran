@@ -60,7 +60,27 @@ export type MemorizationStatus = 'excellent' | 'bon' | 'moyen' | 'a_revoir';
 export type AppScreen = 'language' | 'splash' | 'welcome' | 'initial-choice' | 'login' | 'auth' | 'wizard' | 'main' | 'exit' | 'profile-selection';
 export type WizardType = 'full' | 'reading' | 'revision';
 export type WizardMode = 'new' | 'resume';
-export type ActiveView = 'dashboard-view' | 'reading-plan-view' | 'revision-plan-view' | 'memorization-view' | 'history-view' | 'settings-view' | 'hadith-plan-view' | 'hadith-memorization-view' | 'hadith-evaluation-view' | 'hadith-stats-view' | 'hadith-revision-plan-view' | 'hadith-revision-settings-view' | 'evaluation-view' | 'memorization-settings-view' | 'achievements-view' | 'stats-view' | 'hadith-history-view' | 'evaluation-plans-view' | 'evaluation-plan-form-view';
+export type ActiveView =
+  | 'dashboard-view'
+  | 'reading-plan-view'
+  | 'revision-plan-view'
+  | 'memorization-view'
+  | 'history-view'
+  | 'settings-view'
+  | 'hadith-plan-view'
+  | 'hadith-memorization-view'
+  | 'hadith-evaluation-view'
+  | 'hadith-stats-view'
+  | 'hadith-revision-plan-view'
+  | 'hadith-revision-settings-view'
+  | 'evaluation-view'
+  | 'memorization-settings-view'
+  | 'achievements-view'
+  | 'stats-view'
+  | 'hadith-history-view'
+  | 'evaluation-plans-view'
+  | 'evaluation-plan-form-view'
+  | 'mushaf-view';
 export type EvaluationStatus = 'excellent' | 'bon' | 'moyen' | 'a_revoir';
 export type BadgeId =
   | 'khatma_1'

@@ -26,6 +26,7 @@ import HadithEvaluationView from '@/components/views/HadithEvaluationView';
 import HadithStatsView from '@/components/views/HadithStatsView';
 import HadithRevisionPlanView from '@/components/views/HadithRevisionPlanView';
 import HadithRevisionSettingsView from '@/components/views/HadithRevisionSettingsView';
+import MushafView from '@/components/views/MushafView';
 import { MessageCircle } from 'lucide-react';
 
 const WhatsAppFloatButton: React.FC = () => {
@@ -66,6 +67,7 @@ const MainAppView: React.FC = () => {
       case 'hadith-stats-view': return <HadithStatsView />;
       case 'hadith-revision-plan-view': return <HadithRevisionPlanView />;
       case 'hadith-revision-settings-view': return <HadithRevisionSettingsView />;
+      case 'mushaf-view': return <MushafView />;
       default: return <DashboardView />;
     }
   };
