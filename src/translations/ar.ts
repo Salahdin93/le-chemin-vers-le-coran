@@ -101,6 +101,7 @@ export const ar = {
     "mushafActions": "إجراءات",
     "mushafFullscreen": "ملء الشاشة",
     "mushafExitFullscreen": "خروج",
+    "openInMushaf": "فتح في المصحف",
     "everyXDays": "كل {count} أيام",
     "onDay": "يوم",
     "dayOfWeek": "[\"الأحد\", \"الاثنين\", \"الثلاثاء\", \"الأربعاء\", \"الخميس\", \"الجمعة\", \"السبت\"]",

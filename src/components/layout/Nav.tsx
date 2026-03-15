@@ -20,6 +20,8 @@ const navItems = [
 const Nav: React.FC = () => {
     const { state, dispatch, t } = useStore();
 
+    const isMushafView = state.activeView === 'mushaf-view';
+
     return (
         <>
             {/* Desktop Navigation - Horizontal Floating Dock */}
@@ -56,7 +58,8 @@ const Nav: React.FC = () => {
                 </ul>
             </nav>
 
-            {/* Mobile Bottom Navigation - Scrollable Dock */}
+            {/* Mobile Bottom Navigation - Scrollable Dock (masquée sur la vue Mushaf pour maximiser l'espace de lecture) */}
+            {!isMushafView && (
             <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg">
                 <div className="relative group">
                     {/* Visual Cues for Scrollability */}
@@ -102,6 +105,7 @@ const Nav: React.FC = () => {
                     </ul>
                 </div>
             </nav>
+            )}
         </>
     );
 };

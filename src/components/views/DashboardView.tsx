@@ -4,18 +4,18 @@ import { useStore } from '@/context/AppContext';
 import Button from '@/components/ui/Button';
 import { clsx } from 'clsx';
 import { getHizbDetailsFromPage, recalculateFuturePlan } from '@/services/planLogic';
-import { HIZB_DATA, JUZ_DATA, FULL_SURAH_LIST } from '@/constants/quranData';
+import { HIZB_DATA, JUZ_DATA, FULL_SURAH_LIST, HIZB_PAGE_RANGES, SURAH_DATA } from '@/constants/quranData';
 import { checkReadingProgress } from '@/services/progressLogic';
 import EndOfGoalModal from '@/components/ui/EndOfGoalModal';
 import Modal from '@/components/ui/Modal';
 import Timer from '@/components/ui/Timer';
-import { ReadingStatus, Hadith, HadithMemorizationStatus, PlanDay, RevisionStatus, ExtraRevisionEntry } from '@/types';
+import { ReadingStatus, Hadith, HadithMemorizationStatus, PlanDay, RevisionStatus, ExtraRevisionEntry, RevisionUnit } from '@/types';
 import { notificationService } from '@/components/ui/NotificationContainer';
 import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 import { HADITH_COLLECTION } from '@/constants/hadithData';
-import { Eye, EyeOff, Sparkles, BookOpen, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, Star, Calendar, RotateCcw, Clock } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, BookOpen, BookOpenCheck, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, Star, Calendar, RotateCcw, Clock } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 
 const cardVariants: Variants = {
@@ -127,6 +127,33 @@ const DashboardView: React.FC = () => {
 
     const hasHadithRevisionGoal = !!activeProfile?.goals?.hadithRevision;
 
+    const getRevisionStartPage = (unit: RevisionUnit): number | null => {
+        const text = unit.text.trim();
+        const juzMatch = text.match(/Juz(z)?\s*(\d+)/i);
+        if (juzMatch) {
+            const num = parseInt(juzMatch[2], 10);
+            const juz = JUZ_DATA.find(j => j.id === num);
+            return juz?.page ?? null;
+        }
+        const hizbMatch = text.match(/Hizb\s*(\d+)/i);
+        if (hizbMatch) {
+            const num = parseInt(hizbMatch[1], 10);
+            if (num >= 1 && num <= HIZB_PAGE_RANGES.length) {
+                return HIZB_PAGE_RANGES[num - 1].startPage;
+            }
+        }
+        const surah = FULL_SURAH_LIST.find(s =>
+            text === s.name ||
+            text.endsWith(s.name) ||
+            text.includes(s.name),
+        );
+        if (surah) {
+            const data = SURAH_DATA.find(d => d.id === surah.id);
+            return data?.startPage ?? null;
+        }
+        return null;
+    };
+
     const handleHadithPlanStatusChange = (index: number, status: RevisionStatus) => {
         if (status === 'revised') {
             if (hasHadithRevisionGoal) {
@@ -140,6 +167,33 @@ const DashboardView: React.FC = () => {
             const msg = t('mayAllahEase');
             dispatch({ type: 'SET_TOAST', payload: msg });
         }
+    };
+
+    const openMushafAtReadingPage = () => {
+        if (!readingPlan || !currentReading) return;
+        const dayEntry = state.progress.readingHistory[`day_${currentReading.day}`];
+        const realPages = dayEntry?.realPages ?? 0;
+        const targetPages = currentReading.recalculatedPages;
+        const clampedPages = Math.max(0, Math.min(realPages, targetPages));
+        const page = clampedPages > 0 ? currentReading.startPage + clampedPages - 1 : currentReading.startPage;
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem('mushafLastPage', String(Math.min(page, 604)));
+        }
+        dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'mushaf-view' });
+    };
+
+    const openMushafAtRevisionPage = () => {
+        if (!revisionPlan || !isRevisionActive) return;
+        const currentRevision = revisionPlan[state.progress.currentRevisionIndex];
+        const firstUnit = currentRevision?.units?.[0];
+        if (!firstUnit) return;
+        const inferredPage = getRevisionStartPage(firstUnit);
+        const fallbackPage = currentReading?.startPage ?? 1;
+        const targetPage = inferredPage ?? fallbackPage;
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem('mushafLastPage', String(Math.min(targetPage, 604)));
+        }
+        dispatch({ type: 'SET_ACTIVE_VIEW', payload: 'mushaf-view' });
     };
 
     const handleStatusChange = (day: PlanDay, status: ReadingStatus, isKahf: boolean = false, time?: number) => {
@@ -501,6 +555,14 @@ const DashboardView: React.FC = () => {
 
                                     <div className="space-y-6">
                                         <Timer onStop={(s) => handleStatusChange(currentReading, 'done', false, s)} />
+                                        <Button
+                                            variant="ghost"
+                                            size="lg"
+                                            className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+                                            onClick={openMushafAtReadingPage}
+                                        >
+                                            <BookOpen size={16} /> {t('openInMushaf') ?? 'Ouvrir dans le Mushaf'}
+                                        </Button>
                                         <div className="grid grid-cols-2 gap-2">
                                             {[
                                                 { status: 'done', icon: <CheckCircle2 size={18} />, label: t('goalAchieved') || 'Lu', color: 'success' },
@@ -763,6 +825,14 @@ const DashboardView: React.FC = () => {
                                             }
                                         })}
                                     />
+
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 mt-2"
+                                        onClick={openMushafAtRevisionPage}
+                                    >
+                                        <BookOpenCheck size={16} /> {t('openInMushaf') ?? 'Ouvrir dans le Mushaf'}
+                                    </Button>
 
                                     <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/5">
                                         <Button

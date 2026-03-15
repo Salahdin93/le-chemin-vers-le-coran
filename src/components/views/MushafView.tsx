@@ -69,6 +69,7 @@ const MushafView: React.FC = () => {
   const [actionsOpen, setActionsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fullscreenRef = useRef<HTMLDivElement>(null);
+  const wakeLockRef = useRef<any>(null);
   const goToPanelRef = useRef<HTMLDivElement>(null);
   const actionsPanelRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number>(0);
@@ -81,6 +82,28 @@ const MushafView: React.FC = () => {
   const revisionPlan = state.plans.revision;
   const currentReadingDay = state.progress.currentReadingDay ?? 1;
   const currentRevisionIndex = state.progress.currentRevisionIndex ?? 0;
+
+  const requestWakeLock = useCallback(async () => {
+    try {
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLockRef.current) {
+        // @ts-ignore - experimental API
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      }
+    } catch {
+      // ignore on unsupported browsers
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    try {
+      if (wakeLockRef.current) {
+        await wakeLockRef.current.release?.();
+        wakeLockRef.current = null;
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     if (!goToOpen) return;
@@ -99,6 +122,13 @@ const MushafView: React.FC = () => {
     document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
   }, [actionsOpen]);
+
+  useEffect(() => {
+    requestWakeLock();
+    return () => {
+      releaseWakeLock();
+    };
+  }, [requestWakeLock, releaseWakeLock]);
 
   useEffect(() => {
     let cancelled = false;

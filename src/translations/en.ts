@@ -98,6 +98,7 @@ export const en = {
     "mushafActions": "Actions",
     "mushafFullscreen": "Fullscreen",
     "mushafExitFullscreen": "Exit",
+    "openInMushaf": "Open in Mushaf",
     "everyXDays": "Every {count} days",
     "onDay": "On",
     "dayOfWeek": "[\"Sunday\", \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\"]",
