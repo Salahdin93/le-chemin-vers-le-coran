@@ -272,8 +272,11 @@ const MushafView: React.FC = () => {
       const endX = e.changedTouches[0].clientX;
       const delta = touchStartX.current - endX;
       if (Math.abs(delta) >= SWIPE_THRESHOLD_PX) {
-        if (delta > 0) handleNext();
-        else handlePrev();
+        // Lecture arabe : avancer vers la fin du Mushaf en swipant vers la droite.
+        // delta > 0  => swipe vers la gauche  => revenir en arrière (page précédente)
+        // delta < 0  => swipe vers la droite => avancer (page suivante)
+        if (delta > 0) handlePrev();
+        else handleNext();
       }
     },
     [handleNext, handlePrev],
