@@ -157,7 +157,7 @@ const getHizbsPerDayByTargetPages = (
     }
     const result: number[] = [];
     let hizbIdx = 0;
-    for (let day = 0; day < normalDaysCount; day++) {
+    for (let day = 0; day < normalDaysCount && hizbIdx < pageCounts.length; day++) {
         let dayPages = 0;
         let hizbsThisDay = 0;
         while (hizbIdx < pageCounts.length) {
@@ -168,9 +168,17 @@ const getHizbsPerDayByTargetPages = (
             hizbsThisDay++;
             hizbIdx++;
         }
-        if (day === normalDaysCount - 1 && hizbIdx < pageCounts.length) {
-            hizbsThisDay += pageCounts.length - hizbIdx;
-            hizbIdx = pageCounts.length;
+        result.push(Math.max(1, hizbsThisDay));
+    }
+    while (hizbIdx < pageCounts.length) {
+        let dayPages = 0;
+        let hizbsThisDay = 0;
+        while (hizbIdx < pageCounts.length) {
+            const nextPages = pageCounts[hizbIdx];
+            if (dayPages + nextPages > targetPagesPerDay + tolerance && hizbsThisDay >= 1) break;
+            dayPages += nextPages;
+            hizbsThisDay++;
+            hizbIdx++;
         }
         result.push(Math.max(1, hizbsThisDay));
     }
@@ -273,7 +281,7 @@ export const recalculateFuturePlan = (
         const originalPlanDay = originalPlan.find(d => d.day === day);
         if (originalPlanDay) {
             totalPagesPlanned += originalPlanDay.pages;
-            totalPagesRead += (history?.realPages !== undefined ? history.realPages : originalPlanDay.pages);
+            totalPagesRead += (history?.realPages !== undefined ? history.realPages : 0);
         }
     }
     const pageDifference = totalPagesRead - totalPagesPlanned;
@@ -300,8 +308,7 @@ export const recalculateFuturePlan = (
         if (history?.realPages !== undefined) {
             currentPage += history.realPages;
         } else {
-            const originalDay = originalPlan.find(d => d.day === day);
-            if (originalDay) currentPage += originalDay.pages;
+            // Jour sans historique = pas lu, 0 pages avancées
         }
     }
     for (let day = currentReadingDay; day <= newPlan.length; day++) {

@@ -5,8 +5,11 @@ import {
   HIZB_PAGE_RANGES,
   SURAH_DATA,
   FULL_SURAH_LIST,
+  HIZB_DATA,
 } from '@/constants/quranData';
+import { recalculateFuturePlan } from '@/services/planLogic';
 import type { RevisionUnit } from '@/types';
+import { Play, Pause, Square, BookmarkCheck } from 'lucide-react';
 
 type MushafRiwaya = 'hafs-tajweed' | 'hafs-wasat' | 'warsh-wasat';
 
@@ -20,6 +23,12 @@ interface MushafPageMeta {
 type MushafPagesMap = Record<string, MushafPageMeta>;
 
 const SWIPE_THRESHOLD_PX = 50;
+
+const formatTime = (time: number): string => {
+  const minutes = Math.floor(time / 60);
+  const seconds = time % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
 
 function getPageFromRevisionUnit(unit: RevisionUnit): number | null {
   const text = unit.text.trim();
@@ -46,8 +55,23 @@ function getPageFromRevisionUnit(unit: RevisionUnit): number | null {
   return null;
 }
 
+function getSurahsForRevisionUnits(units: RevisionUnit[]): string[] {
+  const allSurahs: string[] = [];
+  units.forEach(u => {
+    const hizbMatch = u.text.match(/Hizb\s*(\d+)/i);
+    if (hizbMatch) {
+      const hizbIndex = parseInt(hizbMatch[1], 10) - 1;
+      const hizb = HIZB_DATA[hizbIndex];
+      if (hizb?.surahs) allSurahs.push(...hizb.surahs);
+    } else {
+      (u.surahs || '').split(',').map(s => s.trim()).filter(Boolean).forEach(s => allSurahs.push(s));
+    }
+  });
+  return allSurahs;
+}
+
 const MushafView: React.FC = () => {
-  const { state, t } = useStore();
+  const { state, dispatch, t } = useStore();
   const [meta, setMeta] = useState<MushafPagesMap | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,24 +98,119 @@ const MushafView: React.FC = () => {
   const actionsPanelRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number>(0);
 
+  const [timerTime, setTimerTime] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [timerPaused, setTimerPaused] = useState(false);
+  const timerIntervalRef = useRef<any>(null);
+
+  const [ratingOpen, setRatingOpen] = useState(false);
+  const [ratingSurah, setRatingSurah] = useState<string | null>(null);
+  const [surahRatings, setSurahRatings] = useState<Record<string, 'tres_bien' | 'bien' | 'moyen' | 'a_revoir'>>({});
+
   const activeProfile = useMemo(
     () => state.profiles.find((p) => p.id === state.activeProfileId) ?? null,
     [state.profiles, state.activeProfileId],
   );
   const readingPlan = state.plans.reading;
+  const originalReadingPlan = state.plans.originalReading;
   const revisionPlan = state.plans.revision;
   const currentReadingDay = state.progress.currentReadingDay ?? 1;
   const currentRevisionIndex = state.progress.currentRevisionIndex ?? 0;
+  const currentRevision = revisionPlan && currentRevisionIndex < revisionPlan.length ? revisionPlan[currentRevisionIndex] : null;
+
+  const revisionSurahs = useMemo(() => {
+    if (!currentRevision) return [];
+    return getSurahsForRevisionUnits(currentRevision.units);
+  }, [currentRevision]);
+
+  useEffect(() => {
+    if (timerActive && !timerPaused) {
+      timerIntervalRef.current = setInterval(() => setTimerTime(t => t + 1), 1000);
+    } else if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+    return () => { if (timerIntervalRef.current) clearInterval(timerIntervalRef.current); };
+  }, [timerActive, timerPaused]);
+
+  const handleTimerStart = useCallback(() => {
+    setTimerActive(true);
+    setTimerPaused(false);
+  }, []);
+
+  const handleTimerPauseResume = useCallback(() => {
+    setTimerPaused(p => !p);
+  }, []);
+
+  const handleTimerStopReading = useCallback(() => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    const seconds = timerTime;
+    if (readingPlan && readingPlan.length > 0 && activeProfile) {
+      const dayKey = `day_${currentReadingDay}`;
+      const existing = state.progress.readingHistory[dayKey] || { status: 'not_read', realPages: 0, adjustment: 0 };
+      const newHistory = {
+        ...state.progress.readingHistory,
+        [dayKey]: { ...existing, timeSpent: (existing.timeSpent || 0) + seconds },
+      };
+      const recPlan = originalReadingPlan ? recalculateFuturePlan(originalReadingPlan, newHistory, currentReadingDay) : null;
+      dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory, recalculatedPlan: recPlan! } });
+    }
+    dispatch({ type: 'SET_TOAST', payload: `${t('timerSaved') ?? 'Temps enregistré'} : ${formatTime(seconds)}` });
+    setTimerActive(false);
+    setTimerTime(0);
+  }, [timerTime, readingPlan, activeProfile, currentReadingDay, state.progress.readingHistory, originalReadingPlan, dispatch, t]);
+
+  const handleTimerStopRevision = useCallback(() => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    const seconds = timerTime;
+    if (revisionPlan && currentRevisionIndex < revisionPlan.length) {
+      dispatch({
+        type: 'UPDATE_REVISION_STATUS',
+        payload: { revisionIndex: currentRevisionIndex, status: revisionPlan[currentRevisionIndex].status, timeSpent: seconds },
+      });
+    }
+    dispatch({ type: 'SET_TOAST', payload: `${t('timerSaved') ?? 'Temps enregistré'} : ${formatTime(seconds)}` });
+    setTimerActive(false);
+    setTimerTime(0);
+  }, [timerTime, revisionPlan, currentRevisionIndex, dispatch, t]);
+
+  const handleRateSurah = useCallback((rating: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir') => {
+    if (!ratingSurah) return;
+    const newRatings = { ...surahRatings, [ratingSurah]: rating };
+    setSurahRatings(newRatings);
+    const remaining = revisionSurahs.filter(s => !(s in newRatings));
+    if (remaining.length > 0) {
+      setRatingSurah(remaining[0]);
+    } else {
+      const ratings = Object.values(newRatings);
+      let overallQuality: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir' = 'tres_bien';
+      if (ratings.includes('a_revoir')) overallQuality = 'a_revoir';
+      else if (ratings.includes('moyen')) overallQuality = 'moyen';
+      else if (ratings.includes('bien')) overallQuality = 'bien';
+      dispatch({
+        type: 'UPDATE_REVISION_STATUS',
+        payload: { revisionIndex: currentRevisionIndex, status: 'revised', quality: overallQuality, surahRatings: newRatings },
+      });
+      dispatch({ type: 'SET_TOAST', payload: t('jazakAllahuKhayr') ?? 'JazakAllahu Khayr' });
+      setRatingOpen(false);
+      setRatingSurah(null);
+      setSurahRatings({});
+    }
+  }, [ratingSurah, surahRatings, revisionSurahs, currentRevisionIndex, dispatch, t]);
+
+  const openRatingSurahBysurah = useCallback(() => {
+    if (revisionSurahs.length === 0) return;
+    setSurahRatings({});
+    setRatingSurah(revisionSurahs[0]);
+    setRatingOpen(true);
+  }, [revisionSurahs]);
 
   const requestWakeLock = useCallback(async () => {
     try {
       if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLockRef.current) {
-        // @ts-ignore - experimental API
+        // @ts-ignore
         wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
       }
-    } catch {
-      // ignore on unsupported browsers
-    }
+    } catch { /* ignore */ }
   }, []);
 
   const releaseWakeLock = useCallback(async () => {
@@ -100,9 +219,7 @@ const MushafView: React.FC = () => {
         await wakeLockRef.current.release?.();
         wakeLockRef.current = null;
       }
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
@@ -125,9 +242,7 @@ const MushafView: React.FC = () => {
 
   useEffect(() => {
     requestWakeLock();
-    return () => {
-      releaseWakeLock();
-    };
+    return () => { releaseWakeLock(); };
   }, [requestWakeLock, releaseWakeLock]);
 
   useEffect(() => {
@@ -147,9 +262,7 @@ const MushafView: React.FC = () => {
       }
     };
     load();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -169,13 +282,10 @@ const MushafView: React.FC = () => {
 
   const imageBasePath = useMemo(() => {
     switch (riwaya) {
-      case 'hafs-wasat':
-        return '/mushaf-pages/hafs-wasat';
-      case 'warsh-wasat':
-        return '/mushaf-pages/warsh-wasat';
+      case 'hafs-wasat': return '/mushaf-pages/hafs-wasat';
+      case 'warsh-wasat': return '/mushaf-pages/warsh-wasat';
       case 'hafs-tajweed':
-      default:
-        return '/mushaf-pages/hafs-tajweed';
+      default: return '/mushaf-pages/hafs-tajweed';
     }
   }, [riwaya]);
 
@@ -231,9 +341,10 @@ const MushafView: React.FC = () => {
   const handleMarkStop = useCallback(() => {
     if (activeProfile?.id && typeof window !== 'undefined') {
       window.localStorage.setItem(`mushafReadingStop_${activeProfile.id}`, String(currentPage));
+      dispatch({ type: 'SET_TOAST', payload: `${t('mushafStopSaved') ?? 'Arrêt enregistré'} — ${t('pageLabel') ?? 'Page'} ${currentPage}` });
     }
     setActionsOpen(false);
-  }, [activeProfile?.id, currentPage]);
+  }, [activeProfile?.id, currentPage, dispatch, t]);
 
   const handleResumeReading = useCallback(() => {
     if (resumeReadingPage != null) setCurrentPage(resumeReadingPage);
@@ -260,27 +371,18 @@ const MushafView: React.FC = () => {
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
 
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      touchStartX.current = e.touches[0].clientX;
-    },
-    [],
-  );
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
 
-  const onTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      const endX = e.changedTouches[0].clientX;
-      const delta = touchStartX.current - endX;
-      if (Math.abs(delta) >= SWIPE_THRESHOLD_PX) {
-        // Lecture arabe : avancer vers la fin du Mushaf en swipant vers la droite.
-        // delta > 0  => swipe vers la gauche  => revenir en arrière (page précédente)
-        // delta < 0  => swipe vers la droite => avancer (page suivante)
-        if (delta > 0) handlePrev();
-        else handleNext();
-      }
-    },
-    [handleNext, handlePrev],
-  );
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    const endX = e.changedTouches[0].clientX;
+    const delta = touchStartX.current - endX;
+    if (Math.abs(delta) >= SWIPE_THRESHOLD_PX) {
+      if (delta > 0) handlePrev();
+      else handleNext();
+    }
+  }, [handleNext, handlePrev]);
 
   if (loading) {
     return (
@@ -318,18 +420,68 @@ const MushafView: React.FC = () => {
     </span>
   );
 
+  const timerBar = (
+    <div className="flex items-center gap-2 bg-bg-main/90 px-3 py-2 rounded-xl border border-border-main/60">
+      <span className="text-lg font-mono font-bold text-text-main tabular-nums">{formatTime(timerTime)}</span>
+      {!timerActive ? (
+        <button type="button" onClick={handleTimerStart} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-color/20 text-accent-color text-xs font-bold hover:bg-accent-color/30 transition-all">
+          <Play size={14} /> {t('timerStart') ?? 'Démarrer'}
+        </button>
+      ) : (
+        <>
+          <button type="button" onClick={handleTimerPauseResume} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-bg-secondary text-text-main text-xs font-bold hover:bg-bg-main transition-all border border-border-main">
+            {timerPaused ? <Play size={14} /> : <Pause size={14} />}
+          </button>
+          {readingPlan && readingPlan.length > 0 && (
+            <button type="button" onClick={handleTimerStopReading} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/20 text-success text-xs font-bold hover:bg-success/30 transition-all">
+              <Square size={12} /> {t('mushafTimerStopReading') ?? 'Lecture'}
+            </button>
+          )}
+          {revisionPlan && revisionPlan.length > 0 && (
+            <button type="button" onClick={handleTimerStopRevision} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/20 text-blue-400 text-xs font-bold hover:bg-blue-500/30 transition-all">
+              <Square size={12} /> {t('mushafTimerStopRevision') ?? 'Révision'}
+            </button>
+          )}
+        </>
+      )}
+      {revisionSurahs.length > 0 && (
+        <button type="button" onClick={openRatingSurahBysurah} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-warning/20 text-warning text-xs font-bold hover:bg-warning/30 transition-all">
+          <BookmarkCheck size={14} /> {t('mushafRateSurah') ?? 'Noter'}
+        </button>
+      )}
+    </div>
+  );
+
+  const ratingModal = ratingOpen && ratingSurah && (
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setRatingOpen(false)}>
+      <div className="glass-card rounded-3xl p-6 shadow-premium border border-border-main max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+        <p className="text-xs font-black uppercase tracking-widest text-text-secondary mb-2">{t('mushafRateSurahTitle') ?? 'Notation'}</p>
+        <p className="text-lg font-bold text-text-main mb-4">{ratingSurah}</p>
+        <div className="grid grid-cols-2 gap-2">
+          {([['tres_bien', 'Très bien', 'bg-success/20 text-success border-success/40'], ['bien', 'Bien', 'bg-accent-color/20 text-accent-color border-accent-color/40'], ['moyen', 'Moyen', 'bg-warning/20 text-warning border-warning/40'], ['a_revoir', 'À revoir', 'bg-danger/20 text-danger border-danger/40']] as const).map(([val, label, cls]) => (
+            <button key={val} type="button" onClick={() => handleRateSurah(val)} className={`px-4 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:scale-105 ${cls}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-text-secondary mt-3 text-center">
+          {Object.keys(surahRatings).length} / {revisionSurahs.length} {t('mushafRateSurahProgress') ?? 'sourates notées'}
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div
       ref={fullscreenRef}
       className={`w-full flex flex-col ${isFullscreen ? 'h-screen bg-bg-main' : ''}`}
     >
+      {ratingModal}
+
       {isFullscreen ? (
-        <div className="flex-shrink-0 flex justify-end px-2 py-1.5">
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className={btnClass}
-          >
+        <div className="flex-shrink-0 flex items-center justify-between px-3 py-1.5 gap-2">
+          {timerBar}
+          <button type="button" onClick={toggleFullscreen} className={btnClass}>
             {t('mushafExitFullscreen') ?? 'Quitter'}
           </button>
         </div>
@@ -368,52 +520,18 @@ const MushafView: React.FC = () => {
           {goToOpen && (
             <div className="absolute top-full left-0 mt-2 z-50 glass-card rounded-2xl p-4 shadow-premium border border-border-main min-w-[200px]">
               <p className="text-xs font-semibold text-text-secondary mb-2">{t('mushafGoToPage') ?? 'Page'}</p>
-              <input
-                type="number"
-                min={1}
-                max={604}
-                value={currentPage}
-                onChange={(e) => goToPage(parseInt(e.target.value, 10) || 1)}
-                className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
-              />
+              <input type="number" min={1} max={604} value={currentPage} onChange={(e) => goToPage(parseInt(e.target.value, 10) || 1)} className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3" />
               <p className="text-xs font-semibold text-text-secondary mb-2">{t('juz') ?? 'Juz'}</p>
-              <select
-                className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
-                value={currentMeta?.juz ?? 1}
-                onChange={(e) => goToPage(JUZ_DATA[parseInt(e.target.value, 10) - 1].page)}
-              >
-                {JUZ_DATA.map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {t('juz')} {j.id}
-                  </option>
-                ))}
+              <select className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3" value={currentMeta?.juz ?? 1} onChange={(e) => goToPage(JUZ_DATA[parseInt(e.target.value, 10) - 1].page)}>
+                {JUZ_DATA.map((j) => (<option key={j.id} value={j.id}>{t('juz')} {j.id}</option>))}
               </select>
               <p className="text-xs font-semibold text-text-secondary mb-2">{t('hizb') ?? 'Hizb'}</p>
-              <select
-                className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3"
-                value={currentMeta?.hizb ?? 1}
-                onChange={(e) => goToPage(HIZB_PAGE_RANGES[parseInt(e.target.value, 10) - 1].startPage)}
-              >
-                {HIZB_PAGE_RANGES.map((_, i) => (
-                  <option key={i} value={i + 1}>
-                    {t('hizb')} {i + 1}
-                  </option>
-                ))}
+              <select className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3" value={currentMeta?.hizb ?? 1} onChange={(e) => goToPage(HIZB_PAGE_RANGES[parseInt(e.target.value, 10) - 1].startPage)}>
+                {HIZB_PAGE_RANGES.map((_, i) => (<option key={i} value={i + 1}>{t('hizb')} {i + 1}</option>))}
               </select>
               <p className="text-xs font-semibold text-text-secondary mb-2">{t('mushafGoToSurah') ?? 'Sourate'}</p>
-              <select
-                className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm"
-                value={currentMeta?.sura ?? 1}
-                onChange={(e) => {
-                  const surah = SURAH_DATA.find((s) => s.id === parseInt(e.target.value, 10));
-                  if (surah) goToPage(surah.startPage);
-                }}
-              >
-                {SURAH_DATA.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
+              <select className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm" value={currentMeta?.sura ?? 1} onChange={(e) => { const surah = SURAH_DATA.find((s) => s.id === parseInt(e.target.value, 10)); if (surah) goToPage(surah.startPage); }}>
+                {SURAH_DATA.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
               </select>
             </div>
           )}
@@ -421,40 +539,24 @@ const MushafView: React.FC = () => {
 
         {hasActions && (
           <div className="relative" ref={actionsPanelRef}>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setActionsOpen((o) => !o); }}
-              className={btnClass}
-            >
+            <button type="button" onClick={(e) => { e.stopPropagation(); setActionsOpen((o) => !o); }} className={btnClass}>
               {t('mushafActions') ?? 'Actions'} ▾
             </button>
             {actionsOpen && (
               <div className="absolute top-full left-0 mt-2 z-50 glass-card rounded-2xl py-2 shadow-premium border border-border-main min-w-[180px]">
                 {resumeReadingPage != null && (
-                  <button
-                    type="button"
-                    onClick={handleResumeReading}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors"
-                  >
-                    {t('mushafResumeReading') ?? 'Reprendre lecture'}
+                  <button type="button" onClick={handleResumeReading} className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors">
+                    {t('mushafResumeReading') ?? 'Reprendre lecture'} ({t('pageLabel') ?? 'Page'} {resumeReadingPage})
                   </button>
                 )}
                 {resumeRevisionPage != null && (
-                  <button
-                    type="button"
-                    onClick={handleResumeRevision}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors"
-                  >
+                  <button type="button" onClick={handleResumeRevision} className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors">
                     {t('mushafResumeRevision') ?? 'Reprendre révision'}
                   </button>
                 )}
                 {activeProfile && (
-                  <button
-                    type="button"
-                    onClick={handleMarkStop}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors"
-                  >
-                    {t('mushafMarkStop') ?? "Marquer l'arrêt"}
+                  <button type="button" onClick={handleMarkStop} className="w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors">
+                    {t('mushafMarkStop') ?? "Marquer l'arrêt"} ({t('pageLabel') ?? 'Page'} {currentPage})
                   </button>
                 )}
               </div>
@@ -462,27 +564,20 @@ const MushafView: React.FC = () => {
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className={btnClass}
-          title={t('mushafFullscreen') ?? 'Plein écran'}
-        >
+        <button type="button" onClick={toggleFullscreen} className={btnClass} title={t('mushafFullscreen') ?? 'Plein écran'}>
           {t('mushafFullscreen') ?? 'Plein écran'}
         </button>
       </div>
       )}
 
+      {!isFullscreen && <div className="mb-3">{timerBar}</div>}
+
       <div className="flex items-center justify-center gap-3 mb-3">
-        <button onClick={handlePrev} disabled={currentPage <= 1} className={btnClass}>
-          ◀
-        </button>
+        <button onClick={handlePrev} disabled={currentPage <= 1} className={btnClass}>◀</button>
         <div className="px-4 py-2.5 rounded-xl bg-accent-color/15 border-2 border-accent-color/50 text-center min-w-[120px]">
           {pageIndicator}
         </div>
-        <button onClick={handleNext} disabled={currentPage >= 604} className={btnClass}>
-          ▶
-        </button>
+        <button onClick={handleNext} disabled={currentPage >= 604} className={btnClass}>▶</button>
       </div>
 
       <div

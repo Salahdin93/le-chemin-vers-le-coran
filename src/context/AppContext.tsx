@@ -498,11 +498,18 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
       if (typeof readingDay === 'number' && state.plans.reading && state.plans.reading.length > 0) {
         const clampedDay = Math.max(1, Math.min(readingDay, state.plans.reading.length));
+        const updatedReadingHistory = { ...newState.progress.readingHistory };
+        for (let d = 1; d < clampedDay; d++) {
+          if (!updatedReadingHistory[`day_${d}`]) {
+            updatedReadingHistory[`day_${d}`] = { status: 'not_read', realPages: 0, adjustment: 0 };
+          }
+        }
         newState = {
           ...newState,
           progress: {
             ...newState.progress,
             currentReadingDay: clampedDay,
+            readingHistory: updatedReadingHistory,
           },
         };
       }
