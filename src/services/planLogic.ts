@@ -274,33 +274,7 @@ export const recalculateFuturePlan = (
     currentReadingDay: number
 ): PlanDay[] => {
     const newPlan: PlanDay[] = JSON.parse(JSON.stringify(originalPlan));
-    let totalPagesRead = 0;
-    let totalPagesPlanned = 0;
-    for (let day = 1; day < currentReadingDay; day++) {
-        const history = readingHistory[`day_${day}`];
-        const originalPlanDay = originalPlan.find(d => d.day === day);
-        if (originalPlanDay) {
-            totalPagesPlanned += originalPlanDay.pages;
-            totalPagesRead += (history?.realPages !== undefined ? history.realPages : 0);
-        }
-    }
-    const pageDifference = totalPagesRead - totalPagesPlanned;
-    const remainingDays = newPlan.filter((d: PlanDay) => d.day >= currentReadingDay && !d.isKahfDay);
-    if (remainingDays.length > 0) {
-        const adjustmentPerDay = Math.floor(pageDifference / remainingDays.length);
-        let extraAdjustment = pageDifference % remainingDays.length;
-        remainingDays.forEach((day: PlanDay) => {
-            let dayAdjustment = adjustmentPerDay;
-            if (extraAdjustment !== 0) {
-                dayAdjustment += extraAdjustment > 0 ? 1 : -1;
-                extraAdjustment += extraAdjustment > 0 ? -1 : 1;
-            }
-            const planDay = newPlan.find((d: PlanDay) => d.day === day.day);
-            if (planDay) {
-                planDay.recalculatedPages = Math.max(0, planDay.pages - dayAdjustment);
-            }
-        });
-    }
+
     const firstDay = originalPlan.find(d => d.day === 1);
     let currentPage = firstDay?.startPage ?? 1;
     for (let day = 1; day < currentReadingDay; day++) {
@@ -311,6 +285,21 @@ export const recalculateFuturePlan = (
             // Jour sans historique = pas lu, 0 pages avancées
         }
     }
+
+    // Nouvelle logique : repartir les pages restantes sur les jours restants
+    const remainingPlanDays = newPlan.filter((d: PlanDay) => d.day >= currentReadingDay && !d.isKahfDay);
+    const remainingPages = Math.max(0, TOTAL_PAGES - (currentPage - 1));
+    if (remainingPlanDays.length > 0 && remainingPages > 0) {
+        const base = Math.floor(remainingPages / remainingPlanDays.length);
+        let extra = remainingPages % remainingPlanDays.length;
+        remainingPlanDays.forEach((day, index) => {
+            const planDay = newPlan.find((d: PlanDay) => d.day === day.day);
+            if (!planDay) return;
+            const pagesForThisDay = base + (index < extra ? 1 : 0);
+            planDay.recalculatedPages = pagesForThisDay;
+        });
+    }
+
     for (let day = currentReadingDay; day <= newPlan.length; day++) {
         const planDay = newPlan.find((d: PlanDay) => d.day === day);
         if (!planDay) continue;

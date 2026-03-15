@@ -450,30 +450,6 @@ const DashboardView: React.FC = () => {
                 )}
             </section>
 
-            {/* Raccourcis Mushaf (mobile uniquement) */}
-            {(isReadingActive || isRevisionActive) && (
-                <div className="md:hidden mt-6 grid grid-cols-2 gap-3">
-                    {isReadingActive && currentReading && (
-                        <Button
-                            variant="ghost"
-                            className="h-12 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
-                            onClick={openMushafAtReadingPage}
-                        >
-                            <BookOpen size={14} /> {t('openInMushaf') ?? 'Ouvrir dans le Mushaf'}
-                        </Button>
-                    )}
-                    {isRevisionActive && (
-                        <Button
-                            variant="ghost"
-                            className="h-12 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
-                            onClick={openMushafAtRevisionPage}
-                        >
-                            <BookOpenCheck size={14} /> {t('openInMushaf') ?? 'Ouvrir dans le Mushaf'}
-                        </Button>
-                    )}
-                </div>
-            )}
-
             {/* Daily Missions */}
             <section className="grid grid-cols-1 xl:grid-cols-2 gap-10 mt-6">
                 {/* Mission Reading */}
