@@ -15,6 +15,7 @@ import InputModal from '@/components/ui/InputModal';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 import { HADITH_COLLECTION } from '@/constants/hadithData';
+import { TOTAL_PAGES } from '@/constants/quranData';
 import { Eye, EyeOff, Sparkles, BookOpen, BookOpenCheck, Brain, Trophy, Flame, ChevronRight, Play, CheckCircle2, Star, Calendar, RotateCcw, Clock } from 'lucide-react';
 import ReadjustmentModal from '@/components/ui/ReadjustmentModal';
 
@@ -115,9 +116,13 @@ const DashboardView: React.FC = () => {
     const isReadingActive = !!(activeProfile && readingGoal && readingPlan && state.progress.currentReadingDay <= readingGoal.duration);
     const isRevisionActive = !!(activeProfile && revisionGoal && revisionPlan && state.progress.currentRevisionIndex < (revisionPlan?.length || 0));
 
-    const overallPercent = (activeProfile && readingGoal) ? Math.floor(((state.progress.currentReadingDay - 1) / readingGoal.duration) * 100) : 0;
+    const historyPages = Object.values(state.progress.readingHistory).reduce((acc, h: any) => acc + (h.realPages || 0), 0);
+    const totalPagesRead = (state.progress.existingPagesRead ?? 0) + historyPages;
+    const totalPagesToRead = readingGoal ? readingGoal.khatmas * TOTAL_PAGES : 0;
+    const overallPercent = readingGoal && totalPagesToRead > 0
+        ? Math.round((totalPagesRead / totalPagesToRead) * 100)
+        : 0;
     const revisionPercent = revisionPlan ? Math.floor((state.progress.currentRevisionIndex / revisionPlan.length) * 100) : 0;
-    const totalPagesRead = Object.values(state.progress.readingHistory).reduce((acc, h: any) => acc + (h.realPages || 0), 0);
     const masteredHadiths = Object.values(hadithProgress).filter(s => s === 'acquis').length;
     const hadithPercent = Math.floor((masteredHadiths / HADITH_COLLECTION.length) * 100);
 
