@@ -451,6 +451,13 @@ const MushafView: React.FC = () => {
     </span>
   );
 
+  const todayRevisionSummary =
+    todayRevision && todayRevision.units && todayRevision.units.length > 0
+      ? todayRevision.units
+          .map((u) => (u.surahs ? `${u.text} — ${u.surahs}` : u.text))
+          .join(' | ')
+      : null;
+
   const timerBar = (
     <div className="flex flex-wrap items-center gap-2 bg-bg-main/90 px-3 py-2 rounded-xl border border-border-main/60">
       <span className="text-sm md:text-lg font-mono font-bold text-text-main tabular-nums mr-auto">
@@ -539,6 +546,12 @@ const MushafView: React.FC = () => {
           {todayRevision && (
             <p className="text-[11px] font-semibold text-text-secondary">
               {(t('todayRevisionLabel') as string) || 'Révision du jour'}
+              {todayRevisionSummary && (
+                <>
+                  {' : '}
+                  <span className="font-bold text-text-main">{todayRevisionSummary}</span>
+                </>
+              )}
             </p>
           )}
         </div>
