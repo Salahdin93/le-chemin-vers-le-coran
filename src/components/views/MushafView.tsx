@@ -129,6 +129,12 @@ const MushafView: React.FC = () => {
     return readingPlan.find(d => d.day === currentReadingDay) || null;
   }, [readingPlan, currentReadingDay]);
 
+  const todayRevision = useMemo(() => {
+    if (!revisionPlan || revisionPlan.length === 0) return null;
+    if (currentRevisionIndex < 0 || currentRevisionIndex >= revisionPlan.length) return null;
+    return revisionPlan[currentRevisionIndex];
+  }, [revisionPlan, currentRevisionIndex]);
+
   const requestWakeLock = useCallback(async () => {
     try {
       if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLockRef.current) {
@@ -528,6 +534,11 @@ const MushafView: React.FC = () => {
               <span className="font-bold text-text-main">
                 {todayReading.startPage} → {todayReading.endPage}
               </span>
+            </p>
+          )}
+          {todayRevision && (
+            <p className="text-[11px] font-semibold text-text-secondary">
+              {(t('todayRevisionLabel') as string) || 'Révision du jour'}
             </p>
           )}
         </div>
