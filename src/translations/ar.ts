@@ -178,6 +178,8 @@ export const ar = {
     "consecutiveDays": "أيام متتالية",
     "pagesRead": "صفحة مقروءة",
     "daysLeft": "أيام متبقية",
+    "todayReadingLabel": "قراءة اليوم",
+    "todayRevisionLabel": "مراجعة اليوم",
     "myReading": "قراءتي",
     "today": "اليوم",
     "readFromTo": "اقرأ من صفحة {start} إلى {end}",

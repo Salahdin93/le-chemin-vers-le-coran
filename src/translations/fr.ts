@@ -178,6 +178,8 @@ export const fr = {
     "consecutiveDays": "Jours Consécutifs",
     "pagesRead": "Pages Lues",
     "daysLeft": "Jours Restants",
+    "todayReadingLabel": "Lecture du jour",
+    "todayRevisionLabel": "Révision du jour",
     "myReading": "Ma Lecture",
     "today": "Aujourd'hui",
     "readFromTo": "Lire de la page {start} à {end}",

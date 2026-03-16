@@ -396,7 +396,9 @@ const DashboardView: React.FC = () => {
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('pagesReadShort') || 'Pages lues'}</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="block text-2xl font-black text-white">{readingGoal!.duration - state.progress.currentReadingDay + 1}</span>
+                                    <span className="block text-2xl font-black text-white">
+                                        {readingPlan ? Math.max(0, readingPlan.length - state.progress.currentReadingDay + 1) : 0}
+                                    </span>
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysLeft') || 'Jours restants'}</span>
                                 </div>
                             </div>
@@ -441,7 +443,9 @@ const DashboardView: React.FC = () => {
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('completed') || 'Étapes faites'}</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="block text-2xl font-black text-white">{revisionPlan!.length - state.progress.currentRevisionIndex}</span>
+                                    <span className="block text-2xl font-black text-white">
+                                        {revisionPlan ? Math.max(0, revisionPlan.length - state.progress.currentRevisionIndex - 1) : 0}
+                                    </span>
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30">{t('daysLeft') || 'Jours restants'}</span>
                                 </div>
                             </div>

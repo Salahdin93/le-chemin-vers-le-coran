@@ -446,32 +446,34 @@ const MushafView: React.FC = () => {
   );
 
   const timerBar = (
-    <div className="flex items-center gap-2 bg-bg-main/90 px-3 py-2 rounded-xl border border-border-main/60">
-      <span className="text-lg font-mono font-bold text-text-main tabular-nums">{formatTime(timerTime)}</span>
+    <div className="flex flex-wrap items-center gap-2 bg-bg-main/90 px-3 py-2 rounded-xl border border-border-main/60">
+      <span className="text-sm md:text-lg font-mono font-bold text-text-main tabular-nums mr-auto">
+        {formatTime(timerTime)}
+      </span>
       {!timerActive ? (
-        <button type="button" onClick={handleTimerStart} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-color/20 text-accent-color text-xs font-bold hover:bg-accent-color/30 transition-all">
-          <Play size={14} /> {t('timerStart') ?? 'Démarrer'}
+        <button type="button" onClick={handleTimerStart} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-color/20 text-accent-color text-[10px] md:text-xs font-bold hover:bg-accent-color/30 transition-all">
+          <Play size={12} /> {t('timerStart') ?? 'Démarrer'}
         </button>
       ) : (
         <>
-          <button type="button" onClick={handleTimerPauseResume} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-bg-secondary text-text-main text-xs font-bold hover:bg-bg-main transition-all border border-border-main">
-            {timerPaused ? <Play size={14} /> : <Pause size={14} />}
+          <button type="button" onClick={handleTimerPauseResume} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-bg-secondary text-text-main text-[10px] md:text-xs font-bold hover:bg-bg-main transition-all border border-border-main">
+            {timerPaused ? <Play size={12} /> : <Pause size={12} />}
           </button>
           {readingPlan && readingPlan.length > 0 && (
-            <button type="button" onClick={handleTimerStopReading} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/20 text-success text-xs font-bold hover:bg-success/30 transition-all">
-              <Square size={12} /> {t('mushafTimerStopReading') ?? 'Lecture'}
+            <button type="button" onClick={handleTimerStopReading} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/20 text-success text-[10px] md:text-xs font-bold hover:bg-success/30 transition-all">
+              <Square size={11} /> {t('mushafTimerStopReading') ?? 'Lecture'}
             </button>
           )}
           {revisionPlan && revisionPlan.length > 0 && (
-            <button type="button" onClick={handleTimerStopRevision} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/20 text-blue-400 text-xs font-bold hover:bg-blue-500/30 transition-all">
-              <Square size={12} /> {t('mushafTimerStopRevision') ?? 'Révision'}
+            <button type="button" onClick={handleTimerStopRevision} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/20 text-blue-400 text-[10px] md:text-xs font-bold hover:bg-blue-500/30 transition-all">
+              <Square size={11} /> {t('mushafTimerStopRevision') ?? 'Révision'}
             </button>
           )}
         </>
       )}
       {revisionSurahs.length > 0 && (
-        <button type="button" onClick={openRatingSurahBysurah} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-warning/20 text-warning text-xs font-bold hover:bg-warning/30 transition-all">
-          <BookmarkCheck size={14} /> {t('mushafRateSurah') ?? 'Noter'}
+        <button type="button" onClick={openRatingSurahBysurah} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-warning/20 text-warning text-[10px] md:text-xs font-bold hover:bg-warning/30 transition-all">
+          <BookmarkCheck size={12} /> {t('mushafRateSurah') ?? 'Noter'}
         </button>
       )}
     </div>

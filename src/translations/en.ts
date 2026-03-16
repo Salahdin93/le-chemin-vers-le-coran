@@ -175,6 +175,8 @@ export const en = {
     "consecutiveDays": "Consecutive Days",
     "pagesRead": "Pages Read",
     "daysLeft": "Days Left",
+    "todayReadingLabel": "Today\u2019s reading",
+    "todayRevisionLabel": "Today\u2019s review",
     "myReading": "My Reading",
     "today": "Today",
     "readFromTo": "Read from page {start} to {end}",

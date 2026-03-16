@@ -27,22 +27,6 @@ import HadithStatsView from '@/components/views/HadithStatsView';
 import HadithRevisionPlanView from '@/components/views/HadithRevisionPlanView';
 import HadithRevisionSettingsView from '@/components/views/HadithRevisionSettingsView';
 import MushafView from '@/components/views/MushafView';
-import { MessageCircle } from 'lucide-react';
-
-const WhatsAppFloatButton: React.FC = () => {
-  const { dispatch, t } = useStore();
-  return (
-    <motion.button
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      onClick={() => dispatch({ type: 'TOGGLE_SHARE_MODAL', payload: true })}
-      className="fixed bottom-32 right-6 md:bottom-10 md:right-10 z-40 w-16 h-16 bg-[#25D366] text-white rounded-[1.5rem] flex items-center justify-center shadow-premium transition-shadow hover:shadow-[#25D366]/40"
-      aria-label={t('shareOnWhatsApp')}
-    >
-      <MessageCircle size={28} />
-    </motion.button>
-  );
-};
 
 const MainAppView: React.FC = () => {
   const { state, activeProfile, t } = useStore();
@@ -109,10 +93,6 @@ const MainAppView: React.FC = () => {
         <NotificationCenterPanel isOpen={isNotificationPanelOpen} onClose={() => setIsNotificationPanelOpen(false)} />
         <ShareModal />
         <PaceReadjustmentModal />
-
-
-
-        <WhatsAppFloatButton />
       </div>
 
       {/* Decoration Elements */}
