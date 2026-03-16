@@ -129,6 +129,24 @@ const MushafView: React.FC = () => {
     return readingPlan.find(d => d.day === currentReadingDay) || null;
   }, [readingPlan, currentReadingDay]);
 
+  const requestWakeLock = useCallback(async () => {
+    try {
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLockRef.current) {
+        // @ts-ignore
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    try {
+      if (wakeLockRef.current) {
+        await wakeLockRef.current.release?.();
+        wakeLockRef.current = null;
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   useEffect(() => {
     if (timerActive && !timerPaused) {
       timerIntervalRef.current = setInterval(() => setTimerTime(t => t + 1), 1000);
@@ -207,24 +225,6 @@ const MushafView: React.FC = () => {
     setRatingSurah(revisionSurahs[0]);
     setRatingOpen(true);
   }, [revisionSurahs]);
-
-  const requestWakeLock = useCallback(async () => {
-    try {
-      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLockRef.current) {
-        // @ts-ignore
-        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-      }
-    } catch { /* ignore */ }
-  }, []);
-
-  const releaseWakeLock = useCallback(async () => {
-    try {
-      if (wakeLockRef.current) {
-        await wakeLockRef.current.release?.();
-        wakeLockRef.current = null;
-      }
-    } catch { /* ignore */ }
-  }, []);
 
   useEffect(() => {
     if (!goToOpen) return;
