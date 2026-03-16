@@ -102,6 +102,7 @@ const MushafView: React.FC = () => {
   const [timerActive, setTimerActive] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
   const timerIntervalRef = useRef<any>(null);
+  const [goToPageInput, setGoToPageInput] = useState<string>(() => String(currentPage));
 
   const [ratingOpen, setRatingOpen] = useState(false);
   const [ratingSurah, setRatingSurah] = useState<string | null>(null);
@@ -123,6 +124,11 @@ const MushafView: React.FC = () => {
     return getSurahsForRevisionUnits(currentRevision.units);
   }, [currentRevision]);
 
+  const todayReading = useMemo(() => {
+    if (!readingPlan) return null;
+    return readingPlan.find(d => d.day === currentReadingDay) || null;
+  }, [readingPlan, currentReadingDay]);
+
   useEffect(() => {
     if (timerActive && !timerPaused) {
       timerIntervalRef.current = setInterval(() => setTimerTime(t => t + 1), 1000);
@@ -135,7 +141,8 @@ const MushafView: React.FC = () => {
   const handleTimerStart = useCallback(() => {
     setTimerActive(true);
     setTimerPaused(false);
-  }, []);
+    requestWakeLock();
+  }, [requestWakeLock]);
 
   const handleTimerPauseResume = useCallback(() => {
     setTimerPaused(p => !p);
@@ -145,19 +152,15 @@ const MushafView: React.FC = () => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     const seconds = timerTime;
     if (readingPlan && readingPlan.length > 0 && activeProfile) {
-      const dayKey = `day_${currentReadingDay}`;
-      const existing = state.progress.readingHistory[dayKey] || { status: 'not_read', realPages: 0, adjustment: 0 };
-      const newHistory = {
-        ...state.progress.readingHistory,
-        [dayKey]: { ...existing, timeSpent: (existing.timeSpent || 0) + seconds },
-      };
+      const newHistory = state.progress.readingHistory;
       const recPlan = originalReadingPlan ? recalculateFuturePlan(originalReadingPlan, newHistory, currentReadingDay) : null;
-      dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory, recalculatedPlan: recPlan! } });
+      dispatch({ type: 'UPDATE_READING_HISTORY', payload: { newHistory, recalculatedPlan: recPlan!, timeSpent: seconds } });
     }
     dispatch({ type: 'SET_TOAST', payload: `${t('timerSaved') ?? 'Temps enregistré'} : ${formatTime(seconds)}` });
     setTimerActive(false);
     setTimerTime(0);
-  }, [timerTime, readingPlan, activeProfile, currentReadingDay, state.progress.readingHistory, originalReadingPlan, dispatch, t]);
+    releaseWakeLock();
+  }, [timerTime, readingPlan, activeProfile, currentReadingDay, state.progress.readingHistory, originalReadingPlan, dispatch, t, releaseWakeLock]);
 
   const handleTimerStopRevision = useCallback(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -171,7 +174,8 @@ const MushafView: React.FC = () => {
     dispatch({ type: 'SET_TOAST', payload: `${t('timerSaved') ?? 'Temps enregistré'} : ${formatTime(seconds)}` });
     setTimerActive(false);
     setTimerTime(0);
-  }, [timerTime, revisionPlan, currentRevisionIndex, dispatch, t]);
+    releaseWakeLock();
+  }, [timerTime, revisionPlan, currentRevisionIndex, dispatch, t, releaseWakeLock]);
 
   const handleRateSurah = useCallback((rating: 'tres_bien' | 'bien' | 'moyen' | 'a_revoir') => {
     if (!ratingSurah) return;
@@ -241,9 +245,8 @@ const MushafView: React.FC = () => {
   }, [actionsOpen]);
 
   useEffect(() => {
-    requestWakeLock();
     return () => { releaseWakeLock(); };
-  }, [requestWakeLock, releaseWakeLock]);
+  }, [releaseWakeLock]);
 
   useEffect(() => {
     let cancelled = false;
@@ -268,6 +271,10 @@ const MushafView: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem('mushafLastPage', String(currentPage));
+  }, [currentPage]);
+
+  useEffect(() => {
+    setGoToPageInput(String(currentPage));
   }, [currentPage]);
 
   useEffect(() => {
@@ -315,6 +322,12 @@ const MushafView: React.FC = () => {
     setGoToOpen(false);
   }, []);
 
+  const applyGoToPageInput = useCallback(() => {
+    const n = parseInt(goToPageInput, 10);
+    if (!Number.isFinite(n)) return;
+    goToPage(n);
+  }, [goToPageInput, goToPage]);
+
   const resumeReadingPage = useMemo(() => {
     if (!activeProfile?.id || !readingPlan?.length) return null;
     const key = `mushafReadingStop_${activeProfile.id}`;
@@ -359,11 +372,23 @@ const MushafView: React.FC = () => {
   const toggleFullscreen = useCallback(() => {
     if (!fullscreenRef.current) return;
     if (!document.fullscreenElement) {
-      fullscreenRef.current.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(() => {});
+      fullscreenRef.current.requestFullscreen?.()
+        .then(() => {
+          setIsFullscreen(true);
+          requestWakeLock();
+        })
+        .catch(() => {});
     } else {
-      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(() => {});
+      document.exitFullscreen?.()
+        .then(() => {
+          setIsFullscreen(false);
+          if (!timerActive) {
+            releaseWakeLock();
+          }
+        })
+        .catch(() => {});
     }
-  }, []);
+  }, [requestWakeLock, releaseWakeLock, timerActive]);
 
   useEffect(() => {
     const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -486,13 +511,23 @@ const MushafView: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="mb-3">
-          <p className="text-[11px] font-black uppercase tracking-[0.25em] text-text-secondary/60 mb-0.5">
-            {t('mushaf') ?? 'Mushaf'}
-          </p>
-          <h1 className="text-xl md:text-2xl font-black text-text-main">
-            {t('quranReaderTitle') ?? 'Lecture du Coran (Mushaf)'}
-          </h1>
+        <div className="mb-3 space-y-1.5">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-text-secondary/60 mb-0.5">
+              {t('mushaf') ?? 'Mushaf'}
+            </p>
+            <h1 className="text-xl md:text-2xl font-black text-text-main">
+              {t('quranReaderTitle') ?? 'Lecture du Coran (Mushaf)'}
+            </h1>
+          </div>
+          {todayReading && (
+            <p className="text-[11px] font-semibold text-text-secondary">
+              {(t('todayReadingLabel') as string) || 'Lecture du jour'} :{' '}
+              <span className="font-bold text-text-main">
+                {todayReading.startPage} → {todayReading.endPage}
+              </span>
+            </p>
+          )}
         </div>
       )}
 
@@ -520,7 +555,17 @@ const MushafView: React.FC = () => {
           {goToOpen && (
             <div className="absolute top-full left-0 mt-2 z-50 glass-card rounded-2xl p-4 shadow-premium border border-border-main min-w-[200px]">
               <p className="text-xs font-semibold text-text-secondary mb-2">{t('mushafGoToPage') ?? 'Page'}</p>
-              <input type="number" min={1} max={604} value={currentPage} onChange={(e) => goToPage(parseInt(e.target.value, 10) || 1)} className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3" />
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  type="number"
+                  min={1}
+                  max={604}
+                  value={goToPageInput}
+                  onChange={(e) => setGoToPageInput(e.target.value)}
+                  onBlur={applyGoToPageInput}
+                  className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm"
+                />
+              </div>
               <p className="text-xs font-semibold text-text-secondary mb-2">{t('juz') ?? 'Juz'}</p>
               <select className="w-full px-2 py-1.5 rounded-lg border border-border-main bg-bg-main text-text-main text-sm mb-3" value={currentMeta?.juz ?? 1} onChange={(e) => goToPage(JUZ_DATA[parseInt(e.target.value, 10) - 1].page)}>
                 {JUZ_DATA.map((j) => (<option key={j.id} value={j.id}>{t('juz')} {j.id}</option>))}
